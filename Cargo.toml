@@ -1,0 +1,19 @@
+[workspace]
+members = [
+    "crates/stablegui",
+    "crates/stablegui_common",
+    "crates/stablegui_tester",
+    "crates/stablegui_transfer",
+    "crates/stablegui_worker",
+]
+resolver = "2"
+# default-members = ["crates/stablegui_tester"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+
+[workspace.dependencies]
+shared_memory = "0.12.4"
+rand = "0.8.5"
+once_cell = "1.19.0"

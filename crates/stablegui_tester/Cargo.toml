@@ -1,0 +1,8 @@
+[package]
+name = "stablegui_tester"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+libloading = "0.8"
+stablegui = { path = "../stablegui" }
