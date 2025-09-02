@@ -1,0 +1,396 @@
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
+
+use lolite_macros::MergeProperties;
+
+use crate::flex_layout::FlexLayoutEngine;
+
+#[derive(Default)]
+pub(crate) struct Layout {
+    pub bounds: Rect,
+    pub style: Rc<Style>,
+}
+
+#[derive(Default, Debug, Clone, Copy)]
+pub(crate) struct Rect {
+    pub x: f64,
+    pub y: f64,
+    pub width: f64,
+    pub height: f64,
+}
+
+#[derive(Default)]
+pub(crate) struct Node {
+    pub id: Id,
+    pub text: Option<String>,
+    pub attributes: HashMap<String, String>,
+    pub children: Vec<Rc<RefCell<Node>>>,
+    pub parent: Option<Id>, // Add parent member
+    // modified when layouting
+    pub layout: Layout,
+}
+
+impl Node {
+    pub fn new(id: Id, text: Option<String>) -> Self {
+        Self {
+            id,
+            text,
+            ..Default::default()
+        }
+    }
+
+    pub fn add_child(&mut self, child: Rc<RefCell<Node>>) {
+        self.children.push(child);
+    }
+}
+
+#[derive(Clone, Copy, Default, Eq, Hash, PartialEq)]
+pub(crate) struct Id(u64);
+
+pub(crate) struct Document {
+    #[allow(unused)]
+    root: Rc<RefCell<Node>>,
+    nodes: HashMap<Id, Rc<RefCell<Node>>>,
+    next_id: u64,
+}
+
+impl Document {
+    pub fn new() -> Self {
+        let root = Rc::new(RefCell::new(Node::new(Id(0), None)));
+        let mut nodes = HashMap::new();
+        nodes.insert(Id(0), root.clone());
+        Self {
+            root,
+            nodes,
+            next_id: 1,
+        }
+    }
+
+    pub fn create_node_autoid(&mut self, text: Option<String>) -> Id {
+        let id = self.unique_id();
+        let node = Rc::new(RefCell::new(Node::new(id, text)));
+        self.nodes.insert(id, node);
+        id
+    }
+
+    pub fn set_parent(&mut self, parent_id: Id, child_id: Id) -> Result<(), &str> {
+        // Check if the parent and child are the same
+        if parent_id == child_id {
+            return Err("Parent and child cannot be the same");
+        }
+
+        let child = self
+            .nodes
+            .get(&child_id)
+            .ok_or("Child node not found")?
+            .clone();
+
+        // Check if the child is already a child of the parent
+        if child.borrow().parent == Some(parent_id) {
+            return Ok(());
+        }
+
+        let parent = self.nodes.get(&parent_id).ok_or("Parent node not found")?;
+
+        // Remove the child from its previous parent
+        if let Some(old_parent_id) = child.borrow().parent {
+            if let Some(old_parent) = self.nodes.get(&old_parent_id) {
+                old_parent
+                    .borrow_mut()
+                    .children
+                    .retain(|c| c.borrow().id != child_id);
+            }
+        }
+
+        // Set the new parent
+        child.borrow_mut().parent = Some(parent_id);
+        parent.borrow_mut().add_child(child);
+        Ok(())
+    }
+
+    pub fn set_attribute(&mut self, node_id: Id, key: String, value: String) {
+        if let Some(node) = self.nodes.get(&node_id) {
+            node.borrow_mut().attributes.insert(key, value);
+        }
+    }
+
+    pub fn get_attribute(&self, node_id: Id, key: String) -> Option<String> {
+        self.nodes
+            .get(&node_id)
+            .map(|node| node.borrow().attributes.get(&key).cloned())
+            .flatten()
+    }
+
+    fn unique_id(&mut self) -> Id {
+        let id = Id(self.next_id);
+        self.next_id += 1;
+        id
+    }
+
+    pub fn root_id(&self) -> Id {
+        Id(0)
+    }
+
+    pub fn root_node(&self) -> Rc<RefCell<Node>> {
+        self.root.clone()
+    }
+}
+
+#[derive(Clone, Default)]
+pub(crate) struct Rgba {
+    pub r: u8,
+    pub g: u8,
+    pub b: u8,
+    pub a: u8,
+}
+
+#[derive(Clone, Default)]
+pub(crate) enum Length {
+    #[default]
+    Auto,
+    Px(f64),
+    Em(f64),
+    Percent(f64),
+}
+
+impl Length {
+    pub(crate) fn to_px(&self) -> f64 {
+        match self {
+            Length::Px(value) => *value,
+            Length::Auto => 0.0,
+            Length::Em(_) => 0.0,      // TODO: Implement em conversion
+            Length::Percent(_) => 0.0, // TODO: Implement percentage conversion
+        }
+    }
+}
+
+#[derive(Clone, Default)]
+pub(crate) struct Extend {
+    pub top: Length,
+    pub right: Length,
+    pub bottom: Length,
+    pub left: Length,
+}
+
+#[derive(Clone, Default)]
+pub(crate) struct BorderRadius {
+    pub top_left: Length,
+    pub top_right: Length,
+    pub bottom_right: Length,
+    pub bottom_left: Length,
+}
+
+#[derive(Clone, Default)]
+pub(crate) enum Display {
+    // Block,
+    // Inline,
+    // InlineBlock,
+    #[default]
+    Flex,
+    // Grid,
+}
+
+#[derive(Clone, Default)]
+pub(crate) enum FlexDirection {
+    #[default]
+    Row,
+    RowReverse,
+    Column,
+    ColumnReverse,
+}
+
+#[derive(Clone, Default)]
+pub(crate) enum FlexWrap {
+    #[default]
+    NoWrap,
+    Wrap,
+    WrapReverse,
+}
+
+#[derive(Clone, Default)]
+pub(crate) enum JustifyContent {
+    #[default]
+    FlexStart,
+    FlexEnd,
+    Center,
+    SpaceBetween,
+    SpaceAround,
+    SpaceEvenly,
+}
+
+#[derive(Clone, Default)]
+pub(crate) enum AlignItems {
+    #[default]
+    Stretch,
+    FlexStart,
+    FlexEnd,
+    Center,
+    Baseline,
+}
+
+#[derive(Clone, Default)]
+pub(crate) enum AlignContent {
+    #[default]
+    Stretch,
+    FlexStart,
+    FlexEnd,
+    Center,
+    SpaceBetween,
+    SpaceAround,
+    SpaceEvenly,
+}
+
+#[derive(Clone, Default)]
+pub(crate) enum AlignSelf {
+    #[default]
+    Auto,
+    FlexStart,
+    FlexEnd,
+    Center,
+    Baseline,
+    Stretch,
+}
+
+#[derive(Clone, Default, MergeProperties)]
+pub(crate) struct Style {
+    pub display: Display,
+    pub background_color: Option<Rgba>,
+    pub border_color: Option<Rgba>,
+    pub border_width: Option<Length>,
+    pub border_radius: Option<BorderRadius>,
+    pub margin: Option<Extend>,
+    pub padding: Option<Extend>,
+    pub width: Option<Length>,
+    pub height: Option<Length>,
+
+    // Flexbox container properties
+    pub flex_direction: Option<FlexDirection>,
+    pub flex_wrap: Option<FlexWrap>,
+    pub justify_content: Option<JustifyContent>,
+    pub align_items: Option<AlignItems>,
+    pub align_content: Option<AlignContent>,
+    pub gap: Option<Length>,
+    pub row_gap: Option<Length>,
+    pub column_gap: Option<Length>,
+
+    // Flexbox item properties
+    pub flex_grow: Option<f64>,
+    pub flex_shrink: Option<f64>,
+    pub flex_basis: Option<Length>,
+    pub align_self: Option<AlignSelf>,
+}
+
+pub(crate) struct StyleSheet {
+    pub rules: Vec<Rule>,
+}
+
+impl StyleSheet {
+    pub fn new() -> Self {
+        Self { rules: vec![] }
+    }
+
+    pub fn add_rule(&mut self, rule: Rule) {
+        self.rules.push(rule);
+    }
+}
+
+pub(crate) struct Rule {
+    pub selector: Selector,
+    pub declarations: Vec<Style>,
+}
+
+#[derive(Debug, PartialEq)]
+pub(crate) enum Selector {
+    Tag(String),
+    Class(String),
+}
+
+pub(crate) struct Engine {
+    pub document: Document,
+    pub style_sheet: StyleSheet,
+    flex_layout_engine: FlexLayoutEngine,
+}
+
+impl Engine {
+    pub fn new() -> Self {
+        Self {
+            document: Document::new(),
+            style_sheet: StyleSheet::new(),
+            flex_layout_engine: FlexLayoutEngine::new(),
+        }
+    }
+
+    pub fn layout(&mut self) {
+        self.layout_node(self.document.root.clone(), 0.0, 0.0);
+    }
+
+    pub fn layout_node(&self, node: Rc<RefCell<Node>>, x: f64, y: f64) {
+        // Get style for this node - merge existing style with CSS rules
+        let style = {
+            let node_borrow = node.borrow();
+            // Start with existing style as base (this preserves manually set properties like flex_wrap)
+            let mut style = node_borrow.layout.style.as_ref().clone();
+
+            // Apply CSS rules on top of existing style
+            if let Some(class) = node_borrow.attributes.get("class") {
+                let selector = Selector::Class(class.clone());
+                let rule = self
+                    .style_sheet
+                    .rules
+                    .iter()
+                    .find(|rule| rule.selector == selector);
+
+                if let Some(rule) = rule {
+                    for declaration in &rule.declarations {
+                        style.merge(declaration);
+                    }
+                }
+            }
+            style
+        };
+
+        // Set position
+        {
+            let mut node_borrow = node.borrow_mut();
+            node_borrow.layout.bounds.x = x;
+            node_borrow.layout.bounds.y = y;
+        }
+
+        let is_leaf = node.borrow().children.is_empty();
+
+        if is_leaf {
+            // Leaf node - use specified dimensions or defaults
+            let mut node_borrow = node.borrow_mut();
+            node_borrow.layout.bounds.width =
+                style.width.as_ref().map(|w| w.to_px()).unwrap_or(100.0);
+            node_borrow.layout.bounds.height =
+                style.height.as_ref().map(|h| h.to_px()).unwrap_or(30.0);
+            node_borrow.layout.style = Rc::new(style);
+        } else {
+            // Container node - handle flexbox layout
+            let container_width = style.width.as_ref().map(|w| w.to_px()).unwrap_or(300.0);
+            let container_height = style.height.as_ref().map(|h| h.to_px()).unwrap_or(200.0);
+
+            // Set container dimensions
+            {
+                let mut node_borrow = node.borrow_mut();
+                node_borrow.layout.bounds.width = container_width;
+                node_borrow.layout.bounds.height = container_height;
+                node_borrow.layout.style = Rc::new(style.clone());
+            }
+
+            // Layout children using the dedicated flex layout engine
+            self.flex_layout_engine
+                .layout_flex_children(node.clone(), &style, self);
+        }
+    }
+}
+
+#[cfg(test)]
+mod flex_layout_flow_tests {
+    include!("flex_layout_flow.test.rs");
+}
+
+#[cfg(test)]
+mod flex_alignment_tests {
+    include!("flex_alignment.test.rs");
+}
