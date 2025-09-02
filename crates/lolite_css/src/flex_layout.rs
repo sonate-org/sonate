@@ -5,6 +5,7 @@
  * the main engine for better code organization. It includes support for:
  * - All flex directions (row, column, row-reverse, column-reverse)
  * - Flex wrapping (nowrap, wrap, wrap-reverse)
+ * - CSS Gap properties (gap, row-gap, column-gap)
  * - Proper coordinate calculation and child positioning
  */
 
@@ -65,6 +66,7 @@ impl FlexLayoutEngine {
                     container_y,
                     container_height,
                     flex_wrap,
+                    style,
                 );
             }
             FlexDirection::RowReverse => {
@@ -88,7 +90,7 @@ impl FlexLayoutEngine {
         }
     }
 
-    /// Layout children in a row with wrapping support
+    /// Layout children in a row with wrapping support and gap handling
     fn layout_row_with_wrap(
         &self,
         children: &[Rc<RefCell<Node>>],
@@ -99,20 +101,38 @@ impl FlexLayoutEngine {
         flex_wrap: &FlexWrap,
         style: &Style,
     ) {
+        // Get gap values - CSS gap properties take precedence over individual gap properties
+        let column_gap = if let Some(gap) = &style.gap {
+            gap.to_px()
+        } else if let Some(column_gap) = &style.column_gap {
+            column_gap.to_px()
+        } else {
+            0.0
+        };
+
+        let row_gap = if let Some(gap) = &style.gap {
+            gap.to_px()
+        } else if let Some(row_gap) = &style.row_gap {
+            row_gap.to_px()
+        } else {
+            0.0
+        };
+
         match flex_wrap {
             FlexWrap::NoWrap => {
-                // Apply justify-content for single line
-                self.apply_justify_content_row(
+                // Apply justify-content for single line with gap support
+                self.apply_justify_content_row_with_gap(
                     children,
                     container_x,
                     container_y,
                     container_width,
                     container_height,
                     style,
+                    column_gap,
                 );
             }
             FlexWrap::Wrap => {
-                // First pass: organize children into lines
+                // First pass: organize children into lines, accounting for gaps
                 let mut lines: Vec<Vec<Rc<RefCell<Node>>>> = Vec::new();
                 let mut current_line: Vec<Rc<RefCell<Node>>> = Vec::new();
                 let mut current_line_width = 0.0;
@@ -120,8 +140,15 @@ impl FlexLayoutEngine {
                 for child in children {
                     let child_bounds = child.borrow().layout.bounds;
 
+                    // Calculate required width including gap (if not first item in line)
+                    let required_width = if current_line.is_empty() {
+                        child_bounds.width
+                    } else {
+                        child_bounds.width + column_gap
+                    };
+
                     // Check if this child would overflow the container width
-                    if current_line_width + child_bounds.width > container_width
+                    if current_line_width + required_width > container_width
                         && !current_line.is_empty()
                     {
                         // Start new line
@@ -131,7 +158,11 @@ impl FlexLayoutEngine {
                     }
 
                     current_line.push(child.clone());
-                    current_line_width += child_bounds.width;
+                    current_line_width += if current_line.len() == 1 {
+                        child_bounds.width
+                    } else {
+                        child_bounds.width + column_gap
+                    };
                 }
 
                 // Add the last line if it has children
@@ -149,26 +180,27 @@ impl FlexLayoutEngine {
                     line_heights.push(line_height);
                 }
 
-                // Third pass: apply align-content to position lines
+                // Third pass: apply align-content to position lines with row gaps
                 let align_content = style
                     .align_content
                     .as_ref()
                     .unwrap_or(&AlignContent::FlexStart);
 
-                let line_start_positions = self.calculate_line_positions(
+                let line_start_positions = self.calculate_line_positions_with_gap(
                     &line_heights,
                     container_y,
                     container_height,
                     align_content,
+                    row_gap,
                 );
 
-                // Fourth pass: position children within their lines
+                // Fourth pass: position children within their lines with column gaps
                 for (line_index, line) in lines.iter().enumerate() {
                     let line_y = line_start_positions[line_index];
 
-                    // Position children horizontally within the line
+                    // Position children horizontally within the line with gaps
                     let mut current_x = container_x;
-                    for child in line {
+                    for (child_index, child) in line.iter().enumerate() {
                         let child_bounds = child.borrow().layout.bounds;
                         let mut child_borrow = child.borrow_mut();
 
@@ -176,11 +208,16 @@ impl FlexLayoutEngine {
                         child_borrow.layout.bounds.y = line_y;
 
                         current_x += child_bounds.width;
+
+                        // Add column gap after each item except the last
+                        if child_index < line.len() - 1 {
+                            current_x += column_gap;
+                        }
                     }
                 }
             }
             FlexWrap::WrapReverse => {
-                // TODO: Implement wrap-reverse
+                // TODO: Implement wrap-reverse with gap support
                 // For now, behave like wrap
                 self.layout_row_with_wrap(
                     children,
@@ -203,14 +240,24 @@ impl FlexLayoutEngine {
         container_y: f64,
         container_height: f64,
         flex_wrap: &FlexWrap,
+        style: &Style,
     ) {
+        // Get gap values
+        let row_gap = if let Some(gap) = &style.gap {
+            gap.to_px()
+        } else if let Some(row_gap) = &style.row_gap {
+            row_gap.to_px()
+        } else {
+            0.0
+        };
+
         match flex_wrap {
             FlexWrap::NoWrap => {
-                // Original nowrap behavior
+                // Original nowrap behavior with gap support
                 let current_x = container_x;
                 let mut current_y = container_y;
 
-                for child in children {
+                for (index, child) in children.iter().enumerate() {
                     let child_bounds = child.borrow().layout.bounds;
 
                     // Position child
@@ -219,23 +266,43 @@ impl FlexLayoutEngine {
                     child_borrow.layout.bounds.y = current_y;
 
                     current_y += child_bounds.height;
+
+                    // Add row gap after each item except the last
+                    if index < children.len() - 1 {
+                        current_y += row_gap;
+                    }
                 }
             }
             FlexWrap::Wrap => {
+                let column_gap = if let Some(gap) = &style.gap {
+                    gap.to_px()
+                } else if let Some(column_gap) = &style.column_gap {
+                    column_gap.to_px()
+                } else {
+                    0.0
+                };
+
                 let mut current_x = container_x;
                 let mut current_y = container_y;
                 let mut column_width = 0.0;
 
-                for child in children {
+                for (index, child) in children.iter().enumerate() {
                     let child_bounds = child.borrow().layout.bounds;
 
+                    // Calculate required height including gap (if not first item in column)
+                    let required_height = if current_y == container_y {
+                        child_bounds.height
+                    } else {
+                        child_bounds.height + row_gap
+                    };
+
                     // Check if this child would overflow the container height
-                    if current_y + child_bounds.height > container_y + container_height
+                    if current_y + required_height > container_y + container_height
                         && current_y > container_y
                     {
                         // Wrap to next column
                         current_y = container_y;
-                        current_x += column_width;
+                        current_x += column_width + column_gap;
                         column_width = 0.0;
                     }
 
@@ -245,11 +312,17 @@ impl FlexLayoutEngine {
                     child_borrow.layout.bounds.y = current_y;
 
                     current_y += child_bounds.height;
+
+                    // Add row gap after each item except the last in column
+                    if index < children.len() - 1 {
+                        current_y += row_gap;
+                    }
+
                     column_width = column_width.max(child_bounds.width);
                 }
             }
             FlexWrap::WrapReverse => {
-                // TODO: Implement wrap-reverse
+                // TODO: Implement wrap-reverse with gap support
                 // For now, behave like wrap
                 self.layout_column_with_wrap(
                     children,
@@ -257,6 +330,7 @@ impl FlexLayoutEngine {
                     container_y,
                     container_height,
                     &FlexWrap::Wrap,
+                    style,
                 );
             }
         }
@@ -288,7 +362,7 @@ impl FlexLayoutEngine {
                 }
             }
             FlexWrap::Wrap | FlexWrap::WrapReverse => {
-                // TODO: Implement wrapping for row-reverse
+                // TODO: Implement wrapping for row-reverse with gap support
                 // For now, use nowrap behavior
                 self.layout_row_reverse_with_wrap(
                     children,
@@ -327,7 +401,7 @@ impl FlexLayoutEngine {
                 }
             }
             FlexWrap::Wrap | FlexWrap::WrapReverse => {
-                // TODO: Implement wrapping for column-reverse
+                // TODO: Implement wrapping for column-reverse with gap support
                 // For now, use nowrap behavior
                 self.layout_column_reverse_with_wrap(
                     children,
@@ -340,8 +414,8 @@ impl FlexLayoutEngine {
         }
     }
 
-    /// Apply justify-content positioning for row direction
-    fn apply_justify_content_row(
+    /// Apply justify-content positioning for row direction with gap support
+    fn apply_justify_content_row_with_gap(
         &self,
         children: &[Rc<RefCell<Node>>],
         container_x: f64,
@@ -349,6 +423,7 @@ impl FlexLayoutEngine {
         container_width: f64,
         container_height: f64,
         style: &Style,
+        column_gap: f64,
     ) {
         let justify_content = style
             .justify_content
@@ -356,18 +431,23 @@ impl FlexLayoutEngine {
             .unwrap_or(&JustifyContent::FlexStart);
         let align_items = style.align_items.as_ref().unwrap_or(&AlignItems::FlexStart);
 
-        // Calculate total width of all children
+        // Calculate total width of all children plus gaps
         let total_child_width: f64 = children
             .iter()
             .map(|child| child.borrow().layout.bounds.width)
             .sum();
-
-        let free_space = container_width - total_child_width;
+        let total_gap_width = if children.len() > 1 {
+            column_gap * (children.len() - 1) as f64
+        } else {
+            0.0
+        };
+        let total_content_width = total_child_width + total_gap_width;
+        let free_space = container_width - total_content_width;
 
         match justify_content {
             JustifyContent::FlexStart => {
                 let mut current_x = container_x;
-                for child in children {
+                for (index, child) in children.iter().enumerate() {
                     let child_bounds = child.borrow().layout.bounds;
 
                     // Position child on main axis
@@ -383,11 +463,16 @@ impl FlexLayoutEngine {
                     );
 
                     current_x += child_bounds.width;
+
+                    // Add gap after each item except the last
+                    if index < children.len() - 1 {
+                        current_x += column_gap;
+                    }
                 }
             }
             JustifyContent::FlexEnd => {
                 let mut current_x = container_x + free_space;
-                for child in children {
+                for (index, child) in children.iter().enumerate() {
                     let child_bounds = child.borrow().layout.bounds;
 
                     // Position child on main axis
@@ -403,11 +488,16 @@ impl FlexLayoutEngine {
                     );
 
                     current_x += child_bounds.width;
+
+                    // Add gap after each item except the last
+                    if index < children.len() - 1 {
+                        current_x += column_gap;
+                    }
                 }
             }
             JustifyContent::Center => {
                 let mut current_x = container_x + free_space / 2.0;
-                for child in children {
+                for (index, child) in children.iter().enumerate() {
                     let child_bounds = child.borrow().layout.bounds;
 
                     // Position child on main axis
@@ -423,6 +513,11 @@ impl FlexLayoutEngine {
                     );
 
                     current_x += child_bounds.width;
+
+                    // Add gap after each item except the last
+                    if index < children.len() - 1 {
+                        current_x += column_gap;
+                    }
                 }
             }
             JustifyContent::SpaceBetween => {
@@ -436,10 +531,11 @@ impl FlexLayoutEngine {
                         align_items,
                     );
                 } else {
-                    let gap = free_space / (children.len() - 1) as f64;
+                    // Distribute free space evenly between items (in addition to gaps)
+                    let extra_gap = free_space / (children.len() - 1) as f64;
                     let mut current_x = container_x;
 
-                    for child in children {
+                    for (index, child) in children.iter().enumerate() {
                         let child_bounds = child.borrow().layout.bounds;
 
                         // Position child on main axis
@@ -454,15 +550,20 @@ impl FlexLayoutEngine {
                             align_items,
                         );
 
-                        current_x += child_bounds.width + gap;
+                        current_x += child_bounds.width;
+
+                        // Add gap and extra space after each item except the last
+                        if index < children.len() - 1 {
+                            current_x += column_gap + extra_gap;
+                        }
                     }
                 }
             }
             JustifyContent::SpaceAround => {
-                let gap = free_space / children.len() as f64;
-                let mut current_x = container_x + gap / 2.0;
+                let extra_gap = free_space / children.len() as f64;
+                let mut current_x = container_x + extra_gap / 2.0;
 
-                for child in children {
+                for (index, child) in children.iter().enumerate() {
                     let child_bounds = child.borrow().layout.bounds;
 
                     // Position child on main axis
@@ -477,14 +578,19 @@ impl FlexLayoutEngine {
                         align_items,
                     );
 
-                    current_x += child_bounds.width + gap;
+                    current_x += child_bounds.width;
+
+                    // Add gap and extra space after each item
+                    if index < children.len() - 1 {
+                        current_x += column_gap + extra_gap;
+                    }
                 }
             }
             JustifyContent::SpaceEvenly => {
-                let gap = free_space / (children.len() + 1) as f64;
-                let mut current_x = container_x + gap;
+                let extra_gap = free_space / (children.len() + 1) as f64;
+                let mut current_x = container_x + extra_gap;
 
-                for child in children {
+                for (index, child) in children.iter().enumerate() {
                     let child_bounds = child.borrow().layout.bounds;
 
                     // Position child on main axis
@@ -499,7 +605,12 @@ impl FlexLayoutEngine {
                         align_items,
                     );
 
-                    current_x += child_bounds.width + gap;
+                    current_x += child_bounds.width;
+
+                    // Add gap and extra space after each item except the last
+                    if index < children.len() - 1 {
+                        current_x += column_gap + extra_gap;
+                    }
                 }
             }
         }
@@ -561,38 +672,60 @@ impl FlexLayoutEngine {
         }
     }
 
-    /// Calculate the starting Y positions for each line based on align-content
-    fn calculate_line_positions(
+    /// Calculate the starting Y positions for each line based on align-content with gap support
+    fn calculate_line_positions_with_gap(
         &self,
         line_heights: &[f64],
         container_y: f64,
         container_height: f64,
         align_content: &AlignContent,
+        row_gap: f64,
     ) -> Vec<f64> {
         let total_lines_height: f64 = line_heights.iter().sum();
-        let free_space = container_height - total_lines_height;
+        let total_gap_height = if line_heights.len() > 1 {
+            row_gap * (line_heights.len() - 1) as f64
+        } else {
+            0.0
+        };
+        let total_content_height = total_lines_height + total_gap_height;
+        let free_space = container_height - total_content_height;
         let mut positions = Vec::new();
 
         match align_content {
             AlignContent::FlexStart => {
                 let mut current_y = container_y;
-                for &line_height in line_heights {
+                for (index, &line_height) in line_heights.iter().enumerate() {
                     positions.push(current_y);
                     current_y += line_height;
+
+                    // Add row gap after each line except the last
+                    if index < line_heights.len() - 1 {
+                        current_y += row_gap;
+                    }
                 }
             }
             AlignContent::FlexEnd => {
                 let mut current_y = container_y + free_space;
-                for &line_height in line_heights {
+                for (index, &line_height) in line_heights.iter().enumerate() {
                     positions.push(current_y);
                     current_y += line_height;
+
+                    // Add row gap after each line except the last
+                    if index < line_heights.len() - 1 {
+                        current_y += row_gap;
+                    }
                 }
             }
             AlignContent::Center => {
                 let mut current_y = container_y + free_space / 2.0;
-                for &line_height in line_heights {
+                for (index, &line_height) in line_heights.iter().enumerate() {
                     positions.push(current_y);
                     current_y += line_height;
+
+                    // Add row gap after each line except the last
+                    if index < line_heights.len() - 1 {
+                        current_y += row_gap;
+                    }
                 }
             }
             AlignContent::SpaceBetween => {
@@ -600,28 +733,43 @@ impl FlexLayoutEngine {
                     // If only one line, behave like flex-start
                     positions.push(container_y);
                 } else {
-                    let gap = free_space / (line_heights.len() - 1) as f64;
+                    let extra_gap = free_space / (line_heights.len() - 1) as f64;
                     let mut current_y = container_y;
-                    for &line_height in line_heights {
+                    for (index, &line_height) in line_heights.iter().enumerate() {
                         positions.push(current_y);
-                        current_y += line_height + gap;
+                        current_y += line_height;
+
+                        // Add row gap and extra space after each line except the last
+                        if index < line_heights.len() - 1 {
+                            current_y += row_gap + extra_gap;
+                        }
                     }
                 }
             }
             AlignContent::SpaceAround => {
-                let gap = free_space / line_heights.len() as f64;
-                let mut current_y = container_y + gap / 2.0;
-                for &line_height in line_heights {
+                let extra_gap = free_space / line_heights.len() as f64;
+                let mut current_y = container_y + extra_gap / 2.0;
+                for (index, &line_height) in line_heights.iter().enumerate() {
                     positions.push(current_y);
-                    current_y += line_height + gap;
+                    current_y += line_height;
+
+                    // Add row gap and extra space after each line except the last
+                    if index < line_heights.len() - 1 {
+                        current_y += row_gap + extra_gap;
+                    }
                 }
             }
             AlignContent::SpaceEvenly => {
-                let gap = free_space / (line_heights.len() + 1) as f64;
-                let mut current_y = container_y + gap;
-                for &line_height in line_heights {
+                let extra_gap = free_space / (line_heights.len() + 1) as f64;
+                let mut current_y = container_y + extra_gap;
+                for (index, &line_height) in line_heights.iter().enumerate() {
                     positions.push(current_y);
-                    current_y += line_height + gap;
+                    current_y += line_height;
+
+                    // Add row gap and extra space after each line except the last
+                    if index < line_heights.len() - 1 {
+                        current_y += row_gap + extra_gap;
+                    }
                 }
             }
             AlignContent::Stretch => {

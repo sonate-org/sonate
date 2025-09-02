@@ -392,5 +392,10 @@ mod flex_layout_flow_tests {
 
 #[cfg(test)]
 mod flex_alignment_tests {
-    include!("flex_alignment.test.rs");
+    include!("flex_layout_alignment.test.rs");
+}
+
+#[cfg(test)]
+mod gap_tests {
+    include!("flex_layout_gap.test.rs");
 }
