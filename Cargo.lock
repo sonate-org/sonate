@@ -639,6 +639,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a7a70ba024b9dc04c27ea2f0c0548feb474ec5c54bba33a7f72f873a39d07b24"
 
 [[package]]
+name = "lolite"
+version = "0.1.0"
+dependencies = [
+ "ipc-channel",
+ "lolite_common",
+ "lolite_transfer",
+ "once_cell",
+ "shared_memory",
+]
+
+[[package]]
+name = "lolite_common"
+version = "0.1.0"
+
+[[package]]
 name = "lolite_css"
 version = "0.1.0"
 dependencies = [
@@ -655,6 +670,28 @@ version = "0.1.0"
 dependencies = [
  "quote",
  "syn",
+]
+
+[[package]]
+name = "lolite_tester"
+version = "0.1.0"
+dependencies = [
+ "libloading",
+ "lolite",
+]
+
+[[package]]
+name = "lolite_transfer"
+version = "0.1.0"
+dependencies = [
+ "lolite_common",
+]
+
+[[package]]
+name = "lolite_worker"
+version = "0.1.0"
+dependencies = [
+ "shared_memory",
 ]
 
 [[package]]
@@ -1396,43 +1433,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dd538fb6910ac1099850255cf94a94df6551fbdd602454387d0adb2d1ca6dead"
 dependencies = [
  "serde",
-]
-
-[[package]]
-name = "stablegui"
-version = "0.1.0"
-dependencies = [
- "ipc-channel",
- "once_cell",
- "shared_memory",
- "stablegui_common",
- "stablegui_transfer",
-]
-
-[[package]]
-name = "stablegui_common"
-version = "0.1.0"
-
-[[package]]
-name = "stablegui_tester"
-version = "0.1.0"
-dependencies = [
- "libloading",
- "stablegui",
-]
-
-[[package]]
-name = "stablegui_transfer"
-version = "0.1.0"
-dependencies = [
- "stablegui_common",
-]
-
-[[package]]
-name = "stablegui_worker"
-version = "0.1.0"
-dependencies = [
- "shared_memory",
 ]
 
 [[package]]

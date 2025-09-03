@@ -1,5 +1,5 @@
-use stablegui_common::ElId;
-use stablegui_transfer;
+use lolite_common::ElId;
+use lolite_transfer;
 use std::sync::Mutex;
 
 mod worker_instance;
@@ -26,7 +26,7 @@ pub struct Element {
 }
 
 #[no_mangle]
-pub extern "C" fn stablegui_init() {
+pub extern "C" fn lolite_init() {
     WORKER_INSTANCE
         .lock()
         .unwrap()
@@ -34,10 +34,10 @@ pub extern "C" fn stablegui_init() {
 }
 
 #[no_mangle]
-pub extern "C" fn stablegui_add_element(el: *const Element) {
+pub extern "C" fn lolite_add_element(el: *const Element) {
     match WORKER_INSTANCE.lock().unwrap().as_mut() {
         Some(worker_instance) => unsafe {
-            let transfer = stablegui_transfer::Element {
+            let transfer = lolite_transfer::Element {
                 value: (*el).value,
                 parent: (*el).parent,
                 attributes: if (*el).attribute_count == 0 {
@@ -58,6 +58,10 @@ pub extern "C" fn stablegui_add_element(el: *const Element) {
 }
 
 unsafe fn strize(c_str: &*const char) -> &str {
+    if c_str.is_null() {
+        return "";
+    }
+
     std::ffi::CStr::from_ptr(*c_str as *const i8)
         .to_str()
         .unwrap_or_else(|e| {

@@ -1,6 +1,7 @@
 [package]
-name = "stablegui_common"
+name = "lolite_transfer"
 version.workspace = true
 edition.workspace = true
 
 [dependencies]
+lolite_common = { path = "../lolite_common" }

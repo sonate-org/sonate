@@ -1,14 +1,14 @@
 [package]
-name = "stablegui"
+name = "lolite"
 version.workspace = true
 edition.workspace = true
 
 [dependencies]
-stablegui_common = { path = "../stablegui_common" }
-stablegui_transfer = { path = "../stablegui_transfer" }
+lolite_common = { path = "../lolite_common" }
+lolite_transfer = { path = "../lolite_transfer" }
 shared_memory = { workspace = true }
-rand = { workspace = true }
 once_cell = { workspace = true }
+ipc-channel = { workspace = true }
 
 [lib]
 crate-type = ["cdylib", "lib"]

@@ -1,4 +1,4 @@
-use stablegui_common::ElId;
+use lolite_common::ElId;
 
 pub struct BufferTooSmall;
 
@@ -96,12 +96,12 @@ pub fn encode_element(vec: &mut Vec<u8>, el: &Element) {
     writer.write_string(el.string_value);
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
 
-    #[test]
-    fn it_works() {
-        assert_eq!(4, 4);
-    }
-}
+//     #[test]
+//     fn it_works() {
+//         assert_eq!(4, 4);
+//     }
+// }

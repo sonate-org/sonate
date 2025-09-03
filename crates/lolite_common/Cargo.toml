@@ -1,7 +1,6 @@
 [package]
-name = "stablegui_worker"
+name = "lolite_common"
 version.workspace = true
 edition.workspace = true
 
 [dependencies]
-shared_memory = { workspace = true }
