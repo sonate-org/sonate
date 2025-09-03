@@ -208,7 +208,7 @@ mod tests {
         // Verify horizontal positioning with margins
         assert_eq!(x1, 10.0); // left margin
         assert_eq!(x2, 115.0); // after item1 (10 + 80 + 10) + left margin (15)
-        assert_eq!(x3, 190.0); // after item2 (115 + 60 + 20) + no margin
+        assert_eq!(x3, 195.0); // after item2 (115 + 60 + 20) + no margin
 
         // Verify vertical positioning with top margins
         assert_eq!(y1, 10.0); // top margin
@@ -617,7 +617,7 @@ mod tests {
         // In flexbox, margins don't collapse, so both margins should be applied
         assert_eq!(x1, 5.0); // left margin
         assert_eq!(y1, 10.0); // top margin
-        assert_eq!(x2, 123.0); // after item1 (5 + 100 + 15) + left margin (8)
+        assert_eq!(x2, 128.0); // after item1 (5 + 100 + 15) + left margin (8)
         assert_eq!(y2, 25.0); // top margin (margins don't collapse in flexbox)
     }
 }

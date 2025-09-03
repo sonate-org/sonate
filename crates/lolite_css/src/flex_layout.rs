@@ -307,17 +307,20 @@ impl FlexLayoutEngine {
                     child_borrow.layout.bounds.height = final_heights[i];
                 }
 
-                // Position children with calculated heights
-                let current_x = container_x;
+                // Position children with calculated heights and margins
                 let mut current_y = container_y;
 
                 for (index, child) in children.iter().enumerate() {
-                    // Position child
-                    let mut child_borrow = child.borrow_mut();
-                    child_borrow.layout.bounds.x = current_x;
-                    child_borrow.layout.bounds.y = current_y;
+                    let child_style = child.borrow().layout.style.clone();
+                    let (margin_top, _margin_right, margin_bottom, margin_left) =
+                        self.calculate_margin(&child_style);
 
-                    current_y += final_heights[index];
+                    // Position child with margins
+                    let mut child_borrow = child.borrow_mut();
+                    child_borrow.layout.bounds.x = container_x + margin_left;
+                    child_borrow.layout.bounds.y = current_y + margin_top;
+
+                    current_y += final_heights[index] + margin_top + margin_bottom;
 
                     // Add row gap after each item except the last
                     if index < children.len() - 1 {
