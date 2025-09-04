@@ -43,7 +43,7 @@ impl Node {
     }
 }
 
-#[derive(Clone, Copy, Default, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Default, Debug, Eq, Hash, PartialEq)]
 pub(crate) struct Id(u64);
 
 pub(crate) struct Document {
@@ -319,6 +319,70 @@ impl Engine {
         }
     }
 
+    /// Find the element at the given position (x, y).
+    /// Returns a Vec<Id> where the first element is the topmost element at the position,
+    /// and subsequent elements are its parents up to the root.
+    /// This enables event bubbling by providing the full parent chain.
+    pub fn find_element_at_position(&self, x: f64, y: f64) -> Vec<Id> {
+        let mut result = Vec::new();
+
+        // Start from the root and find the deepest element containing the point
+        if let Some(topmost_id) =
+            self.find_topmost_element_at_position(self.document.root.clone(), x, y)
+        {
+            // Build the parent chain starting from the topmost element
+            let mut current_id = topmost_id;
+            result.push(current_id);
+
+            // Walk up the parent chain
+            while let Some(node) = self.document.nodes.get(&current_id) {
+                if let Some(parent_id) = node.borrow().parent {
+                    result.push(parent_id);
+                    current_id = parent_id;
+                } else {
+                    break;
+                }
+            }
+        }
+
+        result
+    }
+
+    /// Recursively find the topmost (deepest) element that contains the given position
+    fn find_topmost_element_at_position(
+        &self,
+        node: Rc<RefCell<Node>>,
+        x: f64,
+        y: f64,
+    ) -> Option<Id> {
+        let node_borrow = node.borrow();
+
+        // Check if the point is within this node's bounds
+        if !self.point_in_bounds(&node_borrow.layout.bounds, x, y) {
+            return None;
+        }
+
+        let node_id = node_borrow.id;
+
+        // Check children in reverse order (later children are rendered on top)
+        for child in node_borrow.children.iter().rev() {
+            if let Some(child_id) = self.find_topmost_element_at_position(child.clone(), x, y) {
+                return Some(child_id);
+            }
+        }
+
+        // No child contains the point, so this node is the topmost
+        Some(node_id)
+    }
+
+    /// Check if a point (x, y) is within the given bounds
+    fn point_in_bounds(&self, bounds: &Rect, x: f64, y: f64) -> bool {
+        x >= bounds.x
+            && x <= bounds.x + bounds.width
+            && y >= bounds.y
+            && y <= bounds.y + bounds.height
+    }
+
     pub fn layout(&mut self) {
         self.layout_node(self.document.root.clone(), 0.0, 0.0);
     }
@@ -408,4 +472,9 @@ mod flex_grow_shrink_basis_tests {
 #[cfg(test)]
 mod margin_padding_tests {
     include!("margin_padding.test.rs");
+}
+
+#[cfg(test)]
+mod hit_testing_tests {
+    include!("hit_testing.test.rs");
 }
