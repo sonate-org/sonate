@@ -1,21 +1,34 @@
-use skia_safe::Canvas;
+use crate::backend::{BackendType, RenderingBackend};
 use std::cell::RefCell;
 
-pub(crate) struct Params {
-    pub on_draw: Box<dyn FnMut(&Canvas)>,
-    pub on_click: Option<Box<dyn FnMut(f64, f64)>>, // x, y coordinates
+// Re-export types
+pub use crate::backend::Params;
+
+/// Run the windowing system with the default backend for the current platform
+pub fn run(params: &RefCell<crate::backend::Params>) -> anyhow::Result<()> {
+    run_with_backend(params, BackendType::default())
 }
 
-#[cfg(not(all(target_os = "windows")))]
-pub fn run(params: &RefCell<Params>) {
-    println!("This example requires the `d3d` feature to be enabled on Windows.");
-    println!("Run it with `cargo run --example d3d-window --features d3d`");
+/// Run the windowing system with a specific backend
+pub fn run_with_backend(
+    params: &RefCell<crate::backend::Params>,
+    backend_type: BackendType,
+) -> anyhow::Result<()> {
+    println!(
+        "Starting windowing system with {} backend",
+        backend_type.name()
+    );
+
+    match backend_type {
+        #[cfg(all(target_os = "windows"))]
+        BackendType::D3D12 => run_with_backend_impl::<crate::backend::d3d12::D3D12Backend>(params),
+    }
 }
 
-#[cfg(all(target_os = "windows"))]
-pub fn run(params: &RefCell<Params>) -> anyhow::Result<()> {
-    // NOTE: Most of code is from https://github.com/microsoft/windows-rs/blob/02db74cf5c4796d970e6d972cdc7bc3967380079/crates/samples/windows/direct3d12/src/main.rs
-
+/// Generic implementation that works with any backend
+fn run_with_backend_impl<'a, B: RenderingBackend<'a>>(
+    params: &'a RefCell<crate::backend::Params>,
+) -> anyhow::Result<()> {
     use winit::{
         application::ApplicationHandler,
         event::{ElementState, MouseButton, WindowEvent},
@@ -26,18 +39,16 @@ pub fn run(params: &RefCell<Params>) -> anyhow::Result<()> {
 
     let event_loop = EventLoop::new()?;
 
-    struct Application<'a> {
-        context: Option<window::Context<'a>>,
-        params: &'a RefCell<Params>,
+    struct Application<'a, B: RenderingBackend<'a>> {
+        backend: Option<B>,
+        params: &'a RefCell<crate::backend::Params>,
     }
 
-    impl<'a> ApplicationHandler for Application<'a> {
+    impl<'a, B: RenderingBackend<'a>> ApplicationHandler for Application<'a, B> {
         fn resumed(&mut self, event_loop: &ActiveEventLoop) {
-            assert!(self.context.is_none());
-            self.context = Some(
-                window::Context::new(event_loop, self.params)
-                    .expect("Failed to create window context"),
-            )
+            assert!(self.backend.is_none());
+            self.backend =
+                Some(B::new(event_loop, self.params).expect("Failed to create rendering backend"))
         }
 
         fn window_event(
@@ -46,44 +57,51 @@ pub fn run(params: &RefCell<Params>) -> anyhow::Result<()> {
             _window_id: WindowId,
             event: WindowEvent,
         ) {
-            let context = self.context.as_mut().unwrap();
-            let state = &mut context.state;
+            let backend = self.backend.as_mut().unwrap();
 
+            // First, let the backend handle any backend-specific events
+            if backend.handle_window_event(&event) {
+                return; // Event was handled by the backend
+            }
+
+            // Handle common events
             match event {
                 WindowEvent::KeyboardInput { event, .. } => {
+                    let input_state = backend.input_state_mut();
                     match event.logical_key {
-                        Key::Named(NamedKey::ArrowLeft) => state.x -= 10.0,
-                        Key::Named(NamedKey::ArrowRight) => state.x += 10.0,
-                        Key::Named(NamedKey::ArrowUp) => state.y += 10.0,
-                        Key::Named(NamedKey::ArrowDown) => state.y -= 10.0,
+                        Key::Named(NamedKey::ArrowLeft) => input_state.x -= 10.0,
+                        Key::Named(NamedKey::ArrowRight) => input_state.x += 10.0,
+                        Key::Named(NamedKey::ArrowUp) => input_state.y += 10.0,
+                        Key::Named(NamedKey::ArrowDown) => input_state.y -= 10.0,
                         Key::Named(NamedKey::Escape) => event_loop.exit(),
                         _ => return,
                     }
-                    context.window.request_redraw();
+                    backend.request_redraw();
                 }
                 WindowEvent::MouseInput {
                     state: ElementState::Pressed,
                     button: MouseButton::Left,
                     ..
                 } => {
-                    if let Some(cursor_position) = &state.cursor_position {
-                        if let Some(ref mut on_click) = self.params.borrow_mut().on_click {
+                    let input_state = backend.input_state();
+                    if let Some(cursor_position) = &input_state.cursor_position {
+                        if let Some(ref mut on_click) = backend.params().borrow_mut().on_click {
                             on_click(cursor_position.x, cursor_position.y);
                         }
                     }
                 }
                 WindowEvent::CursorMoved { position, .. } => {
-                    state.cursor_position = Some(position);
+                    backend.input_state_mut().cursor_position = Some(position);
                 }
-                WindowEvent::RedrawRequested => context.render(),
+                WindowEvent::RedrawRequested => backend.render(),
                 WindowEvent::CloseRequested => event_loop.exit(),
                 _ => {}
             }
         }
     }
 
-    let mut application = Application {
-        context: None,
+    let mut application = Application::<B> {
+        backend: None,
         params,
     };
 
@@ -92,205 +110,4 @@ pub fn run(params: &RefCell<Params>) -> anyhow::Result<()> {
         .expect("Failed to run event loop");
 
     Ok(())
-}
-
-#[cfg(all(target_os = "windows"))]
-mod window {
-    use std::cell::RefCell;
-
-    use anyhow::Result;
-    use windows::{
-        core::Interface,
-        Win32::{
-            Foundation::HWND,
-            Graphics::{
-                Direct3D::D3D_FEATURE_LEVEL_11_0,
-                Direct3D12::{D3D12CreateDevice, ID3D12Device, D3D12_RESOURCE_STATE_COMMON},
-                Dxgi::{
-                    Common::{
-                        DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_SAMPLE_DESC,
-                        DXGI_STANDARD_MULTISAMPLE_QUALITY_PATTERN,
-                    },
-                    CreateDXGIFactory1, IDXGIAdapter1, IDXGIFactory4, IDXGISwapChain3,
-                    DXGI_ADAPTER_FLAG, DXGI_ADAPTER_FLAG_NONE, DXGI_ADAPTER_FLAG_SOFTWARE,
-                    DXGI_PRESENT, DXGI_SWAP_CHAIN_DESC1, DXGI_SWAP_EFFECT_FLIP_DISCARD,
-                    DXGI_USAGE_RENDER_TARGET_OUTPUT,
-                },
-            },
-        },
-    };
-    use winit::{
-        dpi::{LogicalSize, Size},
-        event_loop::ActiveEventLoop,
-        window::{Window, WindowAttributes},
-    };
-
-    use skia_safe::{
-        gpu::{
-            d3d::{BackendContext, TextureResourceInfo},
-            surfaces, BackendRenderTarget, DirectContext, Protected, SurfaceOrigin,
-        },
-        Color, ColorType, Surface,
-    };
-
-    use super::Params;
-
-    const BUFFER_COUNT: usize = 2;
-
-    pub struct Context<'a> {
-        pub window: Window,
-        swap_chain: IDXGISwapChain3,
-        direct_context: DirectContext,
-        surfaces: [(Surface, BackendRenderTarget); BUFFER_COUNT],
-        pub state: State,
-        pub params: &'a RefCell<Params>,
-    }
-
-    pub struct State {
-        pub x: f32,
-        pub y: f32,
-        pub cursor_position: Option<winit::dpi::PhysicalPosition<f64>>,
-    }
-
-    impl<'a> Context<'a> {
-        pub fn new(event_loop: &ActiveEventLoop, params: &'a RefCell<Params>) -> Result<Self> {
-            let mut window_attributes = WindowAttributes::default();
-            window_attributes.inner_size = Some(Size::new(LogicalSize::new(800, 800)));
-            window_attributes.title = "rust-skia-gl-window".into();
-
-            let window = event_loop
-                .create_window(window_attributes)
-                .expect("Failed to create window");
-
-            let hwnd = HWND(u64::from(window.id()) as *mut _);
-            let (width, height) = window.inner_size().into();
-
-            let factory: IDXGIFactory4 = unsafe { CreateDXGIFactory1() }?;
-            let (adapter, device) = get_hardware_adapter_and_device(&factory)?;
-            let queue = unsafe { device.CreateCommandQueue(&Default::default()) }?;
-
-            let backend_context = BackendContext {
-                adapter,
-                device,
-                queue,
-                memory_allocator: None,
-                protected_context: Protected::No,
-            };
-            let mut direct_context =
-                unsafe { DirectContext::new_d3d(&backend_context, None) }.unwrap();
-
-            let swap_chain: IDXGISwapChain3 = unsafe {
-                factory.CreateSwapChainForHwnd(
-                    &backend_context.queue,
-                    hwnd,
-                    &DXGI_SWAP_CHAIN_DESC1 {
-                        Width: width,
-                        Height: height,
-                        Format: DXGI_FORMAT_R8G8B8A8_UNORM,
-                        BufferUsage: DXGI_USAGE_RENDER_TARGET_OUTPUT,
-                        BufferCount: BUFFER_COUNT as _,
-                        SwapEffect: DXGI_SWAP_EFFECT_FLIP_DISCARD,
-                        SampleDesc: DXGI_SAMPLE_DESC {
-                            Count: 1,
-                            Quality: 0,
-                        },
-                        ..Default::default()
-                    },
-                    None,
-                    None,
-                )
-            }?
-            .cast()?;
-
-            let surfaces: [_; BUFFER_COUNT] = std::array::from_fn(|i| {
-                let resource = unsafe { swap_chain.GetBuffer(i as u32).unwrap() };
-
-                let backend_render_target = BackendRenderTarget::new_d3d(
-                    window.inner_size().into(),
-                    &TextureResourceInfo {
-                        resource,
-                        alloc: None,
-                        resource_state: D3D12_RESOURCE_STATE_COMMON,
-                        format: DXGI_FORMAT_R8G8B8A8_UNORM,
-                        sample_count: 1,
-                        level_count: 0,
-                        sample_quality_pattern: DXGI_STANDARD_MULTISAMPLE_QUALITY_PATTERN,
-                        protected: Protected::No,
-                    },
-                );
-
-                let surface = surfaces::wrap_backend_render_target(
-                    &mut direct_context,
-                    &backend_render_target,
-                    SurfaceOrigin::TopLeft,
-                    ColorType::RGBA8888,
-                    None,
-                    None,
-                )
-                .unwrap();
-
-                (surface, backend_render_target)
-            });
-
-            fn get_hardware_adapter_and_device(
-                factory: &IDXGIFactory4,
-            ) -> windows::core::Result<(IDXGIAdapter1, ID3D12Device)> {
-                for i in 0.. {
-                    let adapter = unsafe { factory.EnumAdapters1(i) }?;
-
-                    let adapter_desc = unsafe { adapter.GetDesc1() }?;
-
-                    if (DXGI_ADAPTER_FLAG(adapter_desc.Flags as _) & DXGI_ADAPTER_FLAG_SOFTWARE)
-                        != DXGI_ADAPTER_FLAG_NONE
-                    {
-                        continue; // Don't select the Basic Render Driver adapter.
-                    }
-
-                    let mut device = None;
-                    if unsafe { D3D12CreateDevice(&adapter, D3D_FEATURE_LEVEL_11_0, &mut device) }
-                        .is_ok()
-                    {
-                        return Ok((adapter, device.unwrap()));
-                    }
-                }
-                unreachable!()
-            }
-
-            println!("Skia initialized with {} surfaces.", surfaces.len());
-            println!("Use Arrow Keys to move the rectangle.");
-
-            let state = State {
-                x: 100.0,
-                y: 100.0,
-                cursor_position: None,
-            };
-
-            Ok(Self {
-                window,
-                state,
-                swap_chain,
-                direct_context,
-                surfaces,
-                params,
-            })
-        }
-
-        pub fn render(&mut self) {
-            let index = unsafe { self.swap_chain.GetCurrentBackBufferIndex() };
-            let (surface, _) = &mut self.surfaces[index as usize];
-            let canvas = surface.canvas();
-
-            // Call the user's on_draw callback for all drawing
-            (self.params.borrow_mut().on_draw)(canvas);
-
-            self.direct_context.flush_and_submit_surface(surface, None);
-
-            unsafe { self.swap_chain.Present(1, DXGI_PRESENT::default()) }.unwrap();
-
-            // NOTE: If you get some error when you render, you can check it with:
-            // unsafe {
-            //     device.GetDeviceRemovedReason().ok().unwrap();
-            // }
-        }
-    }
 }
