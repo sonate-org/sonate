@@ -1,4 +1,5 @@
-use std::cell::RefCell;
+use core::borrow;
+use std::{cell::RefCell, rc::Rc};
 
 mod engine;
 mod flex_layout;
@@ -6,10 +7,10 @@ mod painter;
 mod plumbing;
 
 fn main() -> anyhow::Result<()> {
-    let mut engine = engine::Engine::new();
+    let engine = Rc::new(RefCell::new(engine::Engine::new()));
 
     // style
-    engine.style_sheet.add_rule(engine::Rule {
+    engine.borrow_mut().style_sheet.add_rule(engine::Rule {
         selector: engine::Selector::Class("flex_container".to_owned()),
         declarations: vec![engine::Style {
             display: engine::Display::Flex,
@@ -25,7 +26,7 @@ fn main() -> anyhow::Result<()> {
         }],
     });
 
-    engine.style_sheet.add_rule(engine::Rule {
+    engine.borrow_mut().style_sheet.add_rule(engine::Rule {
         selector: engine::Selector::Class("red_box".to_owned()),
         declarations: vec![engine::Style {
             background_color: Some(engine::Rgba {
@@ -57,7 +58,7 @@ fn main() -> anyhow::Result<()> {
         }],
     });
 
-    engine.style_sheet.add_rule(engine::Rule {
+    engine.borrow_mut().style_sheet.add_rule(engine::Rule {
         selector: engine::Selector::Class("green_box".to_owned()),
         declarations: vec![engine::Style {
             background_color: Some(engine::Rgba {
@@ -77,7 +78,8 @@ fn main() -> anyhow::Result<()> {
     });
 
     // document
-    let document = &mut engine.document;
+    let mut borrow_engine = engine.borrow_mut();
+    let document = &mut borrow_engine.document;
 
     let root = document.root_id();
     let a = document.create_node_autoid(Some("Hello".to_string()));
@@ -90,38 +92,38 @@ fn main() -> anyhow::Result<()> {
     document.set_attribute(a, "class".to_owned(), "red_box".to_owned());
     document.set_attribute(b, "class".to_owned(), "green_box".to_owned());
 
+    drop(borrow_engine);
+
     // run
+    let engine_for_draw = engine.clone();
+    let engine_for_click = engine.clone();
+
     let params = plumbing::Params {
         on_draw: Box::new(move |canvas| {
-            engine.layout();
-
-            // Debug: Print layout bounds to verify margin implementation
-            let root_node = engine.document.root_node();
-            println!(
-                "Root bounds: x={}, y={}, w={}, h={}",
-                root_node.borrow().layout.bounds.x,
-                root_node.borrow().layout.bounds.y,
-                root_node.borrow().layout.bounds.width,
-                root_node.borrow().layout.bounds.height
-            );
-
-            for (i, child) in root_node.borrow().children.iter().enumerate() {
-                let bounds = &child.borrow().layout.bounds;
-                let class = child
-                    .borrow()
-                    .attributes
-                    .get("class")
-                    .unwrap_or(&"none".to_string())
-                    .clone();
-                println!(
-                    "Child {} ({}): x={}, y={}, w={}, h={}",
-                    i, class, bounds.x, bounds.y, bounds.width, bounds.height
-                );
-            }
+            // Layout and paint the engine
+            engine_for_draw.borrow_mut().layout();
 
             let mut painter = painter::Painter::new(canvas);
-            painter.paint(&engine.document);
+            painter.paint(&engine_for_draw.borrow().document);
         }),
+        on_click: Some(Box::new(move |x, y| {
+            // Perform hit testing in main.rs where the engine is available
+            let elements = engine_for_click.borrow().find_element_at_position(x, y);
+
+            if elements.is_empty() {
+                println!("Click detected on background at ({:.1}, {:.1})", x, y);
+            } else {
+                println!(
+                    "Click detected at ({:.1}, {:.1}) on {} elements:",
+                    x,
+                    y,
+                    elements.len()
+                );
+                for (i, element_id) in elements.iter().enumerate() {
+                    println!("  Level {}: Element ID {:?}", i, element_id.value());
+                }
+            }
+        })),
     };
 
     plumbing::run_gui(&RefCell::new(params))?;

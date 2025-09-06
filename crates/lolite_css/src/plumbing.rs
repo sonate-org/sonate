@@ -3,10 +3,11 @@ use std::cell::RefCell;
 
 pub(crate) struct Params {
     pub on_draw: Box<dyn FnMut(&Canvas)>,
+    pub on_click: Option<Box<dyn FnMut(f64, f64)>>, // x, y coordinates
 }
 
 #[cfg(not(all(target_os = "windows")))]
-fn run_gui(params: &RefCell<Params>) {
+pub fn run_gui(params: &RefCell<Params>) {
     println!("This example requires the `d3d` feature to be enabled on Windows.");
     println!("Run it with `cargo run --example d3d-window --features d3d`");
 }
@@ -17,7 +18,7 @@ pub fn run_gui(params: &RefCell<Params>) -> anyhow::Result<()> {
 
     use winit::{
         application::ApplicationHandler,
-        event::WindowEvent,
+        event::{ElementState, MouseButton, WindowEvent},
         event_loop::{ActiveEventLoop, EventLoop},
         keyboard::{Key, NamedKey},
         window::WindowId,
@@ -59,6 +60,20 @@ pub fn run_gui(params: &RefCell<Params>) -> anyhow::Result<()> {
                         _ => return,
                     }
                     context.window.request_redraw();
+                }
+                WindowEvent::MouseInput {
+                    state: ElementState::Pressed,
+                    button: MouseButton::Left,
+                    ..
+                } => {
+                    if let Some(cursor_position) = &state.cursor_position {
+                        if let Some(ref mut on_click) = self.params.borrow_mut().on_click {
+                            on_click(cursor_position.x, cursor_position.y);
+                        }
+                    }
+                }
+                WindowEvent::CursorMoved { position, .. } => {
+                    state.cursor_position = Some(position);
                 }
                 WindowEvent::RedrawRequested => context.render(),
                 WindowEvent::CloseRequested => event_loop.exit(),
@@ -134,6 +149,7 @@ mod window {
     pub struct State {
         pub x: f32,
         pub y: f32,
+        pub cursor_position: Option<winit::dpi::PhysicalPosition<f64>>,
     }
 
     impl<'a> Context<'a> {
@@ -243,7 +259,11 @@ mod window {
             println!("Skia initialized with {} surfaces.", surfaces.len());
             println!("Use Arrow Keys to move the rectangle.");
 
-            let state = State { x: 100.0, y: 100.0 };
+            let state = State {
+                x: 100.0,
+                y: 100.0,
+                cursor_position: None,
+            };
 
             Ok(Self {
                 window,
@@ -260,18 +280,8 @@ mod window {
             let (surface, _) = &mut self.surfaces[index as usize];
             let canvas = surface.canvas();
 
+            // Call the user's on_draw callback for all drawing
             (self.params.borrow_mut().on_draw)(canvas);
-
-            // let mut paint = Paint::default();
-            // paint.set_color(Color::RED);
-            // paint.set_style(paint::Style::StrokeAndFill);
-            // paint.set_anti_alias(true);
-            // paint.set_stroke_width(10.0);
-
-            // canvas.draw_rect(
-            //     Rect::from_xywh(self.state.x, self.state.y, 200.0, 200.0),
-            //     &paint,
-            // );
 
             self.direct_context.flush_and_submit_surface(surface, None);
 
