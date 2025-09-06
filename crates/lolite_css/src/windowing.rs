@@ -7,13 +7,13 @@ pub(crate) struct Params {
 }
 
 #[cfg(not(all(target_os = "windows")))]
-pub fn run_gui(params: &RefCell<Params>) {
+pub fn run(params: &RefCell<Params>) {
     println!("This example requires the `d3d` feature to be enabled on Windows.");
     println!("Run it with `cargo run --example d3d-window --features d3d`");
 }
 
 #[cfg(all(target_os = "windows"))]
-pub fn run_gui(params: &RefCell<Params>) -> anyhow::Result<()> {
+pub fn run(params: &RefCell<Params>) -> anyhow::Result<()> {
     // NOTE: Most of code is from https://github.com/microsoft/windows-rs/blob/02db74cf5c4796d970e6d972cdc7bc3967380079/crates/samples/windows/direct3d12/src/main.rs
 
     use winit::{

@@ -1,10 +1,9 @@
-use core::borrow;
 use std::{cell::RefCell, rc::Rc};
 
 mod engine;
 mod flex_layout;
 mod painter;
-mod plumbing;
+mod windowing;
 
 fn main() -> anyhow::Result<()> {
     let engine = Rc::new(RefCell::new(engine::Engine::new()));
@@ -98,7 +97,7 @@ fn main() -> anyhow::Result<()> {
     let engine_for_draw = engine.clone();
     let engine_for_click = engine.clone();
 
-    let params = plumbing::Params {
+    let params = windowing::Params {
         on_draw: Box::new(move |canvas| {
             // Layout and paint the engine
             engine_for_draw.borrow_mut().layout();
@@ -126,7 +125,7 @@ fn main() -> anyhow::Result<()> {
         })),
     };
 
-    plumbing::run_gui(&RefCell::new(params))?;
+    windowing::run(&RefCell::new(params))?;
 
     Ok(())
 }
