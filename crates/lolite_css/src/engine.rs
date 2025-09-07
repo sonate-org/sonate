@@ -147,8 +147,8 @@ impl Document {
     }
 }
 
-#[derive(Clone, Default)]
-pub(crate) struct Rgba {
+#[derive(Clone, Default, Debug, PartialEq)]
+pub struct Rgba {
     pub r: u8,
     pub g: u8,
     pub b: u8,
@@ -157,7 +157,7 @@ pub(crate) struct Rgba {
 
 #[derive(Clone, Default)]
 #[allow(unused)]
-pub(crate) enum Length {
+pub enum Length {
     #[default]
     Auto,
     Px(f64),
@@ -177,7 +177,7 @@ impl Length {
 }
 
 #[derive(Clone, Default)]
-pub(crate) struct Extend {
+pub struct Extend {
     pub top: Length,
     pub right: Length,
     pub bottom: Length,
@@ -195,7 +195,7 @@ pub(crate) struct BorderRadius {
 }
 
 #[derive(Clone, Default)]
-pub(crate) enum Display {
+pub enum Display {
     // Block,
     // Inline,
     // InlineBlock,
@@ -206,7 +206,7 @@ pub(crate) enum Display {
 
 #[derive(Clone, Default)]
 #[allow(unused)]
-pub(crate) enum FlexDirection {
+pub enum FlexDirection {
     #[default]
     Row,
     RowReverse,
@@ -216,7 +216,7 @@ pub(crate) enum FlexDirection {
 
 #[derive(Clone, Default)]
 #[allow(unused)]
-pub(crate) enum FlexWrap {
+pub enum FlexWrap {
     #[default]
     NoWrap,
     Wrap,
@@ -225,7 +225,7 @@ pub(crate) enum FlexWrap {
 
 #[derive(Clone, Default)]
 #[allow(unused)]
-pub(crate) enum JustifyContent {
+pub enum JustifyContent {
     #[default]
     FlexStart,
     FlexEnd,
@@ -237,7 +237,7 @@ pub(crate) enum JustifyContent {
 
 #[derive(Clone, Default)]
 #[allow(unused)]
-pub(crate) enum AlignItems {
+pub enum AlignItems {
     #[default]
     Stretch,
     FlexStart,
@@ -248,7 +248,7 @@ pub(crate) enum AlignItems {
 
 #[derive(Clone, Default)]
 #[allow(unused)]
-pub(crate) enum AlignContent {
+pub enum AlignContent {
     #[default]
     Stretch,
     FlexStart,
@@ -261,7 +261,7 @@ pub(crate) enum AlignContent {
 
 #[derive(Clone, Default)]
 #[allow(unused)]
-pub(crate) enum AlignSelf {
+pub enum AlignSelf {
     #[default]
     Auto,
     FlexStart,
@@ -272,7 +272,7 @@ pub(crate) enum AlignSelf {
 }
 
 #[derive(Clone, Default, MergeProperties)]
-pub(crate) struct Style {
+pub struct Style {
     pub display: Display,
     pub background_color: Option<Rgba>,
     pub border_color: Option<Rgba>,
@@ -300,7 +300,7 @@ pub(crate) struct Style {
     pub align_self: Option<AlignSelf>,
 }
 
-pub(crate) struct StyleSheet {
+pub struct StyleSheet {
     pub rules: Vec<Rule>,
 }
 
@@ -314,14 +314,14 @@ impl StyleSheet {
     }
 }
 
-pub(crate) struct Rule {
+pub struct Rule {
     pub selector: Selector,
     pub declarations: Vec<Style>,
 }
 
 #[derive(Debug, PartialEq)]
 #[allow(unused)]
-pub(crate) enum Selector {
+pub enum Selector {
     Tag(String),
     Class(String),
 }

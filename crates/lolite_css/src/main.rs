@@ -1,81 +1,57 @@
 use std::{cell::RefCell, rc::Rc};
 
 mod backend;
+mod css_parser;
 mod engine;
 mod flex_layout;
 mod painter;
 mod windowing;
 
+#[cfg(test)]
+mod css_parser_tests;
+
 fn main() -> anyhow::Result<()> {
     let engine = Rc::new(RefCell::new(engine::Engine::new()));
 
-    // style
-    engine.borrow_mut().style_sheet.add_rule(engine::Rule {
-        selector: engine::Selector::Class("flex_container".to_owned()),
-        declarations: vec![engine::Style {
-            display: engine::Display::Flex,
-            flex_direction: Some(engine::FlexDirection::Row),
-            gap: Some(engine::Length::Px(10.0)),
-            padding: Some(engine::Extend {
-                top: engine::Length::Px(10.0),
-                right: engine::Length::Px(10.0),
-                bottom: engine::Length::Px(10.0),
-                left: engine::Length::Px(10.0),
-            }),
-            ..Default::default()
-        }],
-    });
+    // Example: Parse CSS from a string
+    let css_content = r#"
+        .flex_container {
+            display: flex;
+            flex-direction: row;
+            gap: 10px;
+            padding: 10px;
+        }
 
-    engine.borrow_mut().style_sheet.add_rule(engine::Rule {
-        selector: engine::Selector::Class("red_box".to_owned()),
-        declarations: vec![engine::Style {
-            background_color: Some(engine::Rgba {
-                r: 255,
-                g: 0,
-                b: 0,
-                a: 255,
-            }),
-            border_radius: Some(engine::BorderRadius {
-                top_left: engine::Length::Px(4.0),
-                top_right: engine::Length::Px(4.0),
-                bottom_right: engine::Length::Px(4.0),
-                bottom_left: engine::Length::Px(4.0),
-            }),
-            border_width: Some(engine::Length::Px(2.0)),
-            border_color: Some(engine::Rgba {
-                r: 0,
-                g: 0,
-                b: 0,
-                a: 255,
-            }),
-            margin: Some(engine::Extend {
-                top: engine::Length::Px(10.0),
-                right: engine::Length::Px(10.0),
-                bottom: engine::Length::Px(10.0),
-                left: engine::Length::Px(10.0),
-            }),
-            ..Default::default()
-        }],
-    });
+        .red_box {
+            background-color: #ff0000;
+            border-width: 2px;
+            border-color: black;
+            border-radius: 8px;
+            margin: 10px;
+        }
 
-    engine.borrow_mut().style_sheet.add_rule(engine::Rule {
-        selector: engine::Selector::Class("green_box".to_owned()),
-        declarations: vec![engine::Style {
-            background_color: Some(engine::Rgba {
-                r: 0,
-                g: 255,
-                b: 0,
-                a: 255,
-            }),
-            border_radius: Some(engine::BorderRadius {
-                top_left: engine::Length::Px(8.0),
-                top_right: engine::Length::Px(8.0),
-                bottom_right: engine::Length::Px(8.0),
-                bottom_left: engine::Length::Px(8.0),
-            }),
-            ..Default::default()
-        }],
-    });
+        .green_box {
+            background-color: green;
+            border-radius: 12px 4px;
+        }
+    "#;
+
+    // Parse the CSS and load it into the engine
+    match css_parser::parse_css(css_content) {
+        Ok(stylesheet) => {
+            println!(
+                "Successfully parsed CSS with {} rules",
+                stylesheet.rules.len()
+            );
+            // Add all parsed rules to the engine
+            for rule in stylesheet.rules {
+                engine.borrow_mut().style_sheet.add_rule(rule);
+            }
+        }
+        Err(err) => {
+            eprintln!("Failed to parse CSS: {}", err);
+        }
+    }
 
     // document
     let mut borrow_engine = engine.borrow_mut();

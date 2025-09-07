@@ -19,3 +19,4 @@ windows = { version = "0.61.3", features = [
     "Win32_Security",
 ] }
 lolite_macros = { path = "../lolite_macros" }
+cssparser = "0.35.0"
