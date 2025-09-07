@@ -5,13 +5,13 @@ use lolite_macros::MergeProperties;
 use crate::flex_layout::FlexLayoutEngine;
 
 #[derive(Default)]
-pub(crate) struct Layout {
+pub struct Layout {
     pub bounds: Rect,
     pub style: Rc<Style>,
 }
 
 #[derive(Default, Debug, Clone, Copy)]
-pub(crate) struct Rect {
+pub struct Rect {
     pub x: f64,
     pub y: f64,
     pub width: f64,
@@ -19,7 +19,8 @@ pub(crate) struct Rect {
 }
 
 #[derive(Default)]
-pub(crate) struct Node {
+#[allow(unused)]
+pub struct Node {
     pub id: Id,
     pub text: Option<String>,
     pub attributes: HashMap<String, String>,
@@ -44,7 +45,7 @@ impl Node {
 }
 
 #[derive(Clone, Copy, Default, Debug, Eq, Hash, PartialEq)]
-pub(crate) struct Id(u64);
+pub struct Id(u64);
 
 impl Id {
     pub fn value(&self) -> u64 {
@@ -52,7 +53,7 @@ impl Id {
     }
 }
 
-pub(crate) struct Document {
+pub struct Document {
     #[allow(unused)]
     root: Rc<RefCell<Node>>,
     nodes: HashMap<Id, Rc<RefCell<Node>>>,
@@ -166,7 +167,7 @@ pub enum Length {
 }
 
 impl Length {
-    pub(crate) fn to_px(&self) -> f64 {
+    pub fn to_px(&self) -> f64 {
         match self {
             Length::Px(value) => *value,
             Length::Auto => 0.0,
@@ -185,7 +186,7 @@ pub struct Extend {
 }
 
 #[derive(Clone, Default)]
-pub(crate) struct BorderRadius {
+pub struct BorderRadius {
     pub top_left: Length,
     pub top_right: Length,
     #[allow(unused)]
@@ -205,7 +206,6 @@ pub enum Display {
 }
 
 #[derive(Clone, Default)]
-#[allow(unused)]
 pub enum FlexDirection {
     #[default]
     Row,
@@ -215,7 +215,6 @@ pub enum FlexDirection {
 }
 
 #[derive(Clone, Default)]
-#[allow(unused)]
 pub enum FlexWrap {
     #[default]
     NoWrap,
@@ -224,7 +223,6 @@ pub enum FlexWrap {
 }
 
 #[derive(Clone, Default)]
-#[allow(unused)]
 pub enum JustifyContent {
     #[default]
     FlexStart,
@@ -236,7 +234,6 @@ pub enum JustifyContent {
 }
 
 #[derive(Clone, Default)]
-#[allow(unused)]
 pub enum AlignItems {
     #[default]
     Stretch,
@@ -247,7 +244,6 @@ pub enum AlignItems {
 }
 
 #[derive(Clone, Default)]
-#[allow(unused)]
 pub enum AlignContent {
     #[default]
     Stretch,
@@ -260,7 +256,6 @@ pub enum AlignContent {
 }
 
 #[derive(Clone, Default)]
-#[allow(unused)]
 pub enum AlignSelf {
     #[default]
     Auto,
@@ -326,7 +321,7 @@ pub enum Selector {
     Class(String),
 }
 
-pub(crate) struct Engine {
+pub struct Engine {
     pub document: Document,
     pub style_sheet: StyleSheet,
     flex_layout_engine: FlexLayoutEngine,

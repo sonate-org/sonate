@@ -1,17 +1,9 @@
-use std::{cell::RefCell, rc::Rc};
-
-mod backend;
-mod css_parser;
-mod engine;
-mod flex_layout;
-mod painter;
-mod windowing;
-
-#[cfg(test)]
-mod css_parser_tests;
+use lolite_css::{CssEngine, Params};
+use std::cell::RefCell;
 
 fn main() -> anyhow::Result<()> {
-    let engine = Rc::new(RefCell::new(engine::Engine::new()));
+    // Create a thread-safe CSS engine
+    let engine = CssEngine::new();
 
     // Example: Parse CSS from a string
     let css_content = r#"
@@ -37,54 +29,46 @@ fn main() -> anyhow::Result<()> {
     "#;
 
     // Parse the CSS and load it into the engine
-    match css_parser::parse_css(css_content) {
-        Ok(stylesheet) => {
-            println!(
-                "Successfully parsed CSS with {} rules",
-                stylesheet.rules.len()
-            );
-            // Add all parsed rules to the engine
-            for rule in stylesheet.rules {
-                engine.borrow_mut().style_sheet.add_rule(rule);
-            }
+    match engine.add_stylesheet(css_content) {
+        Ok(()) => {
+            println!("Successfully parsed and loaded CSS stylesheet");
         }
         Err(err) => {
             eprintln!("Failed to parse CSS: {}", err);
         }
     }
 
-    // document
-    let mut borrow_engine = engine.borrow_mut();
-    let document = &mut borrow_engine.document;
+    // Create document structure
+    let root = engine.root_id();
+    let a = engine.create_node(Some("Hello".to_string()));
+    let b = engine.create_node(Some("World".to_string()));
+    let c = engine.create_node(Some("xD".to_string()));
 
-    let root = document.root_id();
-    let a = document.create_node_autoid(Some("Hello".to_string()));
-    let b = document.create_node_autoid(Some("World".to_string()));
-    let c = document.create_node_autoid(Some("xD".to_string()));
-    document.set_parent(root, a).unwrap();
-    document.set_parent(root, b).unwrap();
-    document.set_parent(root, c).unwrap();
-    document.set_attribute(root, "class".to_owned(), "flex_container".to_owned());
-    document.set_attribute(a, "class".to_owned(), "red_box".to_owned());
-    document.set_attribute(b, "class".to_owned(), "green_box".to_owned());
+    engine.set_parent(root, a).unwrap();
+    engine.set_parent(root, b).unwrap();
+    engine.set_parent(root, c).unwrap();
 
-    drop(borrow_engine);
+    engine.set_attribute(root, "class".to_owned(), "flex_container".to_owned());
+    engine.set_attribute(a, "class".to_owned(), "red_box".to_owned());
+    engine.set_attribute(b, "class".to_owned(), "green_box".to_owned());
 
-    // run
+    // Setup windowing callbacks
     let engine_for_draw = engine.clone();
     let engine_for_click = engine.clone();
 
-    let params = windowing::Params {
+    let params = Params {
         on_draw: Box::new(move |canvas| {
             // Layout and paint the engine
-            engine_for_draw.borrow_mut().layout();
+            engine_for_draw.layout();
 
-            let mut painter = painter::Painter::new(canvas);
-            painter.paint(&engine_for_draw.borrow().document);
+            engine_for_draw.with_engine(|eng| {
+                let mut painter = lolite_css::painter::Painter::new(canvas);
+                painter.paint(&eng.document);
+            });
         }),
         on_click: Some(Box::new(move |x, y| {
-            // Perform hit testing in main.rs where the engine is available
-            let elements = engine_for_click.borrow().find_element_at_position(x, y);
+            // Perform hit testing
+            let elements = engine_for_click.find_element_at_position(x, y);
 
             if elements.is_empty() {
                 println!("Click detected on background at ({:.1}, {:.1})", x, y);
@@ -102,7 +86,7 @@ fn main() -> anyhow::Result<()> {
         })),
     };
 
-    windowing::run(&RefCell::new(params))?;
+    lolite_css::run(&RefCell::new(params))?;
 
     Ok(())
 }
