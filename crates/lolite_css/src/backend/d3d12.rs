@@ -17,17 +17,14 @@ use windows::{
             Direct3D::D3D_FEATURE_LEVEL_11_0,
             Direct3D12::{
                 D3D12CreateDevice, D3D12GetDebugInterface, ID3D12Debug, ID3D12Device, ID3D12Fence,
-                D3D12_FENCE_FLAG_NONE, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_PRESENT,
+                D3D12_FENCE_FLAG_NONE, D3D12_RESOURCE_STATE_PRESENT,
             },
             Dxgi::{
-                Common::{
-                    DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_SAMPLE_DESC,
-                    DXGI_STANDARD_MULTISAMPLE_QUALITY_PATTERN,
-                },
+                Common::{DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_SAMPLE_DESC},
                 CreateDXGIFactory1, IDXGIAdapter1, IDXGIFactory4, IDXGISwapChain3,
                 DXGI_ADAPTER_FLAG, DXGI_ADAPTER_FLAG_NONE, DXGI_ADAPTER_FLAG_SOFTWARE,
-                DXGI_PRESENT, DXGI_SWAP_CHAIN_DESC1, DXGI_SWAP_EFFECT_FLIP_DISCARD,
-                DXGI_USAGE_RENDER_TARGET_OUTPUT,
+                DXGI_PRESENT, DXGI_SCALING_NONE, DXGI_SWAP_CHAIN_DESC1,
+                DXGI_SWAP_EFFECT_FLIP_DISCARD, DXGI_USAGE_RENDER_TARGET_OUTPUT,
             },
         },
         System::Threading::{CreateEventW, WaitForSingleObject},
@@ -109,6 +106,7 @@ impl<'a> RenderingBackend<'a> for D3D12Backend<'a> {
                     BufferUsage: DXGI_USAGE_RENDER_TARGET_OUTPUT,
                     BufferCount: BUFFER_COUNT as _,
                     SwapEffect: DXGI_SWAP_EFFECT_FLIP_DISCARD,
+                    Scaling: DXGI_SCALING_NONE,
                     SampleDesc: DXGI_SAMPLE_DESC {
                         Count: 1,
                         Quality: 0,
