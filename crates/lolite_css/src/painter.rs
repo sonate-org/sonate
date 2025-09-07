@@ -84,6 +84,7 @@ impl<'a> Painter<'a> {
 }
 
 // Helper method to convert Length to pixels
+#[allow(unused)]
 trait ToPx {
     fn to_px(&self) -> f64;
 }

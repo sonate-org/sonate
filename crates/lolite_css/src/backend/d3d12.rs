@@ -98,7 +98,7 @@ impl<'a> RenderingBackend<'a> for D3D12Backend<'a> {
             memory_allocator: None,
             protected_context: Protected::No,
         };
-        let mut direct_context = unsafe { DirectContext::new_d3d(&backend_context, None) }.unwrap();
+        let direct_context = unsafe { DirectContext::new_d3d(&backend_context, None) }.unwrap();
 
         let swap_chain: IDXGISwapChain3 = unsafe {
             factory.CreateSwapChainForHwnd(

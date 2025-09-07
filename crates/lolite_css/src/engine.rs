@@ -119,6 +119,7 @@ impl Document {
         }
     }
 
+    #[allow(unused)]
     pub fn get_attribute(&self, node_id: Id, key: String) -> Option<String> {
         self.nodes
             .get(&node_id)
@@ -140,6 +141,7 @@ impl Document {
         self.root.clone()
     }
 
+    #[allow(unused)]
     pub fn get_node(&self, id: Id) -> Option<Rc<RefCell<Node>>> {
         self.nodes.get(&id).cloned()
     }
@@ -154,6 +156,7 @@ pub(crate) struct Rgba {
 }
 
 #[derive(Clone, Default)]
+#[allow(unused)]
 pub(crate) enum Length {
     #[default]
     Auto,
@@ -185,7 +188,9 @@ pub(crate) struct Extend {
 pub(crate) struct BorderRadius {
     pub top_left: Length,
     pub top_right: Length,
+    #[allow(unused)]
     pub bottom_right: Length,
+    #[allow(unused)]
     pub bottom_left: Length,
 }
 
@@ -200,6 +205,7 @@ pub(crate) enum Display {
 }
 
 #[derive(Clone, Default)]
+#[allow(unused)]
 pub(crate) enum FlexDirection {
     #[default]
     Row,
@@ -209,6 +215,7 @@ pub(crate) enum FlexDirection {
 }
 
 #[derive(Clone, Default)]
+#[allow(unused)]
 pub(crate) enum FlexWrap {
     #[default]
     NoWrap,
@@ -217,6 +224,7 @@ pub(crate) enum FlexWrap {
 }
 
 #[derive(Clone, Default)]
+#[allow(unused)]
 pub(crate) enum JustifyContent {
     #[default]
     FlexStart,
@@ -228,6 +236,7 @@ pub(crate) enum JustifyContent {
 }
 
 #[derive(Clone, Default)]
+#[allow(unused)]
 pub(crate) enum AlignItems {
     #[default]
     Stretch,
@@ -238,6 +247,7 @@ pub(crate) enum AlignItems {
 }
 
 #[derive(Clone, Default)]
+#[allow(unused)]
 pub(crate) enum AlignContent {
     #[default]
     Stretch,
@@ -250,6 +260,7 @@ pub(crate) enum AlignContent {
 }
 
 #[derive(Clone, Default)]
+#[allow(unused)]
 pub(crate) enum AlignSelf {
     #[default]
     Auto,
@@ -309,6 +320,7 @@ pub(crate) struct Rule {
 }
 
 #[derive(Debug, PartialEq)]
+#[allow(unused)]
 pub(crate) enum Selector {
     Tag(String),
     Class(String),

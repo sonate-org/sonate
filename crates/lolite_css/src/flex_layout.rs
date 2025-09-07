@@ -170,7 +170,6 @@ impl FlexLayoutEngine {
                     container_height,
                     style,
                     column_gap,
-                    engine,
                 );
             }
             FlexWrap::Wrap => {
@@ -299,7 +298,7 @@ impl FlexLayoutEngine {
             FlexWrap::NoWrap => {
                 // Calculate flex sizes first - this handles flex-grow, flex-shrink, and flex-basis
                 let final_heights =
-                    self.calculate_flex_sizes_column(children, container_height, row_gap, engine);
+                    self.calculate_flex_sizes_column(children, container_height, row_gap);
 
                 // Update children bounds with calculated flex sizes
                 for (i, child) in children.iter().enumerate() {
@@ -476,7 +475,6 @@ impl FlexLayoutEngine {
         children: &[Rc<RefCell<Node>>],
         container_width: f64,
         column_gap: f64,
-        engine: &Engine,
     ) -> Vec<f64> {
         let mut final_widths = Vec::new();
 
@@ -585,7 +583,6 @@ impl FlexLayoutEngine {
         children: &[Rc<RefCell<Node>>],
         container_height: f64,
         row_gap: f64,
-        engine: &Engine,
     ) -> Vec<f64> {
         let mut final_heights = Vec::new();
 
@@ -698,7 +695,6 @@ impl FlexLayoutEngine {
         container_height: f64,
         style: &Style,
         column_gap: f64,
-        engine: &Engine,
     ) {
         let justify_content = style
             .justify_content
@@ -707,8 +703,7 @@ impl FlexLayoutEngine {
         let align_items = style.align_items.as_ref().unwrap_or(&AlignItems::FlexStart);
 
         // Calculate flex sizes first - this handles flex-grow, flex-shrink, and flex-basis
-        let final_widths =
-            self.calculate_flex_sizes_row(children, container_width, column_gap, &engine);
+        let final_widths = self.calculate_flex_sizes_row(children, container_width, column_gap);
 
         // Update children bounds with calculated flex sizes
         for (i, child) in children.iter().enumerate() {

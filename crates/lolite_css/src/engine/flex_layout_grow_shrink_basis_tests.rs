@@ -158,6 +158,8 @@ fn test_flex_grow_multiple_items() {
     // Item3 should keep its original width (50px)
     assert_eq!(w3, 50.0);
     assert_eq!(h3, 30.0);
+    assert_eq!(h1, 30.0);
+    assert_eq!(h2, 30.0);
 
     // Available space: 400 - 150 = 250px
     // Flex-grow ratio: 1:2 (total = 3)
@@ -253,6 +255,10 @@ fn test_flex_shrink_basic() {
     let (x1, y1, w1, h1) = get_bounds(&engine, item1);
     let (x2, y2, w2, h2) = get_bounds(&engine, item2);
 
+    // Heights should remain unchanged
+    assert_eq!(h1, 30.0);
+    assert_eq!(h2, 30.0);
+
     // Overflow: 300 - 200 = 100px needs to be shrunk
     // Flex-shrink ratio: 1:2 (total = 3)
     // Item1 shrinks by 100 * (1/3) = ~33.33px -> 150 - 33.33 = ~116.67px
@@ -298,6 +304,10 @@ fn test_flex_shrink_column_direction() {
     // Verify positioning and sizing
     let (x1, y1, w1, h1) = get_bounds(&engine, item1);
     let (x2, y2, w2, h2) = get_bounds(&engine, item2);
+
+    // Widths should remain unchanged
+    assert_eq!(w1, 50.0);
+    assert_eq!(w2, 50.0);
 
     // Overflow: 250 - 200 = 50px needs to be shrunk
     // Equal flex-shrink ratios, so shrink proportionally to their base sizes
@@ -532,6 +542,10 @@ fn test_flex_grow_shrink_basis_combined() {
     let (x1, y1, w1, h1) = get_bounds(&engine, item1);
     let (x2, y2, w2, h2) = get_bounds(&engine, item2);
 
+    // Heights should remain unchanged
+    assert_eq!(h1, 30.0);
+    assert_eq!(h2, 30.0);
+
     // Base sizes from flex-basis: 100px + 80px = 180px
     // Available space: 300px - 180px = 120px
     // Flex-grow ratio: 2:1 (total = 3)
@@ -591,6 +605,10 @@ fn test_flex_shrink_with_basis_overflow() {
     let (x1, y1, w1, h1) = get_bounds(&engine, item1);
     let (x2, y2, w2, h2) = get_bounds(&engine, item2);
 
+    // Heights should remain unchanged
+    assert_eq!(h1, 30.0);
+    assert_eq!(h2, 30.0);
+
     // Base sizes from flex-basis: 150px + 100px = 250px
     // Overflow: 250px - 200px = 50px needs to be shrunk
     // Weighted flex-shrink ratio: (1*150):(2*100) = 150:200 = 3:4 (total = 7)
@@ -649,6 +667,10 @@ fn test_flex_zero_values() {
     // Verify positioning and sizing
     let (x1, y1, w1, h1) = get_bounds(&engine, item1);
     let (x2, y2, w2, h2) = get_bounds(&engine, item2);
+
+    // Heights should remain unchanged
+    assert_eq!(h1, 30.0);
+    assert_eq!(h2, 30.0);
 
     // Item1 should not grow or shrink, keeping original width
     assert_eq!(w1, 100.0);
