@@ -58,13 +58,9 @@ fn main() -> anyhow::Result<()> {
 
     let params = Params {
         on_draw: Box::new(move |canvas| {
-            // Layout and paint the engine
-            engine_for_draw.layout();
-
-            engine_for_draw.with_engine(|eng| {
-                let mut painter = lolite_css::painter::Painter::new(canvas);
-                painter.paint(&eng.document);
-            });
+            let snapshot = engine_for_draw.snapshot();
+            let mut painter = lolite_css::painter::Painter::new(canvas);
+            painter.paint(&snapshot);
         }),
         on_click: Some(Box::new(move |x, y| {
             // Perform hit testing

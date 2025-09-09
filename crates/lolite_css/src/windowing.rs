@@ -48,7 +48,10 @@ fn run_with_backend_impl<'a, B: RenderingBackend<'a>>(
         fn resumed(&mut self, event_loop: &ActiveEventLoop) {
             assert!(self.backend.is_none());
             self.backend =
-                Some(B::new(event_loop, self.params).expect("Failed to create rendering backend"))
+                Some(B::new(event_loop, self.params).expect("Failed to create rendering backend"));
+            if let Some(ref backend) = self.backend {
+                backend.request_redraw();
+            }
         }
 
         fn window_event(

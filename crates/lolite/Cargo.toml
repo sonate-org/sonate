@@ -6,6 +6,7 @@ edition.workspace = true
 [dependencies]
 lolite_common = { path = "../lolite_common" }
 lolite_transfer = { path = "../lolite_transfer" }
+lolite_css = { path = "../lolite_css" }
 shared_memory = { workspace = true }
 once_cell = { workspace = true }
 ipc-channel = { workspace = true }

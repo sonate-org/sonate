@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, rc::Rc, sync::Arc};
 
 use lolite_macros::MergeProperties;
 
@@ -7,7 +7,7 @@ use crate::flex_layout::FlexLayoutEngine;
 #[derive(Default)]
 pub struct Layout {
     pub bounds: Rect,
-    pub style: Rc<Style>,
+    pub style: Arc<Style>,
 }
 
 #[derive(Default, Debug, Clone, Copy)]
@@ -50,6 +50,14 @@ pub struct Id(u64);
 impl Id {
     pub fn value(&self) -> u64 {
         self.0
+    }
+
+    pub fn as_u64(&self) -> u64 {
+        self.0
+    }
+
+    pub fn from_u64(value: u64) -> Self {
+        Id(value)
     }
 }
 
@@ -445,7 +453,7 @@ impl Engine {
                 style.width.as_ref().map(|w| w.to_px()).unwrap_or(100.0);
             node_borrow.layout.bounds.height =
                 style.height.as_ref().map(|h| h.to_px()).unwrap_or(30.0);
-            node_borrow.layout.style = Rc::new(style);
+            node_borrow.layout.style = Arc::new(style);
         } else {
             // Container node - handle flexbox layout
             let container_width = style.width.as_ref().map(|w| w.to_px()).unwrap_or(300.0);
@@ -456,13 +464,38 @@ impl Engine {
                 let mut node_borrow = node.borrow_mut();
                 node_borrow.layout.bounds.width = container_width;
                 node_borrow.layout.bounds.height = container_height;
-                node_borrow.layout.style = Rc::new(style.clone());
+                node_borrow.layout.style = Arc::new(style.clone());
             }
 
             // Layout children using the dedicated flex layout engine
             self.flex_layout_engine
                 .layout_flex_children(node.clone(), &style, self);
         }
+    }
+}
+
+/// Snapshot types safe to share across threads
+#[derive(Clone)]
+pub struct RenderNode {
+    pub id: Id,
+    pub bounds: Rect,
+    pub style: Arc<Style>,
+    pub text: Option<String>,
+    pub children: Vec<RenderNode>,
+}
+
+pub fn build_render_tree(node: Rc<RefCell<Node>>) -> RenderNode {
+    let nb = node.borrow();
+    let mut children = Vec::with_capacity(nb.children.len());
+    for c in &nb.children {
+        children.push(build_render_tree(c.clone()));
+    }
+    RenderNode {
+        id: nb.id,
+        bounds: nb.layout.bounds,
+        style: nb.layout.style.clone(),
+        text: nb.text.clone(),
+        children,
     }
 }
 

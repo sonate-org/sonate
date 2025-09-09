@@ -692,6 +692,7 @@ version = "0.1.0"
 dependencies = [
  "ipc-channel",
  "lolite_common",
+ "lolite_css",
  "lolite_transfer",
  "once_cell",
  "shared_memory",

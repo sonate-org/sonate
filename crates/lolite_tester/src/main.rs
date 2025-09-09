@@ -1,10 +1,10 @@
+/*
 #![allow(dead_code, unused_imports)]
 
 use std::time::Duration;
 
 use libloading::{Library, Symbol};
 use lolite::{lolite_add_element, lolite_init, Element};
-
 /*
 fn main() {
     unsafe {
@@ -46,3 +46,6 @@ fn main() {
 
     std::thread::sleep(Duration::from_secs(20));
 }
+*/
+
+fn main() {}

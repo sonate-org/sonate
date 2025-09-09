@@ -1,4 +1,4 @@
-use crate::engine::{Document, Length, Node, Rgba};
+use crate::engine::{Length, RenderNode, Rgba};
 use skia_safe::{Canvas, Color, Color4f, Paint, RRect, Rect};
 
 pub struct Painter<'a> {
@@ -10,22 +10,20 @@ impl<'a> Painter<'a> {
         Self { canvas }
     }
 
-    pub fn paint(&mut self, document: &Document) {
-        let root_node = document.root_node();
-
+    pub fn paint(&mut self, root: &RenderNode) {
         self.canvas.clear(Color::WHITE);
-        self.paint_node(&root_node.borrow());
+        self.paint_node(root);
     }
 
-    fn paint_node(&mut self, node: &Node) {
+    fn paint_node(&mut self, node: &RenderNode) {
         // Draw the node's background color if it has one
-        let style = &node.layout.style;
+        let style = &node.style;
 
         let client_rect = Rect::new(
-            node.layout.bounds.x as f32,
-            node.layout.bounds.y as f32,
-            (node.layout.bounds.x + node.layout.bounds.width) as f32,
-            (node.layout.bounds.y + node.layout.bounds.height) as f32,
+            node.bounds.x as f32,
+            node.bounds.y as f32,
+            (node.bounds.x + node.bounds.width) as f32,
+            (node.bounds.y + node.bounds.height) as f32,
         );
 
         let client_rrect = if let Some(border_radius) = &style.border_radius {
@@ -64,8 +62,8 @@ impl<'a> Painter<'a> {
             let mut paint = Paint::default();
             paint.set_color(Color::BLACK);
 
-            let x = node.layout.bounds.x as f32;
-            let y = (node.layout.bounds.y + node.layout.bounds.height / 2.0) as f32;
+            let x = node.bounds.x as f32;
+            let y = (node.bounds.y + node.bounds.height / 2.0) as f32;
 
             let typeface = skia_safe::FontMgr::default()
                 .match_family("Arial")
@@ -78,7 +76,7 @@ impl<'a> Painter<'a> {
         }
         // Recursively paint the children
         for child in &node.children {
-            self.paint_node(&child.borrow());
+            self.paint_node(child);
         }
     }
 }
