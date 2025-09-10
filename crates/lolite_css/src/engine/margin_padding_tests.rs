@@ -1,4 +1,10 @@
 use super::*;
+use std::sync::atomic::{AtomicU64, Ordering};
+
+fn next_test_id() -> Id {
+    static NEXT: AtomicU64 = AtomicU64::new(1);
+    Id::from_u64(NEXT.fetch_add(1, Ordering::Relaxed))
+}
 
 // Helper function to create a basic engine setup
 fn create_test_engine() -> Engine {
@@ -13,7 +19,7 @@ fn create_container(
     margin: Option<Extend>,
     padding: Option<Extend>,
 ) -> Id {
-    let container_id = engine.document.create_node_autoid(None);
+    let container_id = engine.document.create_node(next_test_id(), None);
 
     // Add a CSS rule for the container
     let class_name = format!("container_{}", container_id.0);
@@ -44,7 +50,9 @@ fn create_item_with_spacing(
     margin: Option<Extend>,
     padding: Option<Extend>,
 ) -> Id {
-    let item_id = engine.document.create_node_autoid(Some("item".to_string()));
+    let item_id = engine
+        .document
+        .create_node(next_test_id(), Some("item".to_string()));
 
     // Add a CSS rule for the item
     let class_name = format!("item_{}", item_id.0);
@@ -220,7 +228,7 @@ fn test_margin_column_direction() {
     let root = engine.document.root_id();
 
     // Create a container with column direction
-    let container_id = engine.document.create_node_autoid(None);
+    let container_id = engine.document.create_node(next_test_id(), None);
     let class_name = format!("container_{}", container_id.0);
     engine.style_sheet.add_rule(Rule {
         selector: Selector::Class(class_name.clone()),
@@ -398,7 +406,7 @@ fn test_padding_column_direction() {
     let root = engine.document.root_id();
 
     // Create a container with column direction and padding
-    let container_id = engine.document.create_node_autoid(None);
+    let container_id = engine.document.create_node(next_test_id(), None);
     let class_name = format!("container_{}", container_id.0);
     engine.style_sheet.add_rule(Rule {
         selector: Selector::Class(class_name.clone()),

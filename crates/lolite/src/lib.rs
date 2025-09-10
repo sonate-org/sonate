@@ -69,42 +69,36 @@ pub extern "C" fn lolite_init(use_same_process: bool) -> EngineHandle {
 /// # Returns
 /// * 0 on success, -1 on error
 #[no_mangle]
-pub extern "C" fn lolite_add_stylesheet(handle: EngineHandle, css_content: *const c_char) -> c_int {
+pub extern "C" fn lolite_add_stylesheet(handle: EngineHandle, css_content: *const c_char) {
     if handle == 0 {
         eprintln!("Invalid engine handle");
-        return -1;
+        return;
     }
 
     if css_content.is_null() {
         eprintln!("CSS content is null");
-        return -1;
+        return;
     }
 
     let css_str = match unsafe { CStr::from_ptr(css_content) }.to_str() {
         Ok(s) => s,
         Err(e) => {
             eprintln!("Invalid UTF-8 in CSS content: {}", e);
-            return -1;
+            return;
         }
     };
 
     let instances = ENGINE_INSTANCES.lock().unwrap();
     match instances.get(&handle) {
-        Some(EngineMode::SameProcess(engine)) => match engine.add_stylesheet(css_str) {
-            Ok(()) => 0,
-            Err(e) => {
-                eprintln!("Failed to add stylesheet: {}", e);
-                -1
-            }
-        },
+        Some(EngineMode::SameProcess(engine)) => {
+            engine.add_stylesheet(css_str);
+        }
         Some(EngineMode::WorkerProcess(_worker)) => {
             // TODO: Implement worker process stylesheet addition
             eprintln!("Worker process mode not yet implemented for add_stylesheet");
-            -1
         }
         None => {
             eprintln!("Engine handle not found");
-            -1
         }
     }
 }
@@ -164,10 +158,10 @@ pub extern "C" fn lolite_create_node(handle: EngineHandle, text_content: *const 
 /// # Returns
 /// * 0 on success, -1 on error
 #[no_mangle]
-pub extern "C" fn lolite_set_parent(handle: EngineHandle, parent_id: u64, child_id: u64) -> c_int {
+pub extern "C" fn lolite_set_parent(handle: EngineHandle, parent_id: u64, child_id: u64) {
     if handle == 0 {
         eprintln!("Invalid engine handle");
-        return -1;
+        return;
     }
 
     let parent = Id::from_u64(parent_id);
@@ -175,21 +169,15 @@ pub extern "C" fn lolite_set_parent(handle: EngineHandle, parent_id: u64, child_
 
     let instances = ENGINE_INSTANCES.lock().unwrap();
     match instances.get(&handle) {
-        Some(EngineMode::SameProcess(engine)) => match engine.set_parent(parent, child) {
-            Ok(()) => 0,
-            Err(e) => {
-                eprintln!("Failed to set parent: {}", e);
-                -1
-            }
-        },
+        Some(EngineMode::SameProcess(engine)) => {
+            engine.set_parent(parent, child);
+        }
         Some(EngineMode::WorkerProcess(_worker)) => {
             // TODO: Implement worker process set_parent
             eprintln!("Worker process mode not yet implemented for set_parent");
-            -1
         }
         None => {
             eprintln!("Engine handle not found");
-            -1
         }
     }
 }
@@ -210,22 +198,22 @@ pub extern "C" fn lolite_set_attribute(
     node_id: u64,
     key: *const c_char,
     value: *const c_char,
-) -> c_int {
+) {
     if handle == 0 {
         eprintln!("Invalid engine handle");
-        return -1;
+        return;
     }
 
     if key.is_null() || value.is_null() {
         eprintln!("Key or value is null");
-        return -1;
+        return;
     }
 
     let key_str = match unsafe { CStr::from_ptr(key) }.to_str() {
         Ok(s) => s.to_string(),
         Err(e) => {
             eprintln!("Invalid UTF-8 in attribute key: {}", e);
-            return -1;
+            return;
         }
     };
 
@@ -233,7 +221,7 @@ pub extern "C" fn lolite_set_attribute(
         Ok(s) => s.to_string(),
         Err(e) => {
             eprintln!("Invalid UTF-8 in attribute value: {}", e);
-            return -1;
+            return;
         }
     };
 
@@ -243,16 +231,13 @@ pub extern "C" fn lolite_set_attribute(
     match instances.get(&handle) {
         Some(EngineMode::SameProcess(engine)) => {
             engine.set_attribute(node, key_str, value_str);
-            0
         }
         Some(EngineMode::WorkerProcess(_worker)) => {
             // TODO: Implement worker process set_attribute
             eprintln!("Worker process mode not yet implemented for set_attribute");
-            -1
         }
         None => {
             eprintln!("Engine handle not found");
-            -1
         }
     }
 }

@@ -1,4 +1,10 @@
 use super::*;
+use std::sync::atomic::{AtomicU64, Ordering};
+
+fn next_test_id() -> Id {
+    static NEXT: AtomicU64 = AtomicU64::new(1);
+    Id::from_u64(NEXT.fetch_add(1, Ordering::Relaxed))
+}
 
 #[test]
 fn test_point_in_bounds() {
@@ -57,13 +63,13 @@ fn test_find_element_at_position_nested_elements() {
     // Create child elements
     let child1_id = engine
         .document
-        .create_node_autoid(Some("child1".to_string()));
+        .create_node(next_test_id(), Some("child1".to_string()));
     let child2_id = engine
         .document
-        .create_node_autoid(Some("child2".to_string()));
+        .create_node(next_test_id(), Some("child2".to_string()));
     let grandchild_id = engine
         .document
-        .create_node_autoid(Some("grandchild".to_string()));
+        .create_node(next_test_id(), Some("grandchild".to_string()));
 
     // Set up parent-child relationships
     engine.document.set_parent(root_id, child1_id).unwrap();
@@ -155,10 +161,10 @@ fn test_find_element_at_position_overlapping_siblings() {
     // Create two overlapping child elements
     let child1_id = engine
         .document
-        .create_node_autoid(Some("child1".to_string()));
+        .create_node(next_test_id(), Some("child1".to_string()));
     let child2_id = engine
         .document
-        .create_node_autoid(Some("child2".to_string()));
+        .create_node(next_test_id(), Some("child2".to_string()));
 
     // Set up parent-child relationships
     engine.document.set_parent(root_id, child1_id).unwrap();

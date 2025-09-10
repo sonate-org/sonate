@@ -29,14 +29,7 @@ fn main() -> anyhow::Result<()> {
     "#;
 
     // Parse the CSS and load it into the engine
-    match engine.add_stylesheet(css_content) {
-        Ok(()) => {
-            println!("Successfully parsed and loaded CSS stylesheet");
-        }
-        Err(err) => {
-            eprintln!("Failed to parse CSS: {}", err);
-        }
-    }
+    engine.add_stylesheet(css_content);
 
     // Create document structure
     let root = engine.root_id();
@@ -44,9 +37,9 @@ fn main() -> anyhow::Result<()> {
     let b = engine.create_node(Some("World".to_string()));
     let c = engine.create_node(Some("xD".to_string()));
 
-    engine.set_parent(root, a).unwrap();
-    engine.set_parent(root, b).unwrap();
-    engine.set_parent(root, c).unwrap();
+    engine.set_parent(root, a);
+    engine.set_parent(root, b);
+    engine.set_parent(root, c);
 
     engine.set_attribute(root, "class".to_owned(), "flex_container".to_owned());
     engine.set_attribute(a, "class".to_owned(), "red_box".to_owned());

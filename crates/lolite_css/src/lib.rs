@@ -8,6 +8,7 @@ mod windowing;
 #[cfg(test)]
 mod css_parser_tests;
 
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{
     mpsc::{self, Receiver, Sender},
     Arc, RwLock,
@@ -25,14 +26,15 @@ pub use windowing::{run, run_with_backend, Params};
 pub struct CssEngine {
     sender: Sender<Command>,
     snapshot: Arc<RwLock<Option<RenderNode>>>,
+    root_id: Id,
+    next_id: Arc<AtomicU64>,
 }
 
 enum Command {
-    AddStylesheet(String, Sender<Result<(), String>>),
-    CreateNode(Option<String>, Sender<Id>),
-    SetParent(Id, Id, Sender<Result<(), String>>),
+    AddStylesheet(String),
+    CreateNode(Id, Option<String>),
+    SetParent(Id, Id),
     SetAttribute(Id, String, String),
-    RootId(Sender<Id>),
     Layout,
 }
 
@@ -49,40 +51,36 @@ impl CssEngine {
         Self {
             sender: tx,
             snapshot,
+            root_id: Id::from_u64(0),
+            // 0 is reserved for root
+            next_id: Arc::new(AtomicU64::new(1)),
         }
     }
 
     /// Add a CSS stylesheet
-    pub fn add_stylesheet(&self, css_content: &str) -> Result<(), String> {
-        let (tx, rx) = mpsc::channel();
-        self.sender
-            .send(Command::AddStylesheet(
-                // serialize to rules via stylesheet; send rules vector
-                // We can't move stylesheet across easily via custom type, so we re-parse on thread.
-                // Simpler: send original CSS string and parse on thread
-                css_content.to_string(),
-                tx,
-            ))
-            .map_err(|e| e.to_string())?;
-        rx.recv().map_err(|e| e.to_string())?
+    pub fn add_stylesheet(&self, css_content: &str) {
+        let _ = self
+            .sender
+            .send(Command::AddStylesheet(css_content.to_string()))
+            .expect("data thread down");
     }
 
     /// Create a new document node with optional text content
     pub fn create_node(&self, text: Option<String>) -> Id {
-        let (tx, rx) = mpsc::channel();
+        // Generate unique id locally without waiting on the data thread
+        let id_value = self.next_id.fetch_add(1, Ordering::Relaxed);
+        let id = Id::from_u64(id_value);
         self.sender
-            .send(Command::CreateNode(text, tx))
+            .send(Command::CreateNode(id, text))
             .expect("data thread down");
-        rx.recv().expect("data thread closed")
+        id
     }
 
     /// Set a parent-child relationship between nodes
-    pub fn set_parent(&self, parent_id: Id, child_id: Id) -> Result<(), String> {
-        let (tx, rx) = mpsc::channel();
+    pub fn set_parent(&self, parent_id: Id, child_id: Id) {
         self.sender
-            .send(Command::SetParent(parent_id, child_id, tx))
-            .map_err(|e| e.to_string())?;
-        rx.recv().map_err(|e| e.to_string())?
+            .send(Command::SetParent(parent_id, child_id))
+            .expect("data thread down");
     }
 
     /// Set an attribute on a node
@@ -94,11 +92,7 @@ impl CssEngine {
 
     /// Get the root node ID of the document
     pub fn root_id(&self) -> Id {
-        let (tx, rx) = mpsc::channel();
-        self.sender
-            .send(Command::RootId(tx))
-            .expect("data thread down");
-        rx.recv().expect("data thread closed")
+        self.root_id
     }
 
     /// Perform layout calculation
@@ -139,6 +133,8 @@ impl Clone for CssEngine {
         Self {
             sender: self.sender.clone(),
             snapshot: Arc::clone(&self.snapshot),
+            root_id: self.root_id,
+            next_id: Arc::clone(&self.next_id),
         }
     }
 }
@@ -178,31 +174,27 @@ fn data_thread(rx: Receiver<Command>, snapshot: Arc<RwLock<Option<RenderNode>>>)
 
         match rx.recv_timeout(timeout) {
             Ok(cmd) => match cmd {
-                Command::AddStylesheet(css, resp) => match parse_css(&css) {
+                Command::AddStylesheet(css) => match parse_css(&css) {
                     Ok(sheet) => {
                         for rule in sheet.rules {
                             eng.style_sheet.add_rule(rule);
                         }
-                        let _ = resp.send(Ok(()));
-                        // Start debounce only if none active; batch further changes until expiry
                         if deadline.is_none() {
                             deadline = Some(Instant::now() + Duration::from_millis(100));
                         }
                     }
                     Err(e) => {
-                        let _ = resp.send(Err(e));
+                        eprintln!("Failed to parse CSS: {}", e);
                     }
                 },
-                Command::CreateNode(text, resp) => {
-                    let id = eng.document.create_node_autoid(text);
-                    let _ = resp.send(id);
+                Command::CreateNode(id, text) => {
+                    eng.document.create_node(id, text);
                     if deadline.is_none() {
                         deadline = Some(Instant::now() + Duration::from_millis(100));
                     }
                 }
-                Command::SetParent(p, c, resp) => {
-                    let r = eng.document.set_parent(p, c).map_err(|e| e.to_string());
-                    let _ = resp.send(r);
+                Command::SetParent(p, c) => {
+                    eng.document.set_parent(p, c).expect("data thread down");
                     if deadline.is_none() {
                         deadline = Some(Instant::now() + Duration::from_millis(100));
                     }
@@ -212,9 +204,6 @@ fn data_thread(rx: Receiver<Command>, snapshot: Arc<RwLock<Option<RenderNode>>>)
                     if deadline.is_none() {
                         deadline = Some(Instant::now() + Duration::from_millis(100));
                     }
-                }
-                Command::RootId(resp) => {
-                    let _ = resp.send(eng.document.root_id());
                 }
                 Command::Layout => {
                     // Immediate layout flush

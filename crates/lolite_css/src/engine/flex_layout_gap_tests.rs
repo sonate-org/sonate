@@ -1,5 +1,11 @@
 use super::*;
-use std::rc::Rc;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
+
+fn next_test_id() -> Id {
+    static NEXT: AtomicU64 = AtomicU64::new(1);
+    Id::from_u64(NEXT.fetch_add(1, Ordering::Relaxed))
+}
 
 // Helper function to create a basic engine setup
 fn create_test_engine() -> Engine {
@@ -16,7 +22,7 @@ fn create_flex_container_with_gap(
     width: Option<f64>,
     height: Option<f64>,
 ) -> Id {
-    let container_id = engine.document.create_node_autoid(None);
+    let container_id = engine.document.create_node(next_test_id(), None);
 
     // Add a CSS rule for the flex container
     let class_name = format!("flex_container_{}", container_id.0);
@@ -42,7 +48,9 @@ fn create_flex_container_with_gap(
 
 // Helper function to create a flex item with specified dimensions
 fn create_flex_item(engine: &mut Engine, width: f64, height: f64) -> Id {
-    let item_id = engine.document.create_node_autoid(Some("item".to_string()));
+    let item_id = engine
+        .document
+        .create_node(next_test_id(), Some("item".to_string()));
 
     // Add a CSS rule for the flex item
     let class_name = format!("flex_item_{}", item_id.0);
@@ -299,7 +307,7 @@ fn test_gap_with_wrapped_layout() {
     let container_node = engine.document.nodes.get(&container).unwrap();
     let mut style = container_node.borrow().layout.style.as_ref().clone();
     style.flex_wrap = Some(FlexWrap::Wrap);
-    container_node.borrow_mut().layout.style = Rc::new(style);
+    container_node.borrow_mut().layout.style = Arc::new(style);
 
     // Create items that will wrap to multiple lines
     let item1 = create_flex_item(&mut engine, 60.0, 30.0);
@@ -399,7 +407,7 @@ fn test_gap_with_justify_content_center() {
     let root = engine.document.root_id();
 
     // Create a flex container with gap and justify-content: center
-    let container_id = engine.document.create_node_autoid(None);
+    let container_id = engine.document.create_node(next_test_id(), None);
     let class_name = format!("flex_container_{}", container_id.0);
     engine.style_sheet.add_rule(Rule {
         selector: Selector::Class(class_name.clone()),
@@ -456,7 +464,7 @@ fn test_gap_with_justify_content_space_between() {
     let root = engine.document.root_id();
 
     // Create a flex container with gap and justify-content: space-between
-    let container_id = engine.document.create_node_autoid(None);
+    let container_id = engine.document.create_node(next_test_id(), None);
     let class_name = format!("flex_container_{}", container_id.0);
     engine.style_sheet.add_rule(Rule {
         selector: Selector::Class(class_name.clone()),

@@ -1,4 +1,10 @@
 use super::*;
+use std::sync::atomic::{AtomicU64, Ordering};
+
+fn next_test_id() -> Id {
+    static NEXT: AtomicU64 = AtomicU64::new(1);
+    Id::from_u64(NEXT.fetch_add(1, Ordering::Relaxed))
+}
 
 // Helper function to create a basic engine setup
 fn create_test_engine() -> Engine {
@@ -12,7 +18,7 @@ fn create_flex_container(
     width: Option<f64>,
     height: Option<f64>,
 ) -> Id {
-    let container_id = engine.document.create_node_autoid(None);
+    let container_id = engine.document.create_node(next_test_id(), None);
 
     // Add a CSS rule for the flex container
     let class_name = format!("flex_container_{}", container_id.0);
@@ -42,7 +48,9 @@ fn create_flex_item_with_flex(
     flex_shrink: Option<f64>,
     flex_basis: Option<Length>,
 ) -> Id {
-    let item_id = engine.document.create_node_autoid(Some("item".to_string()));
+    let item_id = engine
+        .document
+        .create_node(next_test_id(), Some("item".to_string()));
 
     // Add a CSS rule for the flex item
     let class_name = format!("flex_item_{}", item_id.0);

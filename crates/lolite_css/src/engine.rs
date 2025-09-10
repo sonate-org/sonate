@@ -65,7 +65,6 @@ pub struct Document {
     #[allow(unused)]
     root: Rc<RefCell<Node>>,
     nodes: HashMap<Id, Rc<RefCell<Node>>>,
-    next_id: u64,
 }
 
 impl Document {
@@ -73,15 +72,10 @@ impl Document {
         let root = Rc::new(RefCell::new(Node::new(Id(0), None)));
         let mut nodes = HashMap::new();
         nodes.insert(Id(0), root.clone());
-        Self {
-            root,
-            nodes,
-            next_id: 1,
-        }
+        Self { root, nodes }
     }
 
-    pub fn create_node_autoid(&mut self, text: Option<String>) -> Id {
-        let id = self.unique_id();
+    pub fn create_node(&mut self, id: Id, text: Option<String>) -> Id {
         let node = Rc::new(RefCell::new(Node::new(id, text)));
         self.nodes.insert(id, node);
         id
@@ -134,12 +128,6 @@ impl Document {
             .get(&node_id)
             .map(|node| node.borrow().attributes.get(&key).cloned())
             .flatten()
-    }
-
-    fn unique_id(&mut self) -> Id {
-        let id = Id(self.next_id);
-        self.next_id += 1;
-        id
     }
 
     pub fn root_id(&self) -> Id {
