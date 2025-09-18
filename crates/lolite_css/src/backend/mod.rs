@@ -4,6 +4,7 @@ use std::cell::RefCell;
 use winit::{event::WindowEvent, event_loop::ActiveEventLoop};
 
 pub mod d3d12;
+pub mod metal;
 
 /// Common parameters shared across all rendering backends
 pub struct Params {
@@ -59,10 +60,11 @@ pub trait RenderingBackend<'a> {
 pub enum BackendType {
     #[cfg(all(target_os = "windows"))]
     D3D12,
+    #[cfg(target_os = "macos")]
+    Metal,
     // Future backends can be added here:
     // OpenGL,
     // Vulkan,
-    // Metal,
 }
 
 impl BackendType {
@@ -71,7 +73,10 @@ impl BackendType {
         #[cfg(all(target_os = "windows"))]
         return BackendType::D3D12;
 
-        #[cfg(not(all(target_os = "windows")))]
+        #[cfg(target_os = "macos")]
+        return BackendType::Metal;
+
+        #[cfg(not(any(target_os = "windows", target_os = "macos")))]
         compile_error!("No default backend available for this platform");
     }
 
@@ -80,6 +85,8 @@ impl BackendType {
         match self {
             #[cfg(all(target_os = "windows"))]
             BackendType::D3D12 => "Direct3D 12",
+            #[cfg(target_os = "macos")]
+            BackendType::Metal => "Metal",
         }
     }
 }

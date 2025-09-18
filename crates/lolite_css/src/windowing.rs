@@ -22,6 +22,8 @@ pub fn run_with_backend(
     match backend_type {
         #[cfg(all(target_os = "windows"))]
         BackendType::D3D12 => run_with_backend_impl::<crate::backend::d3d12::D3D12Backend>(params),
+        #[cfg(target_os = "macos")]
+        BackendType::Metal => run_with_backend_impl::<crate::backend::metal::MetalBackend>(params),
     }
 }
 
