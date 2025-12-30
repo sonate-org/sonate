@@ -10,7 +10,7 @@ mod windowing;
 mod css_parser_tests;
 
 use css_parser::parse_css;
-use engine::{Id, RenderNode};
+use engine::RenderNode;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{
     mpsc::{self, Receiver, Sender},
@@ -19,6 +19,7 @@ use std::sync::{
 use std::thread;
 use std::time::{Duration, Instant};
 
+pub use engine::Id;
 pub use painter::Painter;
 pub use windowing::{run, run_with_backend, Params};
 

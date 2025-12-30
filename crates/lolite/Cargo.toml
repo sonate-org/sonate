@@ -10,6 +10,11 @@ lolite_css = { path = "../lolite_css" }
 shared_memory = { workspace = true }
 once_cell = { workspace = true }
 ipc-channel = { workspace = true }
+anyhow = "1.0.95"
+
+[[example]]
+name = "rust_usage"
+path = "../../examples/rust_usage/rust_usage.rs"
 
 [lib]
 crate-type = ["cdylib", "lib"]
