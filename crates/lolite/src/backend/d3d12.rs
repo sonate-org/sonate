@@ -1,14 +1,13 @@
 use super::{InputState, Params, RenderingBackend};
 use anyhow::Result;
-use std::cell::RefCell;
-use winit::{
-    dpi::{LogicalSize, Size},
-    event::WindowEvent,
-    event_loop::ActiveEventLoop,
-    window::{Window, WindowAttributes},
+use skia_safe::{
+    gpu::{
+        d3d::{BackendContext, TextureResourceInfo},
+        surfaces, BackendRenderTarget, DirectContext, Protected, SurfaceOrigin,
+    },
+    ColorType, Surface,
 };
-
-#[cfg(all(target_os = "windows"))]
+use std::cell::RefCell;
 use windows::{
     core::Interface,
     Win32::{
@@ -30,21 +29,15 @@ use windows::{
         System::Threading::{CreateEventW, WaitForSingleObject},
     },
 };
-
-#[cfg(all(target_os = "windows"))]
-use skia_safe::{
-    gpu::{
-        d3d::{BackendContext, TextureResourceInfo},
-        surfaces, BackendRenderTarget, DirectContext, Protected, SurfaceOrigin,
-    },
-    ColorType, Surface,
+use winit::{
+    dpi::{LogicalSize, Size},
+    event::WindowEvent,
+    event_loop::ActiveEventLoop,
+    window::{Window, WindowAttributes},
 };
-
-#[cfg(all(target_os = "windows"))]
 const BUFFER_COUNT: usize = 2;
 
 /// Direct3D 12 rendering backend implementation
-#[cfg(all(target_os = "windows"))]
 pub struct D3D12Backend<'a> {
     window: Window,
     #[allow(unused)]
@@ -63,7 +56,6 @@ pub struct D3D12Backend<'a> {
     current_height: u32,
 }
 
-#[cfg(all(target_os = "windows"))]
 impl<'a> RenderingBackend<'a> for D3D12Backend<'a> {
     fn new(event_loop: &ActiveEventLoop, params: &'a RefCell<Params>) -> Result<Self> {
         // Enable D3D12 debug layer (best effort)
@@ -192,7 +184,6 @@ impl<'a> RenderingBackend<'a> for D3D12Backend<'a> {
     }
 }
 
-#[cfg(all(target_os = "windows"))]
 impl<'a> D3D12Backend<'a> {
     fn recreate_surfaces(&mut self, width: u32, height: u32) -> Result<()> {
         for i in 0..BUFFER_COUNT {
@@ -305,7 +296,6 @@ impl<'a> D3D12Backend<'a> {
     }
 }
 
-#[cfg(all(target_os = "windows"))]
 impl<'a> Drop for D3D12Backend<'a> {
     fn drop(&mut self) {
         // Ensure Skia finishes and releases all refs before Device/SwapChain are dropped
@@ -319,7 +309,6 @@ impl<'a> Drop for D3D12Backend<'a> {
     }
 }
 
-#[cfg(all(target_os = "windows"))]
 fn get_hardware_adapter_and_device(
     factory: &IDXGIFactory4,
 ) -> windows::core::Result<(IDXGIAdapter1, ID3D12Device)> {
@@ -337,39 +326,4 @@ fn get_hardware_adapter_and_device(
         }
     }
     unreachable!()
-}
-
-// Stub implementation for non-Windows platforms
-#[cfg(not(all(target_os = "windows")))]
-pub struct D3D12Backend<'a> {
-    _phantom: std::marker::PhantomData<&'a ()>,
-}
-
-#[cfg(not(all(target_os = "windows")))]
-impl<'a> RenderingBackend<'a> for D3D12Backend<'a> {
-    fn new(_event_loop: &ActiveEventLoop, _params: &'a RefCell<Params>) -> Result<Self> {
-        anyhow::bail!("D3D12 backend is not available on this platform");
-    }
-
-    fn handle_window_event(&mut self, _event: &WindowEvent) -> bool {
-        false
-    }
-
-    fn render(&mut self) {}
-
-    fn input_state_mut(&mut self) -> &mut InputState {
-        unreachable!("D3D12 backend is not available on this platform")
-    }
-
-    fn input_state(&self) -> &InputState {
-        unreachable!("D3D12 backend is not available on this platform")
-    }
-
-    fn params(&self) -> &'a RefCell<Params> {
-        unreachable!("D3D12 backend is not available on this platform")
-    }
-
-    fn request_redraw(&self) {
-        unreachable!("D3D12 backend is not available on this platform")
-    }
 }

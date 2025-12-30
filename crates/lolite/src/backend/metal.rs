@@ -8,34 +8,26 @@ use winit::{
     window::{Window, WindowAttributes},
 };
 
-#[cfg(target_os = "macos")]
+use core_graphics_types::geometry::CGSize;
+use metal::{
+    foreign_types::{ForeignType, ForeignTypeRef},
+    Device, MetalLayer,
+};
+use objc::runtime::YES;
+use raw_window_handle::HasWindowHandle;
 use skia_safe::{
     gpu::{
+        backend_render_targets::make_mtl,
+        direct_contexts::make_metal,
         mtl::{BackendContext, TextureInfo},
         surfaces, BackendRenderTarget, DirectContext, SurfaceOrigin,
-        direct_contexts::make_metal,
-        backend_render_targets::make_mtl,
     },
     ColorType, Surface,
 };
 
-#[cfg(target_os = "macos")]
-use metal::{Device, MetalLayer, foreign_types::{ForeignType, ForeignTypeRef}};
-
-#[cfg(target_os = "macos")]
-use objc::runtime::YES;
-
-#[cfg(target_os = "macos")]
-use raw_window_handle::HasWindowHandle;
-
-#[cfg(target_os = "macos")]
-use core_graphics_types::geometry::CGSize;
-
-#[cfg(target_os = "macos")]
 const BUFFER_COUNT: usize = 3;
 
 /// Metal rendering backend implementation for macOS
-#[cfg(target_os = "macos")]
 pub struct MetalBackend<'a> {
     window: Window,
     device: Device,
@@ -48,7 +40,6 @@ pub struct MetalBackend<'a> {
     current_height: u32,
 }
 
-#[cfg(target_os = "macos")]
 impl<'a> RenderingBackend<'a> for MetalBackend<'a> {
     fn new(event_loop: &ActiveEventLoop, params: &'a RefCell<Params>) -> Result<Self> {
         let mut window_attributes = WindowAttributes::default();
@@ -62,9 +53,8 @@ impl<'a> RenderingBackend<'a> for MetalBackend<'a> {
         let (width, height) = window.inner_size().into();
 
         // Create Metal device
-        let device = Device::system_default().ok_or_else(|| {
-            anyhow::anyhow!("Failed to create Metal device")
-        })?;
+        let device = Device::system_default()
+            .ok_or_else(|| anyhow::anyhow!("Failed to create Metal device"))?;
 
         // Create Metal layer
         let layer = MetalLayer::new();
@@ -81,7 +71,7 @@ impl<'a> RenderingBackend<'a> for MetalBackend<'a> {
                 match window_handle.as_raw() {
                     raw_window_handle::RawWindowHandle::AppKit(handle) => {
                         let ns_view = handle.ns_view;
-                        
+
                         // Set layer on the view
                         let _: () = msg_send![ns_view.as_ptr() as *mut objc::runtime::Object, setLayer: layer.as_ref()];
                         let _: () = msg_send![ns_view.as_ptr() as *mut objc::runtime::Object, setWantsLayer: YES];
@@ -100,9 +90,8 @@ impl<'a> RenderingBackend<'a> for MetalBackend<'a> {
         };
 
         // Create Skia Metal DirectContext
-        let direct_context = unsafe {
-            make_metal(&backend_context, None)
-        }.ok_or_else(|| anyhow::anyhow!("Failed to create Metal DirectContext"))?;
+        let direct_context = unsafe { make_metal(&backend_context, None) }
+            .ok_or_else(|| anyhow::anyhow!("Failed to create Metal DirectContext"))?;
 
         let mut backend = Self {
             window,
@@ -148,9 +137,8 @@ impl<'a> RenderingBackend<'a> for MetalBackend<'a> {
             }
         };
 
-        let texture_info = unsafe {
-            TextureInfo::new(drawable.texture().as_ptr() as *mut std::ffi::c_void)
-        };
+        let texture_info =
+            unsafe { TextureInfo::new(drawable.texture().as_ptr() as *mut std::ffi::c_void) };
 
         let backend_render_target = make_mtl(
             (self.current_width as i32, self.current_height as i32),
@@ -168,13 +156,14 @@ impl<'a> RenderingBackend<'a> for MetalBackend<'a> {
 
         if let Some(mut surface) = surface {
             let canvas = surface.canvas();
-            
+
             // Call the draw callback
             (self.params.borrow_mut().on_draw)(canvas);
-            
+
             // Flush and present
-            self.direct_context.flush_and_submit_surface(&mut surface, None);
-            
+            self.direct_context
+                .flush_and_submit_surface(&mut surface, None);
+
             // Present the drawable
             drawable.present();
         }
@@ -197,17 +186,17 @@ impl<'a> RenderingBackend<'a> for MetalBackend<'a> {
     }
 }
 
-#[cfg(target_os = "macos")]
 impl<'a> MetalBackend<'a> {
     fn recreate_surfaces(&mut self, width: u32, height: u32) -> Result<()> {
         // Update layer drawable size
-        self.layer.set_drawable_size(CGSize::new(width as f64, height as f64));
-        
+        self.layer
+            .set_drawable_size(CGSize::new(width as f64, height as f64));
+
         // Clear existing surfaces
         for surface in &mut self.surfaces {
             *surface = None;
         }
-        
+
         self.current_width = width;
         self.current_height = height;
         Ok(())
@@ -216,59 +205,22 @@ impl<'a> MetalBackend<'a> {
     fn resize(&mut self, width: u32, height: u32) -> Result<()> {
         // Flush any pending work
         self.direct_context.flush_and_submit();
-        
+
         // Recreate surfaces with new dimensions
         self.recreate_surfaces(width, height)?;
-        
+
         Ok(())
     }
 }
 
-#[cfg(target_os = "macos")]
 impl<'a> Drop for MetalBackend<'a> {
     fn drop(&mut self) {
         // Ensure all GPU work is finished
         self.direct_context.flush_and_submit();
-        
+
         // Clear surfaces
         for surface in &mut self.surfaces {
             *surface = None;
         }
     }
 }
-
-// Stub implementation for non-macOS platforms
-#[cfg(not(target_os = "macos"))]
-pub struct MetalBackend<'a> {
-    _phantom: std::marker::PhantomData<&'a ()>,
-}
-
-#[cfg(not(target_os = "macos"))]
-impl<'a> RenderingBackend<'a> for MetalBackend<'a> {
-    fn new(_event_loop: &ActiveEventLoop, _params: &'a RefCell<Params>) -> Result<Self> {
-        anyhow::bail!("Metal backend is not available on this platform");
-    }
-
-    fn handle_window_event(&mut self, _event: &WindowEvent) -> bool {
-        false
-    }
-
-    fn render(&mut self) {}
-
-    fn input_state_mut(&mut self) -> &mut InputState {
-        unreachable!("Metal backend is not available on this platform")
-    }
-
-    fn input_state(&self) -> &InputState {
-        unreachable!("Metal backend is not available on this platform")
-    }
-
-    fn params(&self) -> &'a RefCell<Params> {
-        unreachable!("Metal backend is not available on this platform")
-    }
-
-    fn request_redraw(&self) {
-        unreachable!("Metal backend is not available on this platform")
-    }
-}
-
