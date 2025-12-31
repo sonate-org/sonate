@@ -83,32 +83,34 @@ impl Engine {
             .try_lock()
             .map_err(|_| RunError::AlreadyRunning)?;
 
-        let this = self.clone();
+        let this1 = self.clone();
+        let this2 = self.clone();
 
         let params = Params {
             on_draw: Box::new(move |canvas| {
-                if let Some(snapshot) = this.get_current_snapshot() {
+                if let Some(snapshot) = this1.get_current_snapshot() {
                     let mut painter = Painter::new(canvas);
                     painter.paint(&snapshot);
                 }
             }),
-            on_click: Some(Box::new(move |_x, _y| {
-                // Perform hit testing
-                // let elements = engine_for_click.find_element_at_position(x, y); // here we should already know which elements we clicked on
+            on_click: Some(Box::new(move |x, y| {
+                if let Some(snapshot) = this2.get_current_snapshot() {
+                    let elements = snapshot.find_element_at_position(x, y);
 
-                // if elements.is_empty() {
-                //     println!("Click detected on background at ({:.1}, {:.1})", x, y);
-                // } else {
-                //     println!(
-                //         "Click detected at ({:.1}, {:.1}) on {} elements:",
-                //         x,
-                //         y,
-                //         elements.len()
-                //     );
-                //     for (i, element_id) in elements.iter().enumerate() {
-                //         println!("  Level {}: Element ID {:?}", i, element_id.value());
-                //     }
-                // }
+                    if elements.is_empty() {
+                        println!("Click detected on background at ({:.1}, {:.1})", x, y);
+                    } else {
+                        println!(
+                            "Click detected at ({:.1}, {:.1}) on {} elements:",
+                            x,
+                            y,
+                            elements.len()
+                        );
+                        for (i, element_id) in elements.iter().enumerate() {
+                            println!("  Level {}: Element ID {:?}", i, element_id.value());
+                        }
+                    }
+                }
             })),
         };
 
@@ -154,92 +156,6 @@ impl Engine {
     pub fn root_id(&self) -> Id {
         self.root_id
     }
-
-    // /// Find elements at a specific position (for hit testing)
-    // pub fn find_element_at_position(&self, x: f64, y: f64) -> Vec<Id> {
-    //     if let Some(snapshot) = self.snapshot.read().unwrap().as_ref() {
-    //         self.find_element_at_position_recursive(snapshot, snapshot, x, y)
-    //     } else {
-    //         // No snapshot available yet (layout not run)
-    //         vec![]
-    //     }
-    // }
-
-    // /// Recursively find elements at a specific position in the render tree
-    // fn find_element_at_position_recursive(
-    //     &self,
-    //     root: &RenderNode,
-    //     node: &RenderNode,
-    //     x: f64,
-    //     y: f64,
-    // ) -> Vec<Id> {
-    //     let mut result = Vec::new();
-
-    //     // Check if the point is within this node's bounds
-    //     if !self.point_in_bounds(&node.bounds, x, y) {
-    //         return result;
-    //     }
-
-    //     // Check children in reverse order (later children are rendered on top)
-    //     for child in node.children.iter().rev() {
-    //         let child_result = self.find_element_at_position_recursive(root, child, x, y);
-    //         if !child_result.is_empty() {
-    //             // Found a hit in a child, return the child's result chain
-    //             return child_result;
-    //         }
-    //     }
-
-    //     // No child contains the point, so this node is the topmost
-    //     // Build the parent chain by traversing up from this node
-    //     result.push(node.id);
-
-    //     // Since RenderNode doesn't have parent pointers, we need to build the chain
-    //     // by finding this node's ancestors in the tree
-    //     self.build_parent_chain(root, node.id, &mut result);
-
-    //     result
-    // }
-
-    // /// Build the parent chain for a given node ID by traversing the render tree
-    // fn build_parent_chain(&self, root: &RenderNode, target_id: Id, result: &mut Vec<Id>) {
-    //     self.find_parent_recursive(root, target_id, result);
-    // }
-
-    // /// Recursively find the parent chain for a target node
-    // fn find_parent_recursive(
-    //     &self,
-    //     node: &RenderNode,
-    //     target_id: Id,
-    //     result: &mut Vec<Id>,
-    // ) -> bool {
-    //     // Check if any direct child is our target
-    //     for child in &node.children {
-    //         if child.id == target_id {
-    //             // Found the target as a direct child, add this node as parent
-    //             result.push(node.id);
-    //             return true;
-    //         }
-    //     }
-
-    //     // Check if target is in any child subtree
-    //     for child in &node.children {
-    //         if self.find_parent_recursive(child, target_id, result) {
-    //             // Target was found in this child's subtree, add this node as ancestor
-    //             result.push(node.id);
-    //             return true;
-    //         }
-    //     }
-
-    //     false
-    // }
-
-    // /// Check if a point (x, y) is within the given bounds
-    // fn point_in_bounds(&self, bounds: &engine::Rect, x: f64, y: f64) -> bool {
-    //     x >= bounds.x
-    //         && x <= bounds.x + bounds.width
-    //         && y >= bounds.y
-    //         && y <= bounds.y + bounds.height
-    // }
 
     /// Get a cloned copy of the current render snapshot for drawing
     fn get_current_snapshot(&self) -> Option<RenderNode> {

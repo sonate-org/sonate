@@ -19,6 +19,13 @@ pub struct Rect {
     pub height: f64,
 }
 
+impl Rect {
+    #[allow(unused)]
+    pub fn contains_point(&self, x: f64, y: f64) -> bool {
+        x >= self.x && x <= self.x + self.width && y >= self.y && y <= self.y + self.height
+    }
+}
+
 #[derive(Default)]
 #[allow(unused)]
 pub struct Node {
@@ -144,70 +151,6 @@ impl LayoutContext {
         }
     }
 
-    /// Find the element at the given position (x, y).
-    /// Returns a Vec<Id> where the first element is the topmost element at the position,
-    /// and subsequent elements are its parents up to the root.
-    /// This enables event bubbling by providing the full parent chain.
-    pub fn find_element_at_position(&self, x: f64, y: f64) -> Vec<Id> {
-        let mut result = Vec::new();
-
-        // Start from the root and find the deepest element containing the point
-        if let Some(topmost_id) =
-            self.find_topmost_element_at_position(self.document.root.clone(), x, y)
-        {
-            // Build the parent chain starting from the topmost element
-            let mut current_id = topmost_id;
-            result.push(current_id);
-
-            // Walk up the parent chain
-            while let Some(node) = self.document.nodes.get(&current_id) {
-                if let Some(parent_id) = node.borrow().parent {
-                    result.push(parent_id);
-                    current_id = parent_id;
-                } else {
-                    break;
-                }
-            }
-        }
-
-        result
-    }
-
-    /// Recursively find the topmost (deepest) element that contains the given position
-    fn find_topmost_element_at_position(
-        &self,
-        node: Rc<RefCell<Node>>,
-        x: f64,
-        y: f64,
-    ) -> Option<Id> {
-        let node_borrow = node.borrow();
-
-        // Check if the point is within this node's bounds
-        if !self.point_in_bounds(&node_borrow.layout.bounds, x, y) {
-            return None;
-        }
-
-        let node_id = node_borrow.id;
-
-        // Check children in reverse order (later children are rendered on top)
-        for child in node_borrow.children.iter().rev() {
-            if let Some(child_id) = self.find_topmost_element_at_position(child.clone(), x, y) {
-                return Some(child_id);
-            }
-        }
-
-        // No child contains the point, so this node is the topmost
-        Some(node_id)
-    }
-
-    /// Check if a point (x, y) is within the given bounds
-    fn point_in_bounds(&self, bounds: &Rect, x: f64, y: f64) -> bool {
-        x >= bounds.x
-            && x <= bounds.x + bounds.width
-            && y >= bounds.y
-            && y <= bounds.y + bounds.height
-    }
-
     pub fn layout(&mut self) {
         self.layout_node(self.document.root.clone(), 0.0, 0.0);
     }
@@ -282,6 +225,48 @@ pub struct RenderNode {
     pub style: Arc<Style>,
     pub text: Option<String>,
     pub children: Vec<RenderNode>,
+}
+
+impl RenderNode {
+    /// Find the element at the given position (x, y).
+    ///
+    /// Returns a `Vec<Id>` where the first element is the topmost element at the position,
+    /// and subsequent elements are its parents up to the root.
+    /// This enables event bubbling by providing the full parent chain.
+    pub fn find_element_at_position(&self, x: f64, y: f64) -> Vec<Id> {
+        self.find_path_at_position(x, y).unwrap_or_default()
+    }
+
+    /// Recursively find the topmost (deepest) element that contains the given position.
+    fn find_topmost_element_at_position(&self, x: f64, y: f64) -> Option<Id> {
+        if !self.bounds.contains_point(x, y) {
+            return None;
+        }
+
+        // Check children in reverse order (later children are rendered on top)
+        for child in self.children.iter().rev() {
+            if let Some(child_id) = child.find_topmost_element_at_position(x, y) {
+                return Some(child_id);
+            }
+        }
+
+        Some(self.id)
+    }
+
+    fn find_path_at_position(&self, x: f64, y: f64) -> Option<Vec<Id>> {
+        if !self.bounds.contains_point(x, y) {
+            return None;
+        }
+
+        for child in self.children.iter().rev() {
+            if let Some(mut path) = child.find_path_at_position(x, y) {
+                path.push(self.id);
+                return Some(path);
+            }
+        }
+
+        Some(vec![self.id])
+    }
 }
 
 pub fn build_render_tree(node: Rc<RefCell<Node>>) -> RenderNode {

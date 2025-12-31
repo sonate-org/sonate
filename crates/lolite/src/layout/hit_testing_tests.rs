@@ -8,7 +8,6 @@ fn next_test_id() -> Id {
 
 #[test]
 fn test_point_in_bounds() {
-    let ctx = LayoutContext::new();
     let bounds = Rect {
         x: 10.0,
         y: 20.0,
@@ -17,15 +16,15 @@ fn test_point_in_bounds() {
     };
 
     // Point inside bounds
-    assert!(ctx.point_in_bounds(&bounds, 50.0, 30.0));
-    assert!(ctx.point_in_bounds(&bounds, 10.0, 20.0)); // Top-left corner
-    assert!(ctx.point_in_bounds(&bounds, 110.0, 70.0)); // Bottom-right corner
+    assert!(bounds.contains_point(50.0, 30.0));
+    assert!(bounds.contains_point(10.0, 20.0)); // Top-left corner
+    assert!(bounds.contains_point(110.0, 70.0)); // Bottom-right corner
 
     // Point outside bounds
-    assert!(!ctx.point_in_bounds(&bounds, 5.0, 30.0)); // Left of bounds
-    assert!(!ctx.point_in_bounds(&bounds, 150.0, 30.0)); // Right of bounds
-    assert!(!ctx.point_in_bounds(&bounds, 50.0, 10.0)); // Above bounds
-    assert!(!ctx.point_in_bounds(&bounds, 50.0, 80.0)); // Below bounds
+    assert!(!bounds.contains_point(5.0, 30.0)); // Left of bounds
+    assert!(!bounds.contains_point(150.0, 30.0)); // Right of bounds
+    assert!(!bounds.contains_point(50.0, 10.0)); // Above bounds
+    assert!(!bounds.contains_point(50.0, 80.0)); // Below bounds
 }
 
 #[test]
@@ -46,12 +45,14 @@ fn test_find_element_at_position_single_element() {
     }
 
     // Test point inside root
-    let result = ctx.find_element_at_position(50.0, 50.0);
+    let tree = build_render_tree(ctx.document.root_node());
+
+    let result = tree.find_element_at_position(50.0, 50.0);
     assert_eq!(result.len(), 1);
     assert_eq!(result[0], root_id);
 
     // Test point outside root
-    let result = ctx.find_element_at_position(250.0, 50.0);
+    let result = tree.find_element_at_position(250.0, 50.0);
     assert_eq!(result.len(), 0);
 }
 
@@ -121,32 +122,34 @@ fn test_find_element_at_position_nested_elements() {
         };
     }
 
+    let tree = build_render_tree(ctx.document.root_node());
+
     // Test clicking on grandchild - should return [grandchild, child1, root]
-    let result = ctx.find_element_at_position(40.0, 40.0);
+    let result = tree.find_element_at_position(40.0, 40.0);
     assert_eq!(result.len(), 3);
     assert_eq!(result[0], grandchild_id);
     assert_eq!(result[1], child1_id);
     assert_eq!(result[2], root_id);
 
     // Test clicking on child1 but outside grandchild - should return [child1, root]
-    let result = ctx.find_element_at_position(80.0, 80.0);
+    let result = tree.find_element_at_position(80.0, 80.0);
     assert_eq!(result.len(), 2);
     assert_eq!(result[0], child1_id);
     assert_eq!(result[1], root_id);
 
     // Test clicking on child2 - should return [child2, root]
-    let result = ctx.find_element_at_position(150.0, 40.0);
+    let result = tree.find_element_at_position(150.0, 40.0);
     assert_eq!(result.len(), 2);
     assert_eq!(result[0], child2_id);
     assert_eq!(result[1], root_id);
 
     // Test clicking on root but outside children - should return [root]
-    let result = ctx.find_element_at_position(5.0, 5.0);
+    let result = tree.find_element_at_position(5.0, 5.0);
     assert_eq!(result.len(), 1);
     assert_eq!(result[0], root_id);
 
     // Test clicking outside all elements
-    let result = ctx.find_element_at_position(250.0, 250.0);
+    let result = tree.find_element_at_position(250.0, 250.0);
     assert_eq!(result.len(), 0);
 }
 
@@ -201,20 +204,22 @@ fn test_find_element_at_position_overlapping_siblings() {
         };
     }
 
+    let tree = build_render_tree(ctx.document.root_node());
+
     // Test clicking in overlapping area - should hit child2 (last child, rendered on top)
-    let result = ctx.find_element_at_position(80.0, 80.0);
+    let result = tree.find_element_at_position(80.0, 80.0);
     assert_eq!(result.len(), 2);
     assert_eq!(result[0], child2_id);
     assert_eq!(result[1], root_id);
 
     // Test clicking in child1 only area
-    let result = ctx.find_element_at_position(30.0, 30.0);
+    let result = tree.find_element_at_position(30.0, 30.0);
     assert_eq!(result.len(), 2);
     assert_eq!(result[0], child1_id);
     assert_eq!(result[1], root_id);
 
     // Test clicking in child2 only area
-    let result = ctx.find_element_at_position(140.0, 140.0);
+    let result = tree.find_element_at_position(140.0, 140.0);
     assert_eq!(result.len(), 2);
     assert_eq!(result[0], child2_id);
     assert_eq!(result[1], root_id);
