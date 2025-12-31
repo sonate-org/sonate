@@ -43,12 +43,25 @@ impl RenderingBackend for MetalBackend {
         let mut window_attributes = WindowAttributes::default();
         window_attributes.inner_size = Some(Size::new(LogicalSize::new(800, 800)));
         window_attributes.title = "Lolite CSS - Metal".into();
+        
+        // Enable high DPI awareness on macOS
+        #[cfg(target_os = "macos")]
+        {
+            window_attributes = window_attributes.with_theme(Some(winit::window::Theme::Light));
+        }
 
         let window = event_loop
             .create_window(window_attributes)
             .expect("Failed to create window");
 
-        let (width, height) = window.inner_size().into();
+        let logical_size = window.inner_size();
+        let physical_size = window.outer_size();
+        
+        // Get the actual pixel size (accounting for DPI scaling)
+        let (width, height): (u32, u32) = logical_size.into();
+        let (physical_width, physical_height): (u32, u32) = physical_size.into();
+        
+        println!("Logical size: {}x{}, Physical size: {}x{}", width, height, physical_width, physical_height);
 
         // Create Metal device
         let device = Device::system_default()
@@ -59,7 +72,15 @@ impl RenderingBackend for MetalBackend {
         layer.set_device(&device);
         layer.set_pixel_format(metal::MTLPixelFormat::BGRA8Unorm);
         layer.set_presents_with_transaction(false);
+        
+        // Set the contents scale to match system DPI scaling
+        let scale_factor = window.scale_factor();
+        layer.set_contents_scale(scale_factor as f64);
+        
+        // Use logical size for Metal layer to match the coordinate system
         layer.set_drawable_size(CGSize::new(width as f64, height as f64));
+        
+        println!("Scale factor: {}", scale_factor);
 
         // Set up the layer with the window
         unsafe {
@@ -137,6 +158,7 @@ impl RenderingBackend for MetalBackend {
         let texture_info =
             unsafe { TextureInfo::new(drawable.texture().as_ptr() as *mut std::ffi::c_void) };
 
+        // Use the logical size for the render target to match the coordinate system
         let backend_render_target = make_mtl(
             (self.current_width as i32, self.current_height as i32),
             &texture_info,
@@ -181,10 +203,11 @@ impl RenderingBackend for MetalBackend {
 
 impl MetalBackend {
     fn recreate_surfaces(&mut self, width: u32, height: u32) -> Result<()> {
-        // Update layer drawable size
+        // Update layer drawable size and DPI scale factor
+        let scale_factor = self.window.scale_factor();
+        self.layer.set_contents_scale(scale_factor as f64);
         self.layer
             .set_drawable_size(CGSize::new(width as f64, height as f64));
-
         // Clear existing surfaces
         for surface in &mut self.surfaces {
             *surface = None;
