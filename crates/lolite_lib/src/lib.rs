@@ -1,4 +1,4 @@
-use lolite::{Engine, Id};
+use lolite::{Engine, Id, Params};
 use std::collections::HashMap;
 use std::ffi::CStr;
 use std::os::raw::{c_char, c_int};
@@ -17,6 +17,9 @@ enum EngineMode {
 
 /// Handle type for engine instances
 pub type EngineHandle = usize;
+
+/// ID type for nodes and other engine-owned objects.
+pub type LoliteId = u64;
 
 /// Thread-safe global storage for engine instances
 /// We use Box<CssEngine> to store on heap and avoid Send+Sync requirements for static storage
@@ -112,7 +115,10 @@ pub extern "C" fn lolite_add_stylesheet(handle: EngineHandle, css_content: *cons
 /// # Returns
 /// * Node ID on success, 0 on error (since root is always ID 0, we can distinguish)
 #[no_mangle]
-pub extern "C" fn lolite_create_node(handle: EngineHandle, text_content: *const c_char) -> u64 {
+pub extern "C" fn lolite_create_node(
+    handle: EngineHandle,
+    text_content: *const c_char,
+) -> LoliteId {
     if handle == 0 {
         eprintln!("Invalid engine handle");
         return 0;
@@ -158,7 +164,7 @@ pub extern "C" fn lolite_create_node(handle: EngineHandle, text_content: *const 
 /// # Returns
 /// * 0 on success, -1 on error
 #[no_mangle]
-pub extern "C" fn lolite_set_parent(handle: EngineHandle, parent_id: u64, child_id: u64) {
+pub extern "C" fn lolite_set_parent(handle: EngineHandle, parent_id: LoliteId, child_id: LoliteId) {
     if handle == 0 {
         eprintln!("Invalid engine handle");
         return;
@@ -195,7 +201,7 @@ pub extern "C" fn lolite_set_parent(handle: EngineHandle, parent_id: u64, child_
 #[no_mangle]
 pub extern "C" fn lolite_set_attribute(
     handle: EngineHandle,
-    node_id: u64,
+    node_id: LoliteId,
     key: *const c_char,
     value: *const c_char,
 ) {
@@ -250,7 +256,7 @@ pub extern "C" fn lolite_set_attribute(
 /// # Returns
 /// * Root node ID (always 0 for the document root), or 0 if handle is invalid
 #[no_mangle]
-pub extern "C" fn lolite_root_id(handle: EngineHandle) -> u64 {
+pub extern "C" fn lolite_root_id(handle: EngineHandle) -> LoliteId {
     if handle == 0 {
         eprintln!("Invalid engine handle");
         return 0;
@@ -267,6 +273,46 @@ pub extern "C" fn lolite_root_id(handle: EngineHandle) -> u64 {
         None => {
             eprintln!("Engine handle not found");
             0
+        }
+    }
+}
+
+/// Run the engine event loop (blocking).
+///
+/// # Arguments
+/// * `handle` - Engine handle returned from lolite_init
+///
+/// # Returns
+/// * 0 on success, -1 on error
+#[no_mangle]
+pub extern "C" fn lolite_run(handle: EngineHandle) -> c_int {
+    if handle == 0 {
+        eprintln!("Invalid engine handle");
+        return -1;
+    }
+
+    // IMPORTANT: do not hold the global lock while running the event loop.
+    // Take a clone of the engine and drop the lock before calling into run().
+    let engine = {
+        let instances = ENGINE_INSTANCES.lock().unwrap();
+        match instances.get(&handle) {
+            Some(EngineMode::SameProcess(engine)) => engine.as_ref().clone(),
+            Some(EngineMode::WorkerProcess(_worker)) => {
+                eprintln!("Worker process mode not yet implemented for run");
+                return -1;
+            }
+            None => {
+                eprintln!("Engine handle not found");
+                return -1;
+            }
+        }
+    };
+
+    match engine.run(Params { on_click: None }) {
+        Ok(()) => 0,
+        Err(err) => {
+            eprintln!("lolite_run failed: {:?}", err);
+            -1
         }
     }
 }

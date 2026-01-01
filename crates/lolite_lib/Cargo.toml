@@ -17,4 +17,5 @@ name = "rust_usage"
 path = "../../examples/rust_usage/rust_usage.rs"
 
 [lib]
-crate-type = ["cdylib", "lib"]
+crate-type = ["cdylib"]
+name = "lolite"
