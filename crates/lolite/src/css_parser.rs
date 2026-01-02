@@ -358,6 +358,10 @@ impl<'i> DeclarationParser<'i> for StyleDeclarationParser {
             "flex-basis" => {
                 style.flex_basis = Some(self.parse_length_value(input)?);
             }
+            "order" => {
+                let value = input.expect_number()?;
+                style.order = Some(value as i32);
+            }
             "gap" => {
                 style.gap = Some(self.parse_length_value(input)?);
             }

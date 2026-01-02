@@ -78,12 +78,16 @@ impl FlexLayoutEngine {
         let content_width = container_width - padding_left - padding_right;
         let content_height = container_height - padding_top - padding_bottom;
 
-        // First pass: layout all children to get their natural sizes
-        let children = container.borrow().children.clone();
+        // First pass: layout all children to get their computed styles and natural sizes
+        let mut children = container.borrow().children.clone();
         for child in &children {
             // Recursively layout child first (this will apply its styles and set its dimensions)
             engine.layout_node(child.clone(), 0.0, 0.0);
         }
+
+        // Apply CSS `order` on flex items by sorting children for layout purposes.
+        // Note: this does not mutate the document tree; it only affects layout order.
+        children.sort_by_key(|child| child.borrow().layout.style.order.unwrap_or(0));
 
         // Second pass: position children based on flex direction and wrapping
         match flex_direction {

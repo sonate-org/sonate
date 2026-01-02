@@ -145,6 +145,7 @@ pub struct Style {
     pub flex_shrink: Option<f64>,
     pub flex_basis: Option<Length>,
     pub align_self: Option<AlignSelf>,
+    pub order: Option<i32>,
 }
 
 pub struct StyleSheet {
