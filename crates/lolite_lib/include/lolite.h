@@ -48,12 +48,16 @@ LOLITE_API void lolite_add_stylesheet(lolite_engine_handle_t handle, const char*
 /*
  * Create a new document node.
  *
- * text_content: optional null-terminated UTF-8 string (may be NULL)
+ * node_id:
+ *   caller-provided node id (must be non-zero; 0 is reserved for root)
+ *
+ * text_content:
+ *   optional null-terminated UTF-8 string (may be NULL)
  *
  * Returns:
- *   node id on success, 0 on error
+ *   node_id on success, 0 on error
  */
-LOLITE_API lolite_id_t lolite_create_node(lolite_engine_handle_t handle, const char* text_content);
+LOLITE_API lolite_id_t lolite_create_node(lolite_engine_handle_t handle, lolite_id_t node_id, const char* text_content);
 
 /*
  * Set parent-child relationship between nodes.

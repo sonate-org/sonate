@@ -1,23 +1,17 @@
-use crate::EngineHandle;
+use crate::engine_backend::{EngineBackend, LoliteId};
 use ipc_channel::ipc::{self, IpcOneShotServer, IpcSender};
-use std::ffi::CStr;
-use std::os::raw::c_char;
+use std::os::raw::c_int;
 use std::path::PathBuf;
-use std::process::{Command, Stdio};
+use std::process::{Child, Command, Stdio};
 
-#[cfg(windows)]
-const WORKER_FILE: &str = "lolite_worker.exe";
-#[cfg(not(windows))]
-const WORKER_FILE: &str = "lolite_worker";
-
-pub struct WorkerInstance {
-    #[allow(dead_code)]
-    process: std::process::Child,
+pub struct WorkerBackend {
+    handle: usize,
+    process: Child,
     sender: IpcSender<lolite_common::WorkerRequest>,
 }
 
-impl WorkerInstance {
-    pub fn new() -> std::io::Result<WorkerInstance> {
+impl WorkerBackend {
+    pub fn new(handle: usize) -> std::io::Result<Self> {
         // Worker connects back and sends an IpcSender that we can use to send requests.
         let (server, server_name) =
             IpcOneShotServer::<IpcSender<lolite_common::WorkerRequest>>::new()
@@ -29,48 +23,48 @@ impl WorkerInstance {
             .accept()
             .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
 
-        Ok(WorkerInstance { process, sender })
+        let backend = Self {
+            handle,
+            process,
+            sender,
+        };
+
+        backend.init_internal();
+        Ok(backend)
     }
 
-    pub fn init(&self, handle: EngineHandle) {
+    fn init_internal(&self) {
         if let Err(e) = self
             .sender
             .send(lolite_common::WorkerRequest::InitInternal {
-                handle: handle as u64,
+                handle: self.handle as u64,
             })
         {
             eprintln!("Failed to send InitInternal to worker: {e}");
         }
     }
 
-    pub fn add_stylesheet(&self, handle: EngineHandle, css_content: *const c_char) {
-        if css_content.is_null() {
-            eprintln!("CSS content is null");
-            return;
-        }
+    fn shutdown(&self) {
+        let _ = self.sender.send(lolite_common::WorkerRequest::Shutdown);
+    }
+}
 
-        let css_str = match unsafe { CStr::from_ptr(css_content) }.to_str() {
-            Ok(s) => s.to_string(),
-            Err(e) => {
-                eprintln!("Invalid UTF-8 in CSS content: {e}");
-                return;
-            }
-        };
-
+impl EngineBackend for WorkerBackend {
+    fn add_stylesheet(&self, css: String) {
         if let Err(e) = self
             .sender
             .send(lolite_common::WorkerRequest::AddStylesheet {
-                handle: handle as u64,
-                css: css_str,
+                handle: self.handle as u64,
+                css,
             })
         {
             eprintln!("Failed to send AddStylesheet to worker: {e}");
         }
     }
 
-    pub fn create_node(&self, handle: EngineHandle, node_id: u64, text: Option<String>) {
+    fn create_node(&self, node_id: LoliteId, text: Option<String>) {
         if let Err(e) = self.sender.send(lolite_common::WorkerRequest::CreateNode {
-            handle: handle as u64,
+            handle: self.handle as u64,
             node_id,
             text,
         }) {
@@ -78,9 +72,9 @@ impl WorkerInstance {
         }
     }
 
-    pub fn set_parent(&self, handle: EngineHandle, parent_id: u64, child_id: u64) {
+    fn set_parent(&self, parent_id: LoliteId, child_id: LoliteId) {
         if let Err(e) = self.sender.send(lolite_common::WorkerRequest::SetParent {
-            handle: handle as u64,
+            handle: self.handle as u64,
             parent_id,
             child_id,
         }) {
@@ -88,48 +82,21 @@ impl WorkerInstance {
         }
     }
 
-    pub fn set_attribute(
-        &self,
-        handle: EngineHandle,
-        node_id: u64,
-        key: *const c_char,
-        value: *const c_char,
-    ) {
-        if key.is_null() || value.is_null() {
-            eprintln!("Key or value is null");
-            return;
-        }
-
-        let key_str = match unsafe { CStr::from_ptr(key) }.to_str() {
-            Ok(s) => s.to_string(),
-            Err(e) => {
-                eprintln!("Invalid UTF-8 in attribute key: {e}");
-                return;
-            }
-        };
-
-        let value_str = match unsafe { CStr::from_ptr(value) }.to_str() {
-            Ok(s) => s.to_string(),
-            Err(e) => {
-                eprintln!("Invalid UTF-8 in attribute value: {e}");
-                return;
-            }
-        };
-
+    fn set_attribute(&self, node_id: LoliteId, key: String, value: String) {
         if let Err(e) = self
             .sender
             .send(lolite_common::WorkerRequest::SetAttribute {
-                handle: handle as u64,
+                handle: self.handle as u64,
                 node_id,
-                key: key_str,
-                value: value_str,
+                key,
+                value,
             })
         {
             eprintln!("Failed to send SetAttribute to worker: {e}");
         }
     }
 
-    pub fn root_id(&self, handle: EngineHandle) -> u64 {
+    fn root_id(&self) -> LoliteId {
         let (reply_tx, reply_rx) = match ipc::channel::<u64>() {
             Ok(ch) => ch,
             Err(e) => {
@@ -139,7 +106,7 @@ impl WorkerInstance {
         };
 
         if let Err(e) = self.sender.send(lolite_common::WorkerRequest::RootId {
-            handle: handle as u64,
+            handle: self.handle as u64,
             reply_to: reply_tx,
         }) {
             eprintln!("Failed to send RootId to worker: {e}");
@@ -155,7 +122,7 @@ impl WorkerInstance {
         }
     }
 
-    pub fn run(&self, handle: EngineHandle) -> i32 {
+    fn run(&self) -> c_int {
         let (reply_tx, reply_rx) = match ipc::channel::<i32>() {
             Ok(ch) => ch,
             Err(e) => {
@@ -165,7 +132,7 @@ impl WorkerInstance {
         };
 
         if let Err(e) = self.sender.send(lolite_common::WorkerRequest::Run {
-            handle: handle as u64,
+            handle: self.handle as u64,
             reply_to: reply_tx,
         }) {
             eprintln!("Failed to send Run to worker: {e}");
@@ -181,7 +148,7 @@ impl WorkerInstance {
         }
     }
 
-    pub fn destroy_engine(&self, handle: EngineHandle) -> i32 {
+    fn destroy(&self) -> c_int {
         let (reply_tx, reply_rx) = match ipc::channel::<i32>() {
             Ok(ch) => ch,
             Err(e) => {
@@ -191,7 +158,7 @@ impl WorkerInstance {
         };
 
         if let Err(e) = self.sender.send(lolite_common::WorkerRequest::Destroy {
-            handle: handle as u64,
+            handle: self.handle as u64,
             reply_to: reply_tx,
         }) {
             eprintln!("Failed to send Destroy to worker: {e}");
@@ -208,14 +175,19 @@ impl WorkerInstance {
     }
 }
 
-impl Drop for WorkerInstance {
+impl Drop for WorkerBackend {
     fn drop(&mut self) {
-        let _ = self.sender.send(lolite_common::WorkerRequest::Shutdown);
+        self.shutdown();
         let _ = self.process.kill();
     }
 }
 
-fn spawn_worker(method: &str, connection_key: &str) -> std::io::Result<std::process::Child> {
+#[cfg(windows)]
+const WORKER_FILE: &str = "lolite_worker.exe";
+#[cfg(not(windows))]
+const WORKER_FILE: &str = "lolite_worker";
+
+fn spawn_worker(method: &str, connection_key: &str) -> std::io::Result<Child> {
     let worker_path = resolve_worker_path().expect("Failed to resolve worker path");
 
     println!("Running worker at {worker_path:?}");

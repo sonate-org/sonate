@@ -10,7 +10,7 @@ type EngineHandle = usize;
 
 type LoliteInitInternal = unsafe extern "C" fn(EngineHandle);
 type LoliteAddStylesheet = unsafe extern "C" fn(EngineHandle, *const c_char);
-type LoliteCreateNodeInternal = unsafe extern "C" fn(EngineHandle, u64, *const c_char);
+type LoliteCreateNode = unsafe extern "C" fn(EngineHandle, u64, *const c_char) -> u64;
 type LoliteSetParent = unsafe extern "C" fn(EngineHandle, u64, u64);
 type LoliteSetAttribute = unsafe extern "C" fn(EngineHandle, u64, *const c_char, *const c_char);
 type LoliteRootId = unsafe extern "C" fn(EngineHandle) -> u64;
@@ -60,9 +60,9 @@ fn main() {
         let lolite_add_stylesheet: libloading::Symbol<LoliteAddStylesheet> = lib
             .get(b"lolite_add_stylesheet\0")
             .expect("worker: missing symbol lolite_add_stylesheet");
-        let lolite_create_node_internal: libloading::Symbol<LoliteCreateNodeInternal> = lib
-            .get(b"lolite_create_node_internal\0")
-            .expect("worker: missing symbol lolite_create_node_internal");
+        let lolite_create_node: libloading::Symbol<LoliteCreateNode> = lib
+            .get(b"lolite_create_node\0")
+            .expect("worker: missing symbol lolite_create_node");
         let lolite_set_parent: libloading::Symbol<LoliteSetParent> = lib
             .get(b"lolite_set_parent\0")
             .expect("worker: missing symbol lolite_set_parent");
@@ -107,7 +107,7 @@ fn main() {
                 } => {
                     match text {
                         None => {
-                            lolite_create_node_internal(
+                            let _ = lolite_create_node(
                                 handle as EngineHandle,
                                 node_id,
                                 std::ptr::null(),
@@ -115,7 +115,7 @@ fn main() {
                         }
                         Some(s) => match CString::new(s) {
                             Ok(c_text) => {
-                                lolite_create_node_internal(
+                                let _ = lolite_create_node(
                                     handle as EngineHandle,
                                     node_id,
                                     c_text.as_ptr(),
