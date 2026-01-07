@@ -131,6 +131,13 @@ pub enum AlignSelf {
     Stretch,
 }
 
+#[derive(Clone, Copy, Default, Debug, PartialEq)]
+pub enum BoxSizing {
+    #[default]
+    ContentBox,
+    BorderBox,
+}
+
 #[derive(Clone, Default, MergeProperties)]
 pub struct Style {
     pub display: Display,
@@ -138,6 +145,7 @@ pub struct Style {
     pub border_color: Option<Rgba>,
     pub border_width: Option<Length>,
     pub border_radius: Option<BorderRadius>,
+    pub box_sizing: Option<BoxSizing>,
     pub margin: Option<Extend>,
     pub margin_top: Option<Length>,
     pub margin_right: Option<Length>,

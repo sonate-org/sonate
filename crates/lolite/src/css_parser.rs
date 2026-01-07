@@ -1,6 +1,6 @@
 use crate::style::{
-    AlignContent, AlignItems, AlignSelf, BorderRadius, Display, Extend, FlexDirection, FlexWrap,
-    JustifyContent, Length, Rgba, Rule, Selector, Style, StyleSheet,
+    AlignContent, AlignItems, AlignSelf, BorderRadius, BoxSizing, Display, Extend, FlexDirection,
+    FlexWrap, JustifyContent, Length, Rgba, Rule, Selector, Style, StyleSheet,
 };
 use cssparser::{
     AtRuleParser, CowRcStr, DeclarationParser, ParseError, Parser, ParserInput, ParserState,
@@ -244,6 +244,14 @@ impl<'i> DeclarationParser<'i> for StyleDeclarationParser {
                     top_right: second,
                     bottom_right: third,
                     bottom_left: fourth,
+                });
+            }
+            "box-sizing" => {
+                let ident = input.expect_ident()?;
+                style.box_sizing = Some(match ident.as_ref() {
+                    "content-box" => BoxSizing::ContentBox,
+                    "border-box" => BoxSizing::BorderBox,
+                    _ => return Err(input.new_error_for_next_token()),
                 });
             }
             "width" => {

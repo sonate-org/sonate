@@ -1,5 +1,5 @@
 use crate::css_parser::parse_css;
-use crate::style::{Display, Length, Selector};
+use crate::style::{BoxSizing, Display, Length, Selector};
 
 #[test]
 fn test_parse_simple_css_document() {
@@ -237,6 +237,31 @@ fn test_whitespace_only_css() {
     let css = "   \n\t  \n  ";
     let stylesheet = parse_css(css).expect("Failed to parse whitespace CSS");
     assert_eq!(stylesheet.rules.len(), 0);
+}
+
+#[test]
+fn test_parse_box_sizing() {
+    let css = r#"
+        .a { box-sizing: border-box; }
+        .b { box-sizing: content-box; }
+    "#;
+
+    let stylesheet = parse_css(css).expect("Failed to parse CSS");
+    assert_eq!(stylesheet.rules.len(), 2);
+
+    let a = &stylesheet.rules[0];
+    assert_eq!(a.selector, Selector::Class("a".to_string()));
+    assert!(a
+        .declarations
+        .iter()
+        .any(|d| d.box_sizing == Some(BoxSizing::BorderBox)));
+
+    let b = &stylesheet.rules[1];
+    assert_eq!(b.selector, Selector::Class("b".to_string()));
+    assert!(b
+        .declarations
+        .iter()
+        .any(|d| d.box_sizing == Some(BoxSizing::ContentBox)));
 }
 
 #[test]

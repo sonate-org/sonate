@@ -75,3 +75,23 @@ fn case_6_margin_20px_0() {
     ctx.assert_node_bounds_eq(child2, &Rect::new(60.0, 20.0, 60.0, 40.0));
     ctx.assert_node_bounds_eq(child3, &Rect::new(120.0, 0.0, 60.0, 40.0));
 }
+
+#[test]
+fn case_container_padding() {
+    let (ctx, container, child1, child2, child3) = setup_margin_demo_ctx("case_padding");
+
+    ctx.assert_node_bounds_eq(container, &Rect::new(0.0, 0.0, 440.0, 240.0));
+    ctx.assert_node_bounds_eq(child1, &Rect::new(20.0, 20.0, 60.0, 40.0));
+    ctx.assert_node_bounds_eq(child2, &Rect::new(190.0, 20.0, 60.0, 40.0));
+    ctx.assert_node_bounds_eq(child3, &Rect::new(360.0, 20.0, 60.0, 40.0));
+}
+
+#[test]
+fn case_container_border_box() {
+    let (ctx, container, child1, child2, child3) = setup_margin_demo_ctx("case_padding_border_box");
+
+    ctx.assert_node_bounds_eq(container, &Rect::new(0.0, 0.0, 400.0, 200.0));
+    ctx.assert_node_bounds_eq(child1, &Rect::new(20.0, 20.0, 60.0, 40.0));
+    ctx.assert_node_bounds_eq(child2, &Rect::new(170.0, 20.0, 60.0, 40.0));
+    ctx.assert_node_bounds_eq(child3, &Rect::new(320.0, 20.0, 60.0, 40.0));
+}

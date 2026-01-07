@@ -564,12 +564,10 @@ fn test_item_with_padding() {
     assert_eq!(x, 0.0);
     assert_eq!(y, 0.0);
 
-    // Item size should include padding in the total bounds
-    // The content area is 100x50, but the total bounds should include padding
-    // This depends on how we implement padding - whether it's internal or adds to size
-    // For now, let's assume padding is internal (reduces content area)
-    assert_eq!(w, 100.0);
-    assert_eq!(h, 50.0);
+    // With the CSS default `box-sizing: content-box`, the specified width/height apply
+    // to the content box, so the border-box grows by padding.
+    assert_eq!(w, 120.0);
+    assert_eq!(h, 70.0);
 }
 
 #[test]

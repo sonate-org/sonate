@@ -38,6 +38,18 @@ Note: This is a demonstration for the tests but not used in the actual tests
   <div class="child margin_cross_20px" id="child2">child2</div>
   <div class="child" id="child3">child2</div>
 </div>
+<p>padding</p>
+<div class="flex_container padding" id="case_padding">
+  <div class="child" id="child1">child1</div>
+  <div class="child" id="child2">child2</div>
+  <div class="child" id="child3">child2</div>
+</div>
+<p>padding border-box</p>
+<div class="flex_container padding border_box" id="case_padding_border_box">
+  <div class="child" id="child1">child1</div>
+  <div class="child" id="child2">child2</div>
+  <div class="child" id="child3">child2</div>
+</div>
 <style>
   .flex_container {
     display: flex;
@@ -79,5 +91,14 @@ Note: This is a demonstration for the tests but not used in the actual tests
 
   .margin_cross_20px {
     margin: 20px 0;
+  }
+
+  .padding {
+    padding: 20px;
+    justify-content: space-between;
+  }
+
+  .border_box {
+    box-sizing: border-box;
   }
 </style>

@@ -1,5 +1,7 @@
 use crate::layout::{LayoutContext, Node};
-use crate::style::{AlignItems, AlignSelf, FlexDirection, FlexWrap, JustifyContent, Length, Style};
+use crate::style::{
+    AlignItems, AlignSelf, BoxSizing, FlexDirection, FlexWrap, JustifyContent, Length, Style,
+};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -467,14 +469,29 @@ fn base_sizes_for_item(
     // Where flex-basis will later be handled: this function is the current stand-in for
     // §9.2 #3 “flex base size / hypothetical main size” rules.
 
-    let width_opt = style.width.as_ref().map(|l| l.to_px()).filter(|v| *v > 0.0);
-    let height_opt = style
-        .height
-        .as_ref()
-        .map(|l| l.to_px())
-        .filter(|v| *v > 0.0);
+    let padding = style.padding.as_ref().cloned().unwrap_or_default();
+    let padding_w = padding.left.to_px() + padding.right.to_px();
+    let padding_h = padding.top.to_px() + padding.bottom.to_px();
+    let border_sum = style.border_width.map(|w| w.to_px() * 2.0).unwrap_or(0.0);
+    let box_sizing = style.box_sizing.unwrap_or(BoxSizing::ContentBox);
 
-    // TODO handle proper size
+    let width_opt = match style.width {
+        Some(Length::Px(px)) if px > 0.0 => Some(match box_sizing {
+            BoxSizing::ContentBox => px + padding_w + border_sum,
+            BoxSizing::BorderBox => px,
+        }),
+        _ => None,
+    };
+    let height_opt = match style.height {
+        Some(Length::Px(px)) if px > 0.0 => Some(match box_sizing {
+            BoxSizing::ContentBox => px + padding_h + border_sum,
+            BoxSizing::BorderBox => px,
+        }),
+        _ => None,
+    };
+
+    // TODO handle proper size.
+    // These defaults are border-box sizes.
     let width = width_opt.unwrap_or(100.0);
     let height = height_opt.unwrap_or(30.0);
 
@@ -530,20 +547,39 @@ fn is_definite_container_content_box_size(
     direction: &FlexDirection,
     axis: Axis,
 ) -> bool {
+    matches!(
+        specified_axis_length(style, direction, axis),
+        Some(Length::Px(_))
+    )
+}
+
+fn specified_axis_length(style: &Style, direction: &FlexDirection, axis: Axis) -> Option<Length> {
     match (direction, axis) {
-        (FlexDirection::Row | FlexDirection::RowReverse, Axis::Main) => {
-            matches!(style.width, Some(Length::Px(_)))
-        }
-        (FlexDirection::Row | FlexDirection::RowReverse, Axis::Cross) => {
-            matches!(style.height, Some(Length::Px(_)))
-        }
-        (FlexDirection::Column | FlexDirection::ColumnReverse, Axis::Main) => {
-            matches!(style.height, Some(Length::Px(_)))
-        }
-        (FlexDirection::Column | FlexDirection::ColumnReverse, Axis::Cross) => {
-            matches!(style.width, Some(Length::Px(_)))
-        }
+        (FlexDirection::Row | FlexDirection::RowReverse, Axis::Main) => style.width,
+        (FlexDirection::Row | FlexDirection::RowReverse, Axis::Cross) => style.height,
+        (FlexDirection::Column | FlexDirection::ColumnReverse, Axis::Main) => style.height,
+        (FlexDirection::Column | FlexDirection::ColumnReverse, Axis::Cross) => style.width,
     }
+}
+
+fn content_box_axis_size(
+    container_axis_border_box: f64,
+    style: &Style,
+    direction: &FlexDirection,
+    axis: Axis,
+) -> f64 {
+    let padding = axis_padding_sum_px(style, direction, axis);
+    let border = axis_border_sum_px(style, direction, axis);
+
+    let box_sizing = style.box_sizing.unwrap_or(BoxSizing::ContentBox);
+    if let Some(Length::Px(px)) = specified_axis_length(style, direction, axis) {
+        return match box_sizing {
+            BoxSizing::ContentBox => px,
+            BoxSizing::BorderBox => (px - padding - border).max(0.0),
+        };
+    }
+
+    (container_axis_border_box - padding - border).max(0.0)
 }
 
 fn determine_available_space(
@@ -552,21 +588,12 @@ fn determine_available_space(
     direction: &FlexDirection,
     axis: Axis,
 ) -> f64 {
-    // §9.2 #2
-    if is_definite_container_content_box_size(style, direction, axis) {
-        return container_axis_size;
-    }
-
-    // TODO: If the flex container is being sized under a min/max-content constraint,
-    // the available space is that constraint. Lolite currently has no constraint plumbing.
-
-    // Otherwise, subtract margin/border/padding from the space available to the container.
-    // In this engine, `container_axis_size` is already the size we’re laying out into; we can
-    // at least account for padding/border to approximate the inner available space.
-    let padding = axis_padding_sum_px(style, direction, axis);
-    let border = axis_border_sum_px(style, direction, axis);
-
-    (container_axis_size - padding - border).max(0.0)
+    // §9.2 #2 Determine the available space in the container's content box.
+    // Lolite stores `container_axis_size` as the border-box size.
+    // If the container has a definite size, we derive the content-box size using `box-sizing`.
+    // Otherwise, we approximate by subtracting padding/border from the border-box.
+    let _is_definite = is_definite_container_content_box_size(style, direction, axis);
+    content_box_axis_size(container_axis_size, style, direction, axis)
 }
 
 fn axis_padding_sum_px(style: &Style, direction: &FlexDirection, axis: Axis) -> f64 {
@@ -588,7 +615,6 @@ fn axis_padding_sum_px(style: &Style, direction: &FlexDirection, axis: Axis) -> 
 
 fn axis_border_sum_px(style: &Style, _direction: &FlexDirection, _axis: Axis) -> f64 {
     // Lolite currently models a single uniform border width.
-    // TODO should depend on box-sizing?
     style.border_width.map(|w| w.to_px() * 2.0).unwrap_or(0.0)
 }
 

@@ -1,6 +1,6 @@
 use crate::{
     flex_layout::FlexLayoutEngine,
-    style::{Selector, Style, StyleSheet},
+    style::{BoxSizing, Length, Selector, Style, StyleSheet},
     Id,
 };
 use std::{cell::RefCell, collections::HashMap, rc::Rc, sync::Arc};
@@ -202,18 +202,36 @@ impl LayoutContext {
 
         let is_leaf = node.borrow().children.is_empty();
 
+        // Lolite stores `layout.bounds` as the element's border-box.
+        // `box-sizing` determines whether CSS `width/height` refer to the content-box or border-box.
+        let resolved_box_sizing = style.box_sizing.unwrap_or(BoxSizing::ContentBox);
+        let padding = style.padding.clone().unwrap_or_default();
+        let padding_w = padding.left.to_px() + padding.right.to_px();
+        let padding_h = padding.top.to_px() + padding.bottom.to_px();
+        let border_sum = style.border_width.map(|w| w.to_px() * 2.0).unwrap_or(0.0);
+
+        let resolve_border_box =
+            |specified: Option<Length>, fallback: f64, padding_sum: f64| -> f64 {
+                let Some(Length::Px(px)) = specified else {
+                    return fallback;
+                };
+
+                match resolved_box_sizing {
+                    BoxSizing::ContentBox => px + padding_sum + border_sum,
+                    BoxSizing::BorderBox => px,
+                }
+            };
+
         if is_leaf {
             // Leaf node - use specified dimensions or defaults
             let mut node_borrow = node.borrow_mut();
-            node_borrow.layout.bounds.width =
-                style.width.as_ref().map(|w| w.to_px()).unwrap_or(100.0);
-            node_borrow.layout.bounds.height =
-                style.height.as_ref().map(|h| h.to_px()).unwrap_or(30.0);
+            node_borrow.layout.bounds.width = resolve_border_box(style.width, 100.0, padding_w);
+            node_borrow.layout.bounds.height = resolve_border_box(style.height, 30.0, padding_h);
             node_borrow.layout.style = Arc::new(style);
         } else {
             // Container node - handle flexbox layout
-            let container_width = style.width.as_ref().map(|w| w.to_px()).unwrap_or(800.0);
-            let container_height = style.height.as_ref().map(|h| h.to_px()).unwrap_or(500.0);
+            let container_width = resolve_border_box(style.width, 800.0, padding_w);
+            let container_height = resolve_border_box(style.height, 500.0, padding_h);
 
             // Set container dimensions
             {
