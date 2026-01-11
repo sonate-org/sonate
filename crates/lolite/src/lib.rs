@@ -3,13 +3,9 @@ mod commands;
 mod css_parser;
 mod flex_layout;
 mod layout;
-mod named_colors;
 mod painter;
 mod style;
 mod windowing;
-
-#[cfg(test)]
-mod css_parser_tests;
 
 use commands::Command;
 use layout::RenderNode;
