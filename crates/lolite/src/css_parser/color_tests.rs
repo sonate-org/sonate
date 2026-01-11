@@ -194,6 +194,103 @@ fn test_rgb_rgba_comma_syntax() {
 }
 
 #[test]
+fn test_rgb_rgba_modern_syntax() {
+    let css = r#"
+        .a { background-color: rgb(255 0 128); }
+        .b { background-color: rgb(100% 0% 0%); }
+        .c { background-color: rgb(0 0 255 / 0.5); }
+        .d { background-color: rgba(0% 50% 100% / 25%); }
+    "#;
+
+    let stylesheet = parse_css(css).expect("Failed to parse CSS");
+    assert_eq!(stylesheet.rules.len(), 4);
+
+    let get_bg = |idx: usize| -> Rgba {
+        stylesheet.rules[idx]
+            .declarations
+            .iter()
+            .find_map(|d| d.background_color)
+            .expect("Expected background-color declaration")
+    };
+
+    assert_eq!(
+        get_bg(0),
+        Rgba {
+            r: 255,
+            g: 0,
+            b: 128,
+            a: 255
+        }
+    );
+    assert_eq!(
+        get_bg(1),
+        Rgba {
+            r: 255,
+            g: 0,
+            b: 0,
+            a: 255
+        }
+    );
+    assert_eq!(
+        get_bg(2),
+        Rgba {
+            r: 0,
+            g: 0,
+            b: 255,
+            a: 128
+        }
+    );
+    assert_eq!(
+        get_bg(3),
+        Rgba {
+            r: 0,
+            g: 128,
+            b: 255,
+            a: 64
+        }
+    );
+}
+
+#[test]
+fn test_rgb_modern_none_components() {
+    let css = r#"
+        .a { background-color: rgb(none 0 0); }
+        .b { background-color: rgb(0 none 0 / none); }
+    "#;
+
+    let stylesheet = parse_css(css).expect("Failed to parse CSS");
+    assert_eq!(stylesheet.rules.len(), 2);
+
+    let get_bg = |idx: usize| -> Rgba {
+        stylesheet.rules[idx]
+            .declarations
+            .iter()
+            .find_map(|d| d.background_color)
+            .expect("Expected background-color declaration")
+    };
+
+    assert_eq!(
+        get_bg(0),
+        Rgba {
+            r: 0,
+            g: 0,
+            b: 0,
+            a: 255
+        }
+    );
+
+    assert_eq!(
+        get_bg(1),
+        Rgba {
+            r: 0,
+            g: 0,
+            b: 0,
+            a: 255
+        }
+    );
+}
+
+#[test]
 fn test_hsl_hsla_parsing_stylesheet() {
     let css = r#"
         .a { background-color: hsl(0 100% 50%); }

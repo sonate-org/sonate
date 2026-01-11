@@ -22,6 +22,18 @@ impl StyleDeclarationParser {
         }
     }
 
+    fn parse_rgb_channel_or_none<'i, 't>(
+        &mut self,
+        input: &mut Parser<'i, 't>,
+    ) -> Result<u8, ParseError<'i, ()>> {
+        // CSS Color 4 modern rgb() syntax allows `none` components. We can't represent
+        // missing channels here, so treat them as 0.
+        if input.try_parse(|i| i.expect_ident_matching("none")).is_ok() {
+            return Ok(0);
+        }
+        self.parse_rgb_channel(input)
+    }
+
     fn parse_alpha_channel<'i, 't>(
         &mut self,
         input: &mut Parser<'i, 't>,
@@ -218,22 +230,51 @@ impl StyleDeclarationParser {
                 let func = name.as_ref();
                 if func.eq_ignore_ascii_case("rgb") {
                     input.parse_nested_block(|input| {
-                        let r = self.parse_rgb_channel(input)?;
-                        input.expect_comma()?;
-                        let g = self.parse_rgb_channel(input)?;
-                        input.expect_comma()?;
-                        let b = self.parse_rgb_channel(input)?;
-                        Ok(Rgba { r, g, b, a: 255 })
+                        // Legacy: rgb(<c>, <c>, <c>)
+                        // Modern: rgb(<c> <c> <c> [ / <alpha> ]?)
+                        let r = self.parse_rgb_channel_or_none(input)?;
+
+                        if input.try_parse(|i| i.expect_comma()).is_ok() {
+                            let g = self.parse_rgb_channel(input)?;
+                            input.expect_comma()?;
+                            let b = self.parse_rgb_channel(input)?;
+                            return Ok(Rgba { r, g, b, a: 255 });
+                        }
+
+                        let g = self.parse_rgb_channel_or_none(input)?;
+                        let b = self.parse_rgb_channel_or_none(input)?;
+                        let a = if input.try_parse(|i| i.expect_delim('/')).is_ok() {
+                            self.parse_alpha_value_u8(input)?
+                        } else {
+                            255
+                        };
+
+                        Ok(Rgba { r, g, b, a })
                     })
                 } else if func.eq_ignore_ascii_case("rgba") {
                     input.parse_nested_block(|input| {
-                        let r = self.parse_rgb_channel(input)?;
-                        input.expect_comma()?;
-                        let g = self.parse_rgb_channel(input)?;
-                        input.expect_comma()?;
-                        let b = self.parse_rgb_channel(input)?;
-                        input.expect_comma()?;
-                        let a = self.parse_alpha_channel(input)?;
+                        // Legacy: rgba(<c>, <c>, <c>, <alpha>)
+                        // Modern: rgba(<c> <c> <c> [ / <alpha> ]?)
+                        // (Modern syntax is identical to rgb(); keep `rgba()` accepted for web compatibility.)
+                        let r = self.parse_rgb_channel_or_none(input)?;
+
+                        if input.try_parse(|i| i.expect_comma()).is_ok() {
+                            let g = self.parse_rgb_channel(input)?;
+                            input.expect_comma()?;
+                            let b = self.parse_rgb_channel(input)?;
+                            input.expect_comma()?;
+                            let a = self.parse_alpha_channel(input)?;
+                            return Ok(Rgba { r, g, b, a });
+                        }
+
+                        let g = self.parse_rgb_channel_or_none(input)?;
+                        let b = self.parse_rgb_channel_or_none(input)?;
+                        let a = if input.try_parse(|i| i.expect_delim('/')).is_ok() {
+                            self.parse_alpha_value_u8(input)?
+                        } else {
+                            255
+                        };
+
                         Ok(Rgba { r, g, b, a })
                     })
                 } else if func.eq_ignore_ascii_case("hsl") || func.eq_ignore_ascii_case("hsla") {
