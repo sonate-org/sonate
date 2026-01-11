@@ -1,10 +1,30 @@
 # Compatibility
 
-This table lists the specifications enumerated in **Section 2 (Classification of CSS Specifications)** of [CSS Snapshot 2025](https://www.w3.org/TR/css-2025/).
+These tables lists the specifications enumerated in **Section 2 (Classification of CSS Specifications)** of [CSS Snapshot 2025](https://www.w3.org/TR/css-2025/).
+
+## CSS 2.1
+
+| Specification | Status |
+|---|---|
+| [Selectors](https://www.w3.org/TR/CSS2/selector.html) | |
+| [Assigning Property Values, Cascading, and Inheritance](https://www.w3.org/TR/CSS2/cascade.html) | |
+| [Media Types](https://www.w3.org/TR/CSS2/media.html) | |
+| [Box Model](https://www.w3.org/TR/CSS2/box.html) | |
+| [Visual Formatting Model](https://www.w3.org/TR/CSS2/visuren.html) | |
+| [Visual Formatting Model Details](https://www.w3.org/TR/CSS2/visudet.html) | |
+| [Visual Effects (Overflow and Clipping)](https://www.w3.org/TR/CSS2/visufx.html) | |
+| [Generated Content, Automatic Numbering, and Lists](https://www.w3.org/TR/CSS2/generate.html) | |
+| [Paged Media](https://www.w3.org/TR/CSS2/page.html) | |
+| [Colors and Backgrounds](https://www.w3.org/TR/CSS2/colors.html) | Colors are supported |
+| [Fonts](https://www.w3.org/TR/CSS2/fonts.html) | |
+| [Text](https://www.w3.org/TR/CSS2/text.html) | |
+| [Tables](https://www.w3.org/TR/CSS2/tables.html) | |
+| [User Interface](https://www.w3.org/TR/CSS2/ui.html) | |
+
+## CSS 3
 
 | Specification | Shortname | Status |
 |---|---|---|
-| CSS Level 2, latest revision (including errata) | [CSS2](https://www.w3.org/TR/CSS2/) | |
 | CSS Syntax Module Level 3 | [CSS-SYNTAX-3](https://www.w3.org/TR/css-syntax-3/) | |
 | CSS Style Attributes | [CSS-STYLE-ATTR](https://www.w3.org/TR/css-style-attr/) | |
 | Media Queries Level 3 | [CSS3-MEDIAQUERIES](https://www.w3.org/TR/css3-mediaqueries/) | |
