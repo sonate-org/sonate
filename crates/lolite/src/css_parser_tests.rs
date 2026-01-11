@@ -256,6 +256,184 @@ fn test_rgb_rgba_comma_syntax() {
 }
 
 #[test]
+fn test_hsl_hsla_parsing_stylesheet() {
+    let css = r#"
+        .a { background-color: hsl(0 100% 50%); }
+        .b { background-color: hsl(240 100% 50% / 50%); }
+        .c { background-color: hsl(120, 100%, 50%); }
+        .d { background-color: hsla(240, 100%, 50%, 0.5); }
+        .e { background-color: hsl(0.5turn 100% 50%); }
+    "#;
+
+    let stylesheet = parse_css(css).expect("Failed to parse CSS");
+    assert_eq!(stylesheet.rules.len(), 5);
+
+    let get_bg = |idx: usize| -> Rgba {
+        stylesheet.rules[idx]
+            .declarations
+            .iter()
+            .find_map(|d| d.background_color)
+            .expect("Expected background-color declaration")
+    };
+
+    assert_eq!(
+        get_bg(0),
+        Rgba {
+            r: 255,
+            g: 0,
+            b: 0,
+            a: 255
+        }
+    );
+    assert_eq!(
+        get_bg(1),
+        Rgba {
+            r: 0,
+            g: 0,
+            b: 255,
+            a: 128
+        }
+    );
+    assert_eq!(
+        get_bg(2),
+        Rgba {
+            r: 0,
+            g: 255,
+            b: 0,
+            a: 255
+        }
+    );
+    assert_eq!(
+        get_bg(3),
+        Rgba {
+            r: 0,
+            g: 0,
+            b: 255,
+            a: 128
+        }
+    );
+    // 0.5turn == 180deg -> cyan
+    assert_eq!(
+        get_bg(4),
+        Rgba {
+            r: 0,
+            g: 255,
+            b: 255,
+            a: 255
+        }
+    );
+}
+
+#[test]
+fn test_hsl_none_components_stylesheet() {
+    let css = r#"
+        .hue_none { background-color: hsl(none 100% 50%); }
+        .sat_none { background-color: hsl(120 none 50%); }
+        .light_none { background-color: hsl(120 100% none); }
+        .alpha_none { background-color: hsl(0 100% 50% / none); }
+        .all_none { background-color: hsla(none none none / none); }
+    "#;
+
+    let stylesheet = parse_css(css).expect("Failed to parse CSS");
+    assert_eq!(stylesheet.rules.len(), 5);
+
+    let get_bg = |idx: usize| -> Option<Rgba> {
+        stylesheet.rules[idx]
+            .declarations
+            .iter()
+            .find_map(|d| d.background_color)
+    };
+
+    // hue none -> treated as 0deg (red at 100%/50%)
+    assert_eq!(
+        get_bg(0),
+        Some(Rgba {
+            r: 255,
+            g: 0,
+            b: 0,
+            a: 255
+        })
+    );
+
+    // saturation none -> treated as 0 (grayscale at 50% lightness)
+    assert_eq!(
+        get_bg(1),
+        Some(Rgba {
+            r: 128,
+            g: 128,
+            b: 128,
+            a: 255
+        })
+    );
+
+    // lightness none -> treated as 0 (black)
+    assert_eq!(
+        get_bg(2),
+        Some(Rgba {
+            r: 0,
+            g: 0,
+            b: 0,
+            a: 255
+        })
+    );
+
+    // alpha none -> treated as 1 (opaque)
+    assert_eq!(
+        get_bg(3),
+        Some(Rgba {
+            r: 255,
+            g: 0,
+            b: 0,
+            a: 255
+        })
+    );
+
+    // all none -> treated as black, opaque
+    assert_eq!(
+        get_bg(4),
+        Some(Rgba {
+            r: 0,
+            g: 0,
+            b: 0,
+            a: 255
+        })
+    );
+}
+
+#[test]
+fn test_hsl_legacy_rejects_none_in_stylesheet() {
+    let css = r#"
+        .bad { background-color: hsl(0, none, 50%); }
+        .ok { background-color: hsl(0 100% 50%); }
+    "#;
+
+    // Should not panic; invalid declaration should be skipped.
+    let stylesheet = parse_css(css).expect("Failed to parse CSS");
+    assert_eq!(stylesheet.rules.len(), 2);
+
+    let bad_bg = stylesheet.rules[0]
+        .declarations
+        .iter()
+        .find_map(|d| d.background_color);
+    assert!(bad_bg.is_none(), "Expected invalid hsl() to be skipped");
+
+    let ok_bg = stylesheet.rules[1]
+        .declarations
+        .iter()
+        .find_map(|d| d.background_color)
+        .expect("Expected background-color declaration");
+    assert_eq!(
+        ok_bg,
+        Rgba {
+            r: 255,
+            g: 0,
+            b: 0,
+            a: 255
+        }
+    );
+}
+
+#[test]
 fn test_parse_lengths() {
     let css = r#"
         .length-test {
