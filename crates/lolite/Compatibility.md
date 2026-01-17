@@ -36,7 +36,7 @@ These tables lists the specifications enumerated in **Section 2 (Classification 
 | CSS Custom Properties for Cascading Variables Module Level 1 | [CSS-VARIABLES-1](https://www.w3.org/TR/css-variables-1/) | |
 | CSS Box Model Module Level 3 | [CSS-BOX-3](https://www.w3.org/TR/css-box-3/) | |
 | CSS Color Module Level 4 | [CSS-COLOR-4](https://www.w3.org/TR/css-color-4/) | Partial support. Missing `opacity`, `color: inherit`, `lab`, `lch`, `oklab`, `oklch`, `color`, `currentcolor`. Only sRGB color space supported. |
-| CSS Backgrounds and Borders Module Level 3 | [CSS-BACKGROUNDS-3](https://www.w3.org/TR/css-backgrounds-3/) | |
+| CSS Backgrounds and Borders Module Level 3 | [CSS-BACKGROUNDS-3](https://www.w3.org/TR/css-backgrounds-3/) | Partial support. Only background colors and solid borders are supported. |
 | CSS Images Module Level 3 | [CSS-IMAGES-3](https://www.w3.org/TR/css-images-3/) | |
 | CSS Fonts Module Level 3 | [CSS-FONTS-3](https://www.w3.org/TR/css-fonts-3/) | |
 | CSS Writing Modes Level 3 | [CSS-WRITING-MODES-3](https://www.w3.org/TR/css-writing-modes-3/) | |

@@ -60,6 +60,20 @@ pub struct BorderRadius {
     pub bottom_left: Length,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum BorderStyle {
+    None,
+    Hidden,
+    Solid,
+    Dotted,
+    Dashed,
+    Double,
+    Groove,
+    Ridge,
+    Inset,
+    Outset,
+}
+
 #[derive(Clone, Copy, Default)]
 pub enum Display {
     // Block,
@@ -145,6 +159,7 @@ pub struct Style {
     pub background_color: Option<Rgba>,
     pub border_color: Option<Rgba>,
     pub border_width: Option<Length>,
+    pub border_style: Option<BorderStyle>,
     pub border_radius: Option<BorderRadius>,
     pub box_sizing: Option<BoxSizing>,
     pub margin: Option<Extend>,

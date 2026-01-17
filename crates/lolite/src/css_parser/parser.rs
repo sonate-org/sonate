@@ -140,6 +140,16 @@ impl<'i> DeclarationParser<'i> for StyleDeclarationParser {
             "border-width" => {
                 style.border_width = Some(self.parse_length_value(input)?);
             }
+            "border-style" => {
+                // Parse a single <line-style> value.
+                style.border_style = Some(
+                    self.try_parse_line_style(input)?
+                        .ok_or_else(|| input.new_error_for_next_token())?,
+                );
+            }
+            "border" => {
+                self.parse_border_shorthand(input, &mut style)?;
+            }
             "border-radius" => {
                 let first = self.parse_length_value(input)?;
                 let second = input

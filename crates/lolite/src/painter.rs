@@ -1,6 +1,6 @@
 use crate::{
     layout::RenderNode,
-    style::{Length, Rgba},
+    style::{BorderStyle, Length, Rgba},
     text::{FontSpec, SkiaTextMeasurer},
 };
 use skia_safe::{Canvas, Color, Color4f, Paint, RRect, Rect};
@@ -46,19 +46,26 @@ impl<'a> Painter<'a> {
             self.canvas.draw_rrect(client_rrect, &paint);
         }
 
-        if let Some(border_width) = &style.border_width {
-            let color = style.border_color.as_ref().unwrap_or(&Rgba {
-                r: 0,
-                g: 0,
-                b: 0,
-                a: 255,
-            });
+        let border_is_hidden = matches!(
+            style.border_style,
+            Some(BorderStyle::None) | Some(BorderStyle::Hidden)
+        );
 
-            let mut paint = Paint::new(color.to_color4f(), None);
-            paint.set_style(skia_safe::paint::Style::Stroke);
-            paint.set_stroke_width(border_width.to_px() as f32);
-            paint.set_anti_alias(true);
-            self.canvas.draw_rrect(client_rrect, &paint);
+        if !border_is_hidden {
+            if let Some(border_width) = &style.border_width {
+                let color = style.border_color.as_ref().unwrap_or(&Rgba {
+                    r: 0,
+                    g: 0,
+                    b: 0,
+                    a: 255,
+                });
+
+                let mut paint = Paint::new(color.to_color4f(), None);
+                paint.set_style(skia_safe::paint::Style::Stroke);
+                paint.set_stroke_width(border_width.to_px() as f32);
+                paint.set_anti_alias(true);
+                self.canvas.draw_rrect(client_rrect, &paint);
+            }
         }
 
         // Draw the node's text if it has any
