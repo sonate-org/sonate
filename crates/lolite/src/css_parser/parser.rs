@@ -137,8 +137,32 @@ impl<'i> DeclarationParser<'i> for StyleDeclarationParser {
             "border-color" => {
                 style.border_color = Directional::set_all(Some(self.parse_color_value(input)?));
             }
+            "border-top-color" => {
+                self.parse_border_side_color(input, &mut style.border_color.top)?;
+            }
+            "border-right-color" => {
+                self.parse_border_side_color(input, &mut style.border_color.right)?;
+            }
+            "border-bottom-color" => {
+                self.parse_border_side_color(input, &mut style.border_color.bottom)?;
+            }
+            "border-left-color" => {
+                self.parse_border_side_color(input, &mut style.border_color.left)?;
+            }
             "border-width" => {
                 style.border_width = Directional::set_all(Some(self.parse_length_value(input)?));
+            }
+            "border-top-width" => {
+                self.parse_border_side_width(input, &mut style.border_width.top)?;
+            }
+            "border-right-width" => {
+                self.parse_border_side_width(input, &mut style.border_width.right)?;
+            }
+            "border-bottom-width" => {
+                self.parse_border_side_width(input, &mut style.border_width.bottom)?;
+            }
+            "border-left-width" => {
+                self.parse_border_side_width(input, &mut style.border_width.left)?;
             }
             "border-style" => {
                 // Parse a single <line-style> value.
@@ -146,6 +170,18 @@ impl<'i> DeclarationParser<'i> for StyleDeclarationParser {
                     .try_parse_line_style(input)?
                     .ok_or_else(|| input.new_error_for_next_token())?;
                 style.border_style = Directional::set_all(Some(v));
+            }
+            "border-top-style" => {
+                self.parse_border_side_style(input, &mut style.border_style.top)?;
+            }
+            "border-right-style" => {
+                self.parse_border_side_style(input, &mut style.border_style.right)?;
+            }
+            "border-bottom-style" => {
+                self.parse_border_side_style(input, &mut style.border_style.bottom)?;
+            }
+            "border-left-style" => {
+                self.parse_border_side_style(input, &mut style.border_style.left)?;
             }
             "border" => {
                 self.parse_border_shorthand(input, &mut style)?;

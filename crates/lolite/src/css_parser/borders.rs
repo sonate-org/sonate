@@ -1,5 +1,5 @@
 use super::parser::StyleDeclarationParser;
-use crate::style::{BorderStyle, Directional, Length, Radius, Style};
+use crate::style::{BorderStyle, Directional, Length, Radius, Rgba, Style};
 use cssparser::{ParseError, Parser};
 
 impl StyleDeclarationParser {
@@ -211,6 +211,49 @@ impl StyleDeclarationParser {
             return Err(input.new_error_for_next_token());
         }
         *corner = Some(radius);
+        Ok(())
+    }
+
+    pub(crate) fn parse_border_side_color<'i, 't>(
+        &mut self,
+        input: &mut Parser<'i, 't>,
+        side: &mut Option<Rgba>,
+    ) -> Result<(), ParseError<'i, ()>> {
+        let color = self.parse_color_value(input)?;
+        if !input.is_exhausted() {
+            return Err(input.new_error_for_next_token());
+        }
+        *side = Some(color);
+        Ok(())
+    }
+
+    pub(crate) fn parse_border_side_width<'i, 't>(
+        &mut self,
+        input: &mut Parser<'i, 't>,
+        side: &mut Option<Length>,
+    ) -> Result<(), ParseError<'i, ()>> {
+        let width = self
+            .try_parse_line_width(input)?
+            .ok_or_else(|| input.new_error_for_next_token())?;
+        if !input.is_exhausted() {
+            return Err(input.new_error_for_next_token());
+        }
+        *side = Some(width);
+        Ok(())
+    }
+
+    pub(crate) fn parse_border_side_style<'i, 't>(
+        &mut self,
+        input: &mut Parser<'i, 't>,
+        side: &mut Option<BorderStyle>,
+    ) -> Result<(), ParseError<'i, ()>> {
+        let v = self
+            .try_parse_line_style(input)?
+            .ok_or_else(|| input.new_error_for_next_token())?;
+        if !input.is_exhausted() {
+            return Err(input.new_error_for_next_token());
+        }
+        *side = Some(v);
         Ok(())
     }
 }

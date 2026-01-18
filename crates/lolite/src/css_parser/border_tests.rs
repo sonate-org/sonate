@@ -241,3 +241,56 @@ fn test_parse_border_style_property() {
 
     assert!(saw_dashed, "Expected border-style to parse as dashed");
 }
+
+#[test]
+fn test_parse_border_side_longhands() {
+    let css = r#"
+        .sides {
+            border-top-color: #ff0000;
+            border-right-style: dotted;
+            border-bottom-width: thick;
+            border-left-width: 2px;
+        }
+    "#;
+
+    let stylesheet = parse_css(css).expect("Failed to parse CSS");
+    assert_eq!(stylesheet.rules.len(), 1);
+
+    let rule = &stylesheet.rules[0];
+    assert_eq!(rule.selector, Selector::Class("sides".to_string()));
+
+    let mut saw_top_color = false;
+    let mut saw_right_style = false;
+    let mut saw_bottom_width = false;
+    let mut saw_left_width = false;
+
+    for declaration in &rule.declarations {
+        if let Some(c) = declaration.border_color.top {
+            saw_top_color = c.r == 0xFF && c.g == 0x00 && c.b == 0x00 && c.a == 0xFF;
+        }
+        if let Some(s) = declaration.border_style.right {
+            saw_right_style = s == BorderStyle::Dotted;
+        }
+        if let Some(w) = declaration.border_width.bottom {
+            saw_bottom_width = matches!(w, Length::Px(v) if (v - 5.0).abs() < f64::EPSILON);
+        }
+        if let Some(w) = declaration.border_width.left {
+            saw_left_width = matches!(w, Length::Px(v) if (v - 2.0).abs() < f64::EPSILON);
+        }
+
+        // Ensure we didn't accidentally set other sides for these.
+        assert!(declaration.border_color.right.is_none());
+        assert!(declaration.border_color.bottom.is_none());
+        assert!(declaration.border_color.left.is_none());
+        assert!(declaration.border_style.top.is_none());
+        assert!(declaration.border_style.bottom.is_none());
+        assert!(declaration.border_style.left.is_none());
+        assert!(declaration.border_width.top.is_none());
+        assert!(declaration.border_width.right.is_none());
+    }
+
+    assert!(saw_top_color);
+    assert!(saw_right_style);
+    assert!(saw_bottom_width);
+    assert!(saw_left_width);
+}
