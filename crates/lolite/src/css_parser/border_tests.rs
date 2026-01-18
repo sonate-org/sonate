@@ -20,15 +20,17 @@ fn test_parse_border_shorthand_width_and_color() {
     let mut found_style = false;
 
     for declaration in &rule.declarations {
-        if let Some(width) = declaration.border_width {
+        if let Some(width) = declaration.border_width.top {
             // 2px
-            found_width =
-                matches!(width, crate::style::Length::Px(v) if (v - 2.0).abs() < f64::EPSILON);
+            found_width = matches!(
+                width,
+                crate::style::Length::Px(v) if (v - 2.0).abs() < f64::EPSILON
+            );
         }
-        if let Some(color) = declaration.border_color {
-            found_color = color.r == 0x00 && color.g == 0x56 && color.b == 0xB3 && color.a == 0xFF;
+        if let Some(c) = declaration.border_color.top {
+            found_color = c.r == 0x00 && c.g == 0x56 && c.b == 0xB3 && c.a == 0xFF;
         }
-        if let Some(style) = declaration.border_style {
+        if let Some(style) = declaration.border_style.top {
             found_style = style == BorderStyle::Solid;
         }
     }
@@ -55,11 +57,14 @@ fn test_parse_border_shorthand_none() {
     // Also ensure we did parse the style keyword.
     let mut saw_none_style = false;
     for declaration in &rule.declarations {
-        if declaration.border_style == Some(BorderStyle::None) {
+        if matches!(declaration.border_style.top, Some(BorderStyle::None)) {
             saw_none_style = true;
         }
         assert!(
-            declaration.border_width.is_none(),
+            declaration.border_width.top.is_none()
+                && declaration.border_width.right.is_none()
+                && declaration.border_width.bottom.is_none()
+                && declaration.border_width.left.is_none(),
             "Expected border: none to not force border_width"
         );
     }
@@ -88,9 +93,18 @@ fn test_parse_border_shorthand_rejects_duplicate_width() {
         if matches!(declaration.width, Some(Length::Px(v)) if (v - 10.0).abs() < f64::EPSILON) {
             saw_width_decl = true;
         }
-        if declaration.border_width.is_some()
-            || declaration.border_color.is_some()
-            || declaration.border_style.is_some()
+        if declaration.border_width.top.is_some()
+            || declaration.border_width.right.is_some()
+            || declaration.border_width.bottom.is_some()
+            || declaration.border_width.left.is_some()
+            || declaration.border_color.top.is_some()
+            || declaration.border_color.right.is_some()
+            || declaration.border_color.bottom.is_some()
+            || declaration.border_color.left.is_some()
+            || declaration.border_style.top.is_some()
+            || declaration.border_style.right.is_some()
+            || declaration.border_style.bottom.is_some()
+            || declaration.border_style.left.is_some()
         {
             saw_any_border_field = true;
         }
@@ -128,9 +142,18 @@ fn test_parse_border_shorthand_rejects_duplicate_color() {
         if matches!(declaration.width, Some(Length::Px(v)) if (v - 10.0).abs() < f64::EPSILON) {
             saw_width_decl = true;
         }
-        if declaration.border_width.is_some()
-            || declaration.border_color.is_some()
-            || declaration.border_style.is_some()
+        if declaration.border_width.top.is_some()
+            || declaration.border_width.right.is_some()
+            || declaration.border_width.bottom.is_some()
+            || declaration.border_width.left.is_some()
+            || declaration.border_color.top.is_some()
+            || declaration.border_color.right.is_some()
+            || declaration.border_color.bottom.is_some()
+            || declaration.border_color.left.is_some()
+            || declaration.border_style.top.is_some()
+            || declaration.border_style.right.is_some()
+            || declaration.border_style.bottom.is_some()
+            || declaration.border_style.left.is_some()
         {
             saw_any_border_field = true;
         }
@@ -168,9 +191,18 @@ fn test_parse_border_shorthand_rejects_duplicate_style() {
         if matches!(declaration.width, Some(Length::Px(v)) if (v - 10.0).abs() < f64::EPSILON) {
             saw_width_decl = true;
         }
-        if declaration.border_width.is_some()
-            || declaration.border_color.is_some()
-            || declaration.border_style.is_some()
+        if declaration.border_width.top.is_some()
+            || declaration.border_width.right.is_some()
+            || declaration.border_width.bottom.is_some()
+            || declaration.border_width.left.is_some()
+            || declaration.border_color.top.is_some()
+            || declaration.border_color.right.is_some()
+            || declaration.border_color.bottom.is_some()
+            || declaration.border_color.left.is_some()
+            || declaration.border_style.top.is_some()
+            || declaration.border_style.right.is_some()
+            || declaration.border_style.bottom.is_some()
+            || declaration.border_style.left.is_some()
         {
             saw_any_border_field = true;
         }
@@ -202,7 +234,7 @@ fn test_parse_border_style_property() {
 
     let mut saw_dashed = false;
     for declaration in &rule.declarations {
-        if declaration.border_style == Some(BorderStyle::Dashed) {
+        if matches!(declaration.border_style.top, Some(BorderStyle::Dashed)) {
             saw_dashed = true;
         }
     }

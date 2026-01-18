@@ -1,6 +1,7 @@
 use crate::layout::{LayoutContext, Node};
 use crate::style::{
-    AlignItems, AlignSelf, BoxSizing, FlexDirection, FlexWrap, JustifyContent, Length, Style,
+    AlignContent, AlignItems, AlignSelf, BoxSizing, Directional, FlexDirection, FlexWrap,
+    JustifyContent, Length, Style,
 };
 use crate::text::FontSpec;
 use std::cell::RefCell;
@@ -54,7 +55,7 @@ impl FlexLayoutEngine {
         // Positioning origin for the flex container’s content box.
         // Lolite currently models `width/height` as the primary size and uses padding as an
         // inset for child placement.
-        let padding = container_style.padding.clone().unwrap_or_default();
+        let padding = container_style.padding.resolved();
         let content_origin_x = container_x + padding.left.to_px();
         let content_origin_y = container_y + padding.top.to_px();
 
@@ -109,7 +110,7 @@ impl FlexLayoutEngine {
             }
 
             let style = resolve_style(&child, ctx, container_style);
-            let margins = resolved_margin(&style);
+            let margins = style.margin.resolved();
             let (main_before, main_after, cross_before, cross_after) =
                 margins_for_direction(&margins, &direction);
             // NOTE: This currently approximates §9.2 #3 “Determine the flex base size and
@@ -465,22 +466,24 @@ fn base_sizes_for_item(
     // Where flex-basis will later be handled: this function is the current stand-in for
     // §9.2 #3 “flex base size / hypothetical main size” rules.
 
-    let padding = style.padding.as_ref().cloned().unwrap_or_default();
+    let padding = style.padding.resolved();
     let padding_w = padding.left.to_px() + padding.right.to_px();
     let padding_h = padding.top.to_px() + padding.bottom.to_px();
-    let border_sum = style.border_width.map(|w| w.to_px() * 2.0).unwrap_or(0.0);
+    let border = style.border_width.resolved();
+    let border_w = border.left.to_px() + border.right.to_px();
+    let border_h = border.top.to_px() + border.bottom.to_px();
     let box_sizing = style.box_sizing.unwrap_or(BoxSizing::ContentBox);
 
     let width_opt = match style.width {
         Some(Length::Px(px)) if px > 0.0 => Some(match box_sizing {
-            BoxSizing::ContentBox => px + padding_w + border_sum,
+            BoxSizing::ContentBox => px + padding_w + border_w,
             BoxSizing::BorderBox => px,
         }),
         _ => None,
     };
     let height_opt = match style.height {
         Some(Length::Px(px)) if px > 0.0 => Some(match box_sizing {
-            BoxSizing::ContentBox => px + padding_h + border_sum,
+            BoxSizing::ContentBox => px + padding_h + border_h,
             BoxSizing::BorderBox => px,
         }),
         _ => None,
@@ -498,7 +501,7 @@ fn base_sizes_for_item(
 
             if width_opt.is_none() {
                 let text_size = ctx.text_measurer.measure_unwrapped(text, &font);
-                width = text_size.width + padding_w + border_sum;
+                width = text_size.width + padding_w + border_w;
             }
 
             if height_opt.is_none() {
@@ -507,7 +510,7 @@ fn base_sizes_for_item(
                         let content_max_width = match box_sizing {
                             BoxSizing::ContentBox => specified_width_px,
                             BoxSizing::BorderBox => {
-                                (specified_width_px - padding_w - border_sum).max(0.0)
+                                (specified_width_px - padding_w - border_w).max(0.0)
                             }
                         };
                         ctx.text_measurer
@@ -516,7 +519,7 @@ fn base_sizes_for_item(
                     _ => ctx.text_measurer.measure_unwrapped(text, &font),
                 };
 
-                height = text_size.height + padding_h + border_sum;
+                height = text_size.height + padding_h + border_h;
             }
         }
     }
@@ -623,9 +626,7 @@ fn determine_available_space(
 }
 
 fn axis_padding_sum_px(style: &Style, direction: &FlexDirection, axis: Axis) -> f64 {
-    let Some(p) = style.padding.as_ref() else {
-        return 0.0;
-    };
+    let p = style.padding.resolved();
 
     match (direction, axis) {
         (FlexDirection::Row | FlexDirection::RowReverse, Axis::Main)
@@ -639,9 +640,19 @@ fn axis_padding_sum_px(style: &Style, direction: &FlexDirection, axis: Axis) -> 
     }
 }
 
-fn axis_border_sum_px(style: &Style, _direction: &FlexDirection, _axis: Axis) -> f64 {
-    // Lolite currently models a single uniform border width.
-    style.border_width.map(|w| w.to_px() * 2.0).unwrap_or(0.0)
+fn axis_border_sum_px(style: &Style, direction: &FlexDirection, axis: Axis) -> f64 {
+    let b = style.border_width.resolved();
+
+    match (direction, axis) {
+        (FlexDirection::Row | FlexDirection::RowReverse, Axis::Main)
+        | (FlexDirection::Column | FlexDirection::ColumnReverse, Axis::Cross) => {
+            b.left.to_px() + b.right.to_px()
+        }
+        (FlexDirection::Row | FlexDirection::RowReverse, Axis::Cross)
+        | (FlexDirection::Column | FlexDirection::ColumnReverse, Axis::Main) => {
+            b.top.to_px() + b.bottom.to_px()
+        }
+    }
 }
 
 fn intrinsic_main_from_children(
@@ -688,27 +699,8 @@ fn cross_size_is_auto(style: &Style, direction: &FlexDirection) -> bool {
     }
 }
 
-fn resolved_margin(style: &Style) -> crate::style::Extend {
-    let mut m = style.margin.clone().unwrap_or_default();
-
-    if let Some(v) = &style.margin_top {
-        m.top = v.clone();
-    }
-    if let Some(v) = &style.margin_right {
-        m.right = v.clone();
-    }
-    if let Some(v) = &style.margin_bottom {
-        m.bottom = v.clone();
-    }
-    if let Some(v) = &style.margin_left {
-        m.left = v.clone();
-    }
-
-    m
-}
-
 fn margins_for_direction(
-    m: &crate::style::Extend,
+    m: &Directional<Length>,
     direction: &FlexDirection,
 ) -> (Length, Length, Length, Length) {
     match direction {
@@ -739,7 +731,7 @@ fn resolve_margin_px(length: &Length, auto_share: Option<f64>) -> f64 {
 }
 
 fn align_content_offsets(
-    align_content: crate::style::AlignContent,
+    align_content: AlignContent,
     available_cross: f64,
     base_gap: f64,
     lines: &mut [FlexLine],
@@ -754,10 +746,10 @@ fn align_content_offsets(
     let leftover = (available_cross - total_cross).max(0.0);
 
     match align_content {
-        crate::style::AlignContent::FlexStart => (0.0, base_gap),
-        crate::style::AlignContent::FlexEnd => (leftover, base_gap),
-        crate::style::AlignContent::Center => (leftover / 2.0, base_gap),
-        crate::style::AlignContent::SpaceBetween => {
+        AlignContent::FlexStart => (0.0, base_gap),
+        AlignContent::FlexEnd => (leftover, base_gap),
+        AlignContent::Center => (leftover / 2.0, base_gap),
+        AlignContent::SpaceBetween => {
             if line_count <= 1 {
                 (0.0, base_gap)
             } else {
@@ -765,15 +757,15 @@ fn align_content_offsets(
                 (0.0, base_gap + extra)
             }
         }
-        crate::style::AlignContent::SpaceAround => {
+        AlignContent::SpaceAround => {
             let extra = leftover / line_count as f64;
             (extra / 2.0, base_gap + extra)
         }
-        crate::style::AlignContent::SpaceEvenly => {
+        AlignContent::SpaceEvenly => {
             let extra = leftover / (line_count as f64 + 1.0);
             (extra, base_gap + extra)
         }
-        crate::style::AlignContent::Stretch => {
+        AlignContent::Stretch => {
             let extra = leftover / line_count as f64;
             for line in lines.iter_mut() {
                 line.cross_size += extra;

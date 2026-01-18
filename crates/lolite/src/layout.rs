@@ -221,13 +221,15 @@ impl LayoutContext {
         // Lolite stores `layout.bounds` as the element's border-box.
         // `box-sizing` determines whether CSS `width/height` refer to the content-box or border-box.
         let resolved_box_sizing = style.box_sizing.unwrap_or(BoxSizing::ContentBox);
-        let padding = style.padding.clone().unwrap_or_default();
+        let padding = style.padding.resolved();
         let padding_w = padding.left.to_px() + padding.right.to_px();
         let padding_h = padding.top.to_px() + padding.bottom.to_px();
-        let border_sum = style.border_width.map(|w| w.to_px() * 2.0).unwrap_or(0.0);
+        let border = style.border_width.resolved();
+        let border_w = border.left.to_px() + border.right.to_px();
+        let border_h = border.top.to_px() + border.bottom.to_px();
 
         let resolve_border_box =
-            |specified: Option<Length>, fallback: f64, padding_sum: f64| -> f64 {
+            |specified: Option<Length>, fallback: f64, padding_sum: f64, border_sum: f64| -> f64 {
                 let Some(Length::Px(px)) = specified else {
                     return fallback;
                 };
@@ -251,7 +253,7 @@ impl LayoutContext {
                     // Width: if not specified, use unwrapped intrinsic width.
                     if matches!(style.width, Some(Length::Auto)) {
                         let text_size = self.text_measurer.measure_unwrapped(text, &font);
-                        fallback_width_border_box = text_size.width + padding_w + border_sum;
+                        fallback_width_border_box = text_size.width + padding_w + border_w;
                     }
 
                     // Height: if not specified, try to wrap to a specified width (if any), else unwrapped.
@@ -262,7 +264,7 @@ impl LayoutContext {
                                 let content_max_width = match resolved_box_sizing {
                                     BoxSizing::ContentBox => specified_width_px,
                                     BoxSizing::BorderBox => {
-                                        (specified_width_px - padding_w - border_sum).max(0.0)
+                                        (specified_width_px - padding_w - border_w).max(0.0)
                                     }
                                 };
                                 self.text_measurer
@@ -271,21 +273,25 @@ impl LayoutContext {
                             _ => self.text_measurer.measure_unwrapped(text, &font),
                         };
 
-                        fallback_height_border_box = text_size.height + padding_h + border_sum;
+                        fallback_height_border_box = text_size.height + padding_h + border_h;
                     }
                 }
             }
 
             let mut node_borrow = node.borrow_mut();
             node_borrow.layout.bounds.width =
-                resolve_border_box(style.width, fallback_width_border_box, padding_w);
-            node_borrow.layout.bounds.height =
-                resolve_border_box(style.height, fallback_height_border_box, padding_h);
+                resolve_border_box(style.width, fallback_width_border_box, padding_w, border_w);
+            node_borrow.layout.bounds.height = resolve_border_box(
+                style.height,
+                fallback_height_border_box,
+                padding_h,
+                border_h,
+            );
             node_borrow.layout.style = Arc::new(style);
         } else {
             // Container node - handle flexbox layout
-            let container_width = resolve_border_box(style.width, 800.0, padding_w);
-            let container_height = resolve_border_box(style.height, 500.0, padding_h);
+            let container_width = resolve_border_box(style.width, 800.0, padding_w, border_w);
+            let container_height = resolve_border_box(style.height, 500.0, padding_h, border_h);
 
             // Set container dimensions
             {

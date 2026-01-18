@@ -1,7 +1,7 @@
 use super::*;
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use crate::style::{Display, Extend, FlexDirection, Length, Rule, Selector, Style};
+use crate::style::{Directional, Display, FlexDirection, Length, Rule, Selector, Style};
 
 fn next_test_id() -> Id {
     static NEXT: AtomicU64 = AtomicU64::new(1);
@@ -18,8 +18,8 @@ fn create_container(
     ctx: &mut LayoutContext,
     width: Option<f64>,
     height: Option<f64>,
-    margin: Option<Extend>,
-    padding: Option<Extend>,
+    margin: Option<Directional<Length>>,
+    padding: Option<Directional<Length>>,
 ) -> Id {
     let container_id = ctx.document.create_node(next_test_id(), None);
 
@@ -32,8 +32,24 @@ fn create_container(
             flex_direction: Some(FlexDirection::Row),
             width: width.map(Length::Px),
             height: height.map(Length::Px),
-            margin,
-            padding,
+            margin: margin
+                .as_ref()
+                .map(|m| Directional {
+                    top: Some(m.top),
+                    right: Some(m.right),
+                    bottom: Some(m.bottom),
+                    left: Some(m.left),
+                })
+                .unwrap_or_default(),
+            padding: padding
+                .as_ref()
+                .map(|p| Directional {
+                    top: Some(p.top),
+                    right: Some(p.right),
+                    bottom: Some(p.bottom),
+                    left: Some(p.left),
+                })
+                .unwrap_or_default(),
             ..Default::default()
         }],
     });
@@ -48,8 +64,8 @@ fn create_item_with_spacing(
     ctx: &mut LayoutContext,
     width: f64,
     height: f64,
-    margin: Option<Extend>,
-    padding: Option<Extend>,
+    margin: Option<Directional<Length>>,
+    padding: Option<Directional<Length>>,
 ) -> Id {
     let item_id = ctx
         .document
@@ -62,8 +78,24 @@ fn create_item_with_spacing(
         declarations: vec![Style {
             width: Some(Length::Px(width)),
             height: Some(Length::Px(height)),
-            margin,
-            padding,
+            margin: margin
+                .as_ref()
+                .map(|m| Directional {
+                    top: Some(m.top),
+                    right: Some(m.right),
+                    bottom: Some(m.bottom),
+                    left: Some(m.left),
+                })
+                .unwrap_or_default(),
+            padding: padding
+                .as_ref()
+                .map(|p| Directional {
+                    top: Some(p.top),
+                    right: Some(p.right),
+                    bottom: Some(p.bottom),
+                    left: Some(p.left),
+                })
+                .unwrap_or_default(),
             ..Default::default()
         }],
     });
@@ -86,8 +118,8 @@ fn get_bounds(ctx: &LayoutContext, node_id: Id) -> (f64, f64, f64, f64) {
 }
 
 // Helper function to create uniform spacing
-fn uniform_spacing(value: f64) -> Extend {
-    Extend {
+fn uniform_spacing(value: f64) -> Directional<Length> {
+    Directional {
         top: Length::Px(value),
         right: Length::Px(value),
         bottom: Length::Px(value),
@@ -96,8 +128,8 @@ fn uniform_spacing(value: f64) -> Extend {
 }
 
 // Helper function to create asymmetric spacing
-fn asymmetric_spacing(top: f64, right: f64, bottom: f64, left: f64) -> Extend {
-    Extend {
+fn asymmetric_spacing(top: f64, right: f64, bottom: f64, left: f64) -> Directional<Length> {
+    Directional {
         top: Length::Px(top),
         right: Length::Px(right),
         bottom: Length::Px(bottom),
@@ -411,7 +443,12 @@ fn test_padding_column_direction() {
             flex_direction: Some(FlexDirection::Column),
             width: Some(Length::Px(200.0)),
             height: Some(Length::Px(400.0)),
-            padding: Some(uniform_spacing(30.0)),
+            padding: Directional {
+                top: Some(Length::Px(30.0)),
+                right: Some(Length::Px(30.0)),
+                bottom: Some(Length::Px(30.0)),
+                left: Some(Length::Px(30.0)),
+            },
             ..Default::default()
         }],
     });

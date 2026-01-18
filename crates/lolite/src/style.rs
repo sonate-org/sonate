@@ -29,23 +29,78 @@ impl Length {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 #[allow(unused)]
-pub struct Extend {
-    pub top: Length,
-    pub right: Length,
-    pub bottom: Length,
-    pub left: Length,
+pub struct Directional<T> {
+    pub top: T,
+    pub right: T,
+    pub bottom: T,
+    pub left: T,
 }
 
-impl Default for Extend {
+impl<T> Directional<T> {
+    pub fn set_all(value: T) -> Self
+    where
+        T: Clone,
+    {
+        Self {
+            top: value.clone(),
+            right: value.clone(),
+            bottom: value.clone(),
+            left: value,
+        }
+    }
+}
+
+impl Default for Directional<Length> {
     fn default() -> Self {
-        // CSS initial value for margin/padding edges is 0.
         Self {
             top: Length::Px(0.0),
             right: Length::Px(0.0),
             bottom: Length::Px(0.0),
             left: Length::Px(0.0),
+        }
+    }
+}
+
+impl<T> Default for Directional<Option<T>> {
+    fn default() -> Self {
+        Self {
+            top: None,
+            right: None,
+            bottom: None,
+            left: None,
+        }
+    }
+}
+
+impl<T> Directional<Option<T>>
+where
+    T: Clone,
+{
+    pub fn merge(&mut self, other: &Self) {
+        if let Some(value) = &other.top {
+            self.top = Some(value.clone());
+        }
+        if let Some(value) = &other.right {
+            self.right = Some(value.clone());
+        }
+        if let Some(value) = &other.bottom {
+            self.bottom = Some(value.clone());
+        }
+        if let Some(value) = &other.left {
+            self.left = Some(value.clone());
+        }
+    }
+}
+
+impl Directional<Option<Length>> {
+    pub fn resolved(&self) -> Directional<Length> {
+        Directional::<Length> {
+            top: self.top.clone().unwrap_or(Length::Px(0.0)),
+            right: self.right.clone().unwrap_or(Length::Px(0.0)),
+            bottom: self.bottom.clone().unwrap_or(Length::Px(0.0)),
+            left: self.left.clone().unwrap_or(Length::Px(0.0)),
         }
     }
 }
@@ -157,17 +212,18 @@ pub struct Style {
     pub display: Display,
     pub color: Option<Rgba>,
     pub background_color: Option<Rgba>,
-    pub border_color: Option<Rgba>,
-    pub border_width: Option<Length>,
-    pub border_style: Option<BorderStyle>,
+    #[merge_by_method_call]
+    pub border_color: Directional<Option<Rgba>>,
+    #[merge_by_method_call]
+    pub border_width: Directional<Option<Length>>,
+    #[merge_by_method_call]
+    pub border_style: Directional<Option<BorderStyle>>,
     pub border_radius: Option<BorderRadius>,
     pub box_sizing: Option<BoxSizing>,
-    pub margin: Option<Extend>,
-    pub margin_top: Option<Length>,
-    pub margin_right: Option<Length>,
-    pub margin_bottom: Option<Length>,
-    pub margin_left: Option<Length>,
-    pub padding: Option<Extend>,
+    #[merge_by_method_call]
+    pub margin: Directional<Option<Length>>,
+    #[merge_by_method_call]
+    pub padding: Directional<Option<Length>>,
     pub width: Option<Length>,
     pub height: Option<Length>,
 

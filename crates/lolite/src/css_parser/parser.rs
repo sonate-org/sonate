@@ -1,6 +1,6 @@
 use crate::style::{
-    AlignContent, AlignItems, AlignSelf, BorderRadius, BoxSizing, Display, Extend, FlexDirection,
-    FlexWrap, JustifyContent, Rule, Selector, Style, StyleSheet,
+    AlignContent, AlignItems, AlignSelf, BorderRadius, BoxSizing, Directional, Display,
+    FlexDirection, FlexWrap, JustifyContent, Rule, Selector, Style, StyleSheet,
 };
 use cssparser::{
     AtRuleParser, CowRcStr, DeclarationParser, ParseError, Parser, ParserInput, ParserState,
@@ -135,17 +135,17 @@ impl<'i> DeclarationParser<'i> for StyleDeclarationParser {
                 style.background_color = Some(self.parse_color_value(input)?);
             }
             "border-color" => {
-                style.border_color = Some(self.parse_color_value(input)?);
+                style.border_color = Directional::set_all(Some(self.parse_color_value(input)?));
             }
             "border-width" => {
-                style.border_width = Some(self.parse_length_value(input)?);
+                style.border_width = Directional::set_all(Some(self.parse_length_value(input)?));
             }
             "border-style" => {
                 // Parse a single <line-style> value.
-                style.border_style = Some(
-                    self.try_parse_line_style(input)?
-                        .ok_or_else(|| input.new_error_for_next_token())?,
-                );
+                let v = self
+                    .try_parse_line_style(input)?
+                    .ok_or_else(|| input.new_error_for_next_token())?;
+                style.border_style = Directional::set_all(Some(v));
             }
             "border" => {
                 self.parse_border_shorthand(input, &mut style)?;
@@ -200,33 +200,26 @@ impl<'i> DeclarationParser<'i> for StyleDeclarationParser {
                     .try_parse(|input| self.parse_length_value(input))
                     .unwrap_or(second.clone());
 
-                style.margin = Some(Extend {
-                    top: first,
-                    right: second,
-                    bottom: third,
-                    left: fourth,
-                });
-
-                // Mirror into per-side fields so later declarations like `margin-left`
-                // can override a single side via Style::merge.
-                if let Some(m) = style.margin.as_ref() {
-                    style.margin_top = Some(m.top);
-                    style.margin_right = Some(m.right);
-                    style.margin_bottom = Some(m.bottom);
-                    style.margin_left = Some(m.left);
-                }
+                // Emit per-side declarations so later `margin-left` etc. can override
+                // a single side via Style::merge.
+                style.margin = Directional {
+                    top: Some(first),
+                    right: Some(second),
+                    bottom: Some(third),
+                    left: Some(fourth),
+                };
             }
             "margin-top" => {
-                style.margin_top = Some(self.parse_length_value(input)?);
+                style.margin.top = Some(self.parse_length_value(input)?);
             }
             "margin-right" => {
-                style.margin_right = Some(self.parse_length_value(input)?);
+                style.margin.right = Some(self.parse_length_value(input)?);
             }
             "margin-bottom" => {
-                style.margin_bottom = Some(self.parse_length_value(input)?);
+                style.margin.bottom = Some(self.parse_length_value(input)?);
             }
             "margin-left" => {
-                style.margin_left = Some(self.parse_length_value(input)?);
+                style.margin.left = Some(self.parse_length_value(input)?);
             }
             "padding" => {
                 let first = self.parse_length_value(input)?;
@@ -240,12 +233,26 @@ impl<'i> DeclarationParser<'i> for StyleDeclarationParser {
                     .try_parse(|input| self.parse_length_value(input))
                     .unwrap_or(second.clone());
 
-                style.padding = Some(Extend {
-                    top: first,
-                    right: second,
-                    bottom: third,
-                    left: fourth,
-                });
+                // Emit per-side declarations so later `padding-left` etc. can override
+                // a single side via Style::merge.
+                style.padding = Directional {
+                    top: Some(first),
+                    right: Some(second),
+                    bottom: Some(third),
+                    left: Some(fourth),
+                };
+            }
+            "padding-top" => {
+                style.padding.top = Some(self.parse_length_value(input)?);
+            }
+            "padding-right" => {
+                style.padding.right = Some(self.parse_length_value(input)?);
+            }
+            "padding-bottom" => {
+                style.padding.bottom = Some(self.parse_length_value(input)?);
+            }
+            "padding-left" => {
+                style.padding.left = Some(self.parse_length_value(input)?);
             }
             "flex" => {
                 let value = input.expect_number()?;

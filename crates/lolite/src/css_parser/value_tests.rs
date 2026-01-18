@@ -105,24 +105,69 @@ fn test_parse_margin_sides() {
     assert!(m_rule
         .declarations
         .iter()
-        .any(|d| matches!(d.margin_left, Some(Length::Px(20.0)))));
+        .any(|d| matches!(d.margin.left, Some(Length::Px(20.0)))));
     assert!(m_rule
         .declarations
         .iter()
-        .any(|d| matches!(d.margin_top, Some(Length::Px(10.0)))));
+        .any(|d| matches!(d.margin.top, Some(Length::Px(10.0)))));
     assert!(m_rule
         .declarations
         .iter()
-        .any(|d| matches!(d.margin_right, Some(Length::Px(5.0)))));
+        .any(|d| matches!(d.margin.right, Some(Length::Px(5.0)))));
     assert!(m_rule
         .declarations
         .iter()
-        .any(|d| matches!(d.margin_bottom, Some(Length::Px(15.0)))));
+        .any(|d| matches!(d.margin.bottom, Some(Length::Px(15.0)))));
 
     let auto_rule = &stylesheet.rules[1];
     assert_eq!(auto_rule.selector, Selector::Class("auto_left".to_string()));
     assert!(auto_rule
         .declarations
         .iter()
-        .any(|d| matches!(d.margin_left, Some(Length::Auto))));
+        .any(|d| matches!(d.margin.left, Some(Length::Auto))));
+}
+
+#[test]
+fn test_parse_padding_sides() {
+    let css = r#"
+        .p {
+            padding-left: 20px;
+            padding-top: 10px;
+            padding-right: 5px;
+            padding-bottom: 15px;
+        }
+
+        .auto_left {
+            padding-left: auto;
+        }
+    "#;
+
+    let stylesheet = parse_css(css).expect("Failed to parse CSS");
+    assert_eq!(stylesheet.rules.len(), 2);
+
+    let p_rule = &stylesheet.rules[0];
+    assert_eq!(p_rule.selector, Selector::Class("p".to_string()));
+    assert!(p_rule
+        .declarations
+        .iter()
+        .any(|d| matches!(d.padding.left, Some(Length::Px(20.0)))));
+    assert!(p_rule
+        .declarations
+        .iter()
+        .any(|d| matches!(d.padding.top, Some(Length::Px(10.0)))));
+    assert!(p_rule
+        .declarations
+        .iter()
+        .any(|d| matches!(d.padding.right, Some(Length::Px(5.0)))));
+    assert!(p_rule
+        .declarations
+        .iter()
+        .any(|d| matches!(d.padding.bottom, Some(Length::Px(15.0)))));
+
+    let auto_rule = &stylesheet.rules[1];
+    assert_eq!(auto_rule.selector, Selector::Class("auto_left".to_string()));
+    assert!(auto_rule
+        .declarations
+        .iter()
+        .any(|d| matches!(d.padding.left, Some(Length::Auto))));
 }

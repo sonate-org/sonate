@@ -1,5 +1,5 @@
 use super::parser::StyleDeclarationParser;
-use crate::style::{BorderStyle, Length, Style};
+use crate::style::{BorderStyle, Directional, Length, Style};
 use cssparser::{ParseError, Parser};
 
 impl StyleDeclarationParser {
@@ -112,7 +112,7 @@ impl StyleDeclarationParser {
                     return Err(input.new_error_for_next_token());
                 }
                 saw_width = true;
-                style.border_width = Some(width);
+                style.border_width = Directional::set_all(Some(width));
                 continue;
             }
 
@@ -121,7 +121,7 @@ impl StyleDeclarationParser {
                     return Err(input.new_error_for_next_token());
                 }
                 saw_color = true;
-                style.border_color = Some(color);
+                style.border_color = Directional::set_all(Some(color));
                 continue;
             }
 
@@ -130,7 +130,7 @@ impl StyleDeclarationParser {
                     return Err(input.new_error_for_next_token());
                 }
                 saw_style = true;
-                style.border_style = Some(border_style);
+                style.border_style = Directional::set_all(Some(border_style));
                 continue;
             }
 
