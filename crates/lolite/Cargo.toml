@@ -33,6 +33,13 @@ objc = "0.2"
 raw-window-handle = "0.6"
 core-graphics-types = "0.1"
 
+[target.'cfg(target_os = "linux")'.dependencies]
+skia-safe = { version = "0.87.0", features = ["gl"] }
+gl = "0.14"
+glutin = "0.32"
+glutin-winit = "0.5"
+raw-window-handle = "0.6"
+
 
 [[bin]]
 name = "lolite_html"

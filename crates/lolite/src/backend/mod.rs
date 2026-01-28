@@ -4,6 +4,8 @@ use winit::{event::WindowEvent, event_loop::ActiveEventLoop};
 
 #[cfg(target_os = "windows")]
 pub mod d3d12;
+#[cfg(target_os = "linux")]
+pub mod gl;
 #[cfg(target_os = "macos")]
 pub mod metal;
 
@@ -60,9 +62,8 @@ pub enum BackendType {
     D3D12,
     #[cfg(target_os = "macos")]
     Metal,
-    // Future backends can be added here:
-    // OpenGL,
-    // Vulkan,
+    #[cfg(target_os = "linux")]
+    OpenGL,
 }
 
 impl BackendType {
@@ -74,7 +75,10 @@ impl BackendType {
         #[cfg(target_os = "macos")]
         return BackendType::Metal;
 
-        #[cfg(not(any(target_os = "windows", target_os = "macos")))]
+        #[cfg(target_os = "linux")]
+        return BackendType::OpenGL;
+
+        #[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
         compile_error!("No default backend available for this platform");
     }
 
@@ -85,6 +89,8 @@ impl BackendType {
             BackendType::D3D12 => "Direct3D 12",
             #[cfg(target_os = "macos")]
             BackendType::Metal => "Metal",
+            #[cfg(target_os = "linux")]
+            BackendType::OpenGL => "OpenGL",
         }
     }
 }
