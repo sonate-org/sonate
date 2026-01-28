@@ -62,6 +62,10 @@ pub fn run_with_backend(
         BackendType::Metal => {
             run_with_backend_impl::<crate::backend::metal::MetalBackend>(params, message_sender)
         }
+        #[cfg(target_os = "linux")]
+        BackendType::OpenGL => {
+            run_with_backend_impl::<crate::backend::gl::OpenGlBackend>(params, message_sender)
+        }
     }
 }
 
