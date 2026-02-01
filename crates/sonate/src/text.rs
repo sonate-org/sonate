@@ -107,7 +107,7 @@ impl SkiaTextMeasurer {
     }
 
     fn measure_wrapped_uncached(&self, text: &str, font: &FontSpec, max_width_px: f64) -> Size {
-        // NOTE: Skia has a proper paragraph layout API, but Lolite doesn’t depend on it yet.
+        // NOTE: Skia has a proper paragraph layout API, but Sonate doesn’t depend on it yet.
         // This approximation is good enough to drive basic layout decisions.
         let max_width_px = max_width_px.max(0.0);
         if max_width_px == 0.0 {

@@ -83,7 +83,7 @@ impl RenderingBackend for OpenGlBackend {
         use gl::types::GLint;
 
         let window_attributes = WindowAttributes::default()
-            .with_title("Lolite CSS - OpenGL")
+            .with_title("Sonate CSS - OpenGL")
             .with_inner_size(Size::new(LogicalSize::new(800, 800)));
 
         let template = ConfigTemplateBuilder::new()

@@ -205,11 +205,6 @@ fn resolve_worker_path() -> Option<PathBuf> {
         return Some(PathBuf::from(path));
     }
 
-    // Backwards-compatible env var.
-    if let Ok(path) = std::env::var("LOLITE_WORKER_PATH") {
-        return Some(PathBuf::from(path));
-    }
-
     if let Ok(exe_path) = std::env::current_exe() {
         if let Some(dir) = exe_path.parent() {
             let candidate = dir.join(WORKER_FILE);

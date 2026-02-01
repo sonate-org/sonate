@@ -187,11 +187,6 @@ fn resolve_library_path() -> PathBuf {
         return PathBuf::from(path);
     }
 
-    // Backwards-compatible env var.
-    if let Ok(path) = std::env::var("LOLITE_LIBRARY_PATH") {
-        return PathBuf::from(path);
-    }
-
     let name = default_library_name();
 
     if let Ok(exe_path) = std::env::current_exe() {

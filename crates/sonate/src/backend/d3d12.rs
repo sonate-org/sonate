@@ -68,7 +68,7 @@ impl RenderingBackend for D3D12Backend {
         }
         let mut window_attributes = WindowAttributes::default();
         window_attributes.inner_size = Some(Size::new(LogicalSize::new(800, 800)));
-        window_attributes.title = "Lolite CSS - Direct3D 12".into();
+        window_attributes.title = "Sonate CSS - Direct3D 12".into();
 
         let window = event_loop
             .create_window(window_attributes)

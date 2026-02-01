@@ -218,7 +218,7 @@ impl LayoutContext {
         let is_leaf = node.borrow().children.is_empty();
         let is_text_node = node.borrow().is_text_node();
 
-        // Lolite stores `layout.bounds` as the element's border-box.
+        // Sonate stores `layout.bounds` as the element's border-box.
         // `box-sizing` determines whether CSS `width/height` refer to the content-box or border-box.
         let resolved_box_sizing = style.box_sizing.unwrap_or(BoxSizing::ContentBox);
         let padding = style.padding.resolved();

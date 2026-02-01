@@ -42,7 +42,7 @@ impl RenderingBackend for MetalBackend {
     fn new(event_loop: &ActiveEventLoop) -> Result<Self> {
         let mut window_attributes = WindowAttributes::default();
         window_attributes.inner_size = Some(Size::new(LogicalSize::new(800, 800)));
-        window_attributes.title = "Lolite CSS - Metal".into();
+        window_attributes.title = "Sonate CSS - Metal".into();
         
         // Enable high DPI awareness on macOS
         #[cfg(target_os = "macos")]

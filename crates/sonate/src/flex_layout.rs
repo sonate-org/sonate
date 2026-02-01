@@ -53,7 +53,7 @@ impl FlexLayoutEngine {
         };
 
         // Positioning origin for the flex container’s content box.
-        // Lolite currently models `width/height` as the primary size and uses padding as an
+        // Sonate currently models `width/height` as the primary size and uses padding as an
         // inset for child placement.
         let padding = container_style.padding.resolved();
         let content_origin_x = container_x + padding.left.to_px();
@@ -126,7 +126,7 @@ impl FlexLayoutEngine {
             //
             // Where aspect ratio will later be handled:
             // The spec has cases where an item’s preferred/intrinsic aspect ratio affects its
-            // flex base size (see §9.2 #3). Lolite does not model aspect ratio yet.
+            // flex base size (see §9.2 #3). Sonate does not model aspect ratio yet.
             let (base_main, base_cross) = base_sizes_for_item(&child, &style, &direction, ctx);
 
             items.push(FlexItem {
@@ -251,7 +251,7 @@ impl FlexLayoutEngine {
 
         // === §9.6 Cross-axis alignment: align-content for multi-line containers ===
         // We distribute leftover cross space between lines according to align-content.
-        // NOTE: The CSS initial value of align-content is `stretch`, but the current Lolite
+        // NOTE: The CSS initial value of align-content is `stretch`, but the current Sonate
         // test suite expects the default behavior to pack lines at the start unless an
         // explicit `align-content` is set.
         let align_content = container_style
@@ -622,7 +622,7 @@ fn determine_available_space(
     axis: Axis,
 ) -> f64 {
     // §9.2 #2 Determine the available space in the container's content box.
-    // Lolite stores `container_axis_size` as the border-box size.
+    // Sonate stores `container_axis_size` as the border-box size.
     // If the container has a definite size, we derive the content-box size using `box-sizing`.
     // Otherwise, we approximate by subtracting padding/border from the border-box.
     let _is_definite = is_definite_container_content_box_size(style, direction, axis);
@@ -666,7 +666,7 @@ fn intrinsic_main_from_children(
     fallback: &Style,
 ) -> f64 {
     // Best-effort intrinsic main size used for shrink-to-fit containers.
-    // We intentionally keep this conservative (max of child fixed sizes), since Lolite
+    // We intentionally keep this conservative (max of child fixed sizes), since Sonate
     // does not yet implement min/max-content constraints or full intrinsic sizing.
 
     let children = node.borrow().children.clone();

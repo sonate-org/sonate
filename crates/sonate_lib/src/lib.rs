@@ -18,7 +18,6 @@ pub type EngineHandle = usize;
 
 /// ID type for nodes and other engine-owned objects.
 pub type SonateId = u64;
-pub type LoliteId = SonateId;
 
 type EngineBox = Box<dyn EngineBackend>;
 type EngineRef = Arc<Mutex<EngineBox>>;
@@ -60,24 +59,12 @@ pub extern "C" fn sonate_init(use_same_process: bool) -> EngineHandle {
     handle
 }
 
-// Backwards-compatible exports.
-#[no_mangle]
-pub extern "C" fn lolite_init(use_same_process: bool) -> EngineHandle {
-    sonate_init(use_same_process)
-}
-
 #[no_mangle]
 pub extern "C" fn sonate_init_internal(handle: EngineHandle) {
     ENGINE_INSTANCES
         .lock()
         .unwrap()
         .insert(handle, Arc::new(Mutex::new(Box::new(DirectBackend::new()))));
-}
-
-// Backwards-compatible export.
-#[no_mangle]
-pub extern "C" fn lolite_init_internal(handle: EngineHandle) {
-    sonate_init_internal(handle)
 }
 
 fn get_engine(handle: EngineHandle) -> Option<EngineRef> {
@@ -115,12 +102,6 @@ pub extern "C" fn sonate_add_stylesheet(handle: EngineHandle, css_content: *cons
     };
 
     engine.lock().unwrap().add_stylesheet(css_str);
-}
-
-// Backwards-compatible export.
-#[no_mangle]
-pub extern "C" fn lolite_add_stylesheet(handle: EngineHandle, css_content: *const c_char) {
-    sonate_add_stylesheet(handle, css_content)
 }
 
 /// Create a new document node
@@ -168,16 +149,6 @@ pub extern "C" fn sonate_create_node(
     node_id
 }
 
-// Backwards-compatible export.
-#[no_mangle]
-pub extern "C" fn lolite_create_node(
-    handle: EngineHandle,
-    node_id: LoliteId,
-    text_content: *const c_char,
-) -> LoliteId {
-    sonate_create_node(handle, node_id, text_content)
-}
-
 /// Set parent-child relationship between nodes
 ///
 /// # Arguments
@@ -200,12 +171,6 @@ pub extern "C" fn sonate_set_parent(handle: EngineHandle, parent_id: SonateId, c
     };
 
     engine.lock().unwrap().set_parent(parent_id, child_id);
-}
-
-// Backwards-compatible export.
-#[no_mangle]
-pub extern "C" fn lolite_set_parent(handle: EngineHandle, parent_id: LoliteId, child_id: LoliteId) {
-    sonate_set_parent(handle, parent_id, child_id)
 }
 
 /// Set an attribute on a node
@@ -262,17 +227,6 @@ pub extern "C" fn sonate_set_attribute(
         .set_attribute(node_id, key_str, value_str);
 }
 
-// Backwards-compatible export.
-#[no_mangle]
-pub extern "C" fn lolite_set_attribute(
-    handle: EngineHandle,
-    node_id: LoliteId,
-    key: *const c_char,
-    value: *const c_char,
-) {
-    sonate_set_attribute(handle, node_id, key, value)
-}
-
 /// Get the root node ID of the document
 ///
 /// # Arguments
@@ -294,12 +248,6 @@ pub extern "C" fn sonate_root_id(handle: EngineHandle) -> SonateId {
 
     let id = engine.lock().unwrap().root_id();
     id
-}
-
-// Backwards-compatible export.
-#[no_mangle]
-pub extern "C" fn lolite_root_id(handle: EngineHandle) -> LoliteId {
-    sonate_root_id(handle)
 }
 
 /// Run the engine event loop (blocking).
@@ -325,12 +273,6 @@ pub extern "C" fn sonate_run(handle: EngineHandle) -> c_int {
     code
 }
 
-// Backwards-compatible export.
-#[no_mangle]
-pub extern "C" fn lolite_run(handle: EngineHandle) -> c_int {
-    sonate_run(handle)
-}
-
 /// Cleanup and destroy an engine instance
 ///
 /// # Arguments
@@ -353,10 +295,4 @@ pub extern "C" fn sonate_destroy(handle: EngineHandle) -> c_int {
 
     let code = engine.lock().unwrap().destroy();
     code
-}
-
-// Backwards-compatible export.
-#[no_mangle]
-pub extern "C" fn lolite_destroy(handle: EngineHandle) -> c_int {
-    sonate_destroy(handle)
 }
