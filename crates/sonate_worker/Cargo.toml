@@ -1,0 +1,9 @@
+[package]
+name = "sonate_worker"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+ipc-channel = { workspace = true }
+libloading = "0.8.6"
+sonate_common = { path = "../sonate_common" }

@@ -1,0 +1,20 @@
+[package]
+name = "sonate_lib"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+sonate_common = { path = "../sonate_common" }
+sonate = { path = "../sonate" }
+shared_memory = { workspace = true }
+once_cell = { workspace = true }
+ipc-channel = { workspace = true }
+anyhow = "1.0.95"
+
+[[example]]
+name = "rust_usage"
+path = "../../examples/rust_usage/rust_usage.rs"
+
+[lib]
+crate-type = ["cdylib"]
+name = "sonate"

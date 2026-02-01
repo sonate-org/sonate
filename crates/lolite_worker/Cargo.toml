@@ -1,9 +1,0 @@
-[package]
-name = "lolite_worker"
-version.workspace = true
-edition.workspace = true
-
-[dependencies]
-ipc-channel = { workspace = true }
-libloading = "0.8.6"
-lolite_common = { path = "../lolite_common" }

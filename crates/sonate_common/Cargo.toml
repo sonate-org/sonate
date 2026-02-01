@@ -1,0 +1,8 @@
+[package]
+name = "sonate_common"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+ipc-channel = { workspace = true }

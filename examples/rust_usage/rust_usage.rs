@@ -1,4 +1,4 @@
-use lolite::{Engine, Id};
+use sonate::{Engine, Id};
 
 fn main() {
     // Create a thread-safe CSS engine
@@ -49,7 +49,7 @@ fn main() {
     engine.set_attribute(b, "class".to_owned(), "green_box".to_owned());
 
     // Run
-    let params = lolite::Params {
+    let params = sonate::Params {
         on_click: Some(Box::new(|x, y, elements| {
             println!("Clicked at ({}, {}), elements: {:?}", x, y, elements);
         })),
