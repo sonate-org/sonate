@@ -1,5 +1,5 @@
 [package]
-name = "lolite"
+name = "sonate"
 version.workspace = true
 edition.workspace = true
 
@@ -7,7 +7,7 @@ edition.workspace = true
 winit = "0.30.8"
 anyhow = "1.0.95"
 skia-safe = "0.87.0"
-lolite_macros = { path = "../lolite_macros" }
+sonate_macros = { path = "../sonate_macros" }
 cssparser = "0.35.0"
 parking_lot = "0.12"
 html_parser = "0.7.0"
@@ -42,8 +42,8 @@ raw-window-handle = "0.6"
 
 
 [[bin]]
-name = "lolite_html"
-path = "src/bin/lolite_html.rs"
+name = "sonate_html"
+path = "src/bin/sonate_html.rs"
 
 [[example]]
 name = "showcase_flex"

@@ -1,10 +1,10 @@
 [workspace]
 members = [
-    "crates/lolite",
-    "crates/lolite_common",
-    "crates/lolite_lib",
-    "crates/lolite_macros",
-    "crates/lolite_worker",
+    "crates/sonate",
+    "crates/sonate_common",
+    "crates/sonate_lib",
+    "crates/sonate_macros",
+    "crates/sonate_worker",
 ]
 resolver = "2"
 

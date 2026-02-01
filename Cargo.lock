@@ -873,64 +873,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a7a70ba024b9dc04c27ea2f0c0548feb474ec5c54bba33a7f72f873a39d07b24"
 
 [[package]]
-name = "lolite"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "core-graphics-types",
- "cssparser",
- "gl",
- "glutin",
- "glutin-winit",
- "html_parser",
- "lolite_macros",
- "metal",
- "objc",
- "parking_lot",
- "raw-window-handle",
- "skia-safe",
- "windows 0.61.3",
- "winit",
-]
-
-[[package]]
-name = "lolite_common"
-version = "0.1.0"
-dependencies = [
- "ipc-channel",
- "serde",
-]
-
-[[package]]
-name = "lolite_lib"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "ipc-channel",
- "lolite",
- "lolite_common",
- "once_cell",
- "shared_memory",
-]
-
-[[package]]
-name = "lolite_macros"
-version = "0.1.0"
-dependencies = [
- "quote",
- "syn",
-]
-
-[[package]]
-name = "lolite_worker"
-version = "0.1.0"
-dependencies = [
- "ipc-channel",
- "libloading",
- "lolite_common",
-]
-
-[[package]]
 name = "malloc_buf"
 version = "0.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1893,6 +1835,64 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dd538fb6910ac1099850255cf94a94df6551fbdd602454387d0adb2d1ca6dead"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "sonate"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "core-graphics-types",
+ "cssparser",
+ "gl",
+ "glutin",
+ "glutin-winit",
+ "html_parser",
+ "metal",
+ "objc",
+ "parking_lot",
+ "raw-window-handle",
+ "skia-safe",
+ "sonate_macros",
+ "windows 0.61.3",
+ "winit",
+]
+
+[[package]]
+name = "sonate_common"
+version = "0.1.0"
+dependencies = [
+ "ipc-channel",
+ "serde",
+]
+
+[[package]]
+name = "sonate_lib"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "ipc-channel",
+ "once_cell",
+ "shared_memory",
+ "sonate",
+ "sonate_common",
+]
+
+[[package]]
+name = "sonate_macros"
+version = "0.1.0"
+dependencies = [
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "sonate_worker"
+version = "0.1.0"
+dependencies = [
+ "ipc-channel",
+ "libloading",
+ "sonate_common",
 ]
 
 [[package]]

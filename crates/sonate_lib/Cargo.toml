@@ -1,11 +1,11 @@
 [package]
-name = "lolite_lib"
+name = "sonate_lib"
 version.workspace = true
 edition.workspace = true
 
 [dependencies]
-lolite_common = { path = "../lolite_common" }
-lolite = { path = "../lolite" }
+sonate_common = { path = "../sonate_common" }
+sonate = { path = "../sonate" }
 shared_memory = { workspace = true }
 once_cell = { workspace = true }
 ipc-channel = { workspace = true }
@@ -17,4 +17,4 @@ path = "../../examples/rust_usage/rust_usage.rs"
 
 [lib]
 crate-type = ["cdylib"]
-name = "lolite"
+name = "sonate"

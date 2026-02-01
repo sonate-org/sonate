@@ -1,14 +1,14 @@
 use anyhow::{Context, Result};
-use lolite::{Engine, Id, Params};
+use sonate::{Engine, Id, Params};
 
 fn main() -> Result<()> {
     let mut args = std::env::args().skip(1);
     let html_path = args
         .next()
-        .context("Usage: lolite_html <path/to/file.html>")?;
+        .context("Usage: sonate_html <path/to/file.html>")?;
 
     if args.next().is_some() {
-        anyhow::bail!("Usage: lolite_html <path/to/file.html>");
+        anyhow::bail!("Usage: sonate_html <path/to/file.html>");
     }
 
     let html = std::fs::read_to_string(&html_path)
@@ -54,7 +54,7 @@ fn copy_nodes(
             let id = Id::from_u64(*next_id);
             *next_id += 1;
 
-            // Lolite currently only supports "text if it's the only child".
+            // Sonate currently only supports "text if it's the only child".
             let text = element
                 .children
                 .get(0)

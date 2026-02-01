@@ -1,7 +1,7 @@
 use ipc_channel::ipc::IpcSender;
 use serde::{Deserialize, Serialize};
 
-/// Cross-process requests sent from the host (lolite_lib) to the worker process (lolite_worker).
+/// Cross-process requests sent from the host (sonate_lib) to the worker process (sonate_worker).
 ///
 /// This is intentionally small and can be extended as more FFI functions are proxied.
 #[derive(Debug, Clone, Serialize, Deserialize)]

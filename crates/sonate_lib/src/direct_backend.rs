@@ -1,5 +1,5 @@
-use crate::engine_backend::{EngineBackend, LoliteId};
-use lolite::{Engine, Id, Params};
+use crate::engine_backend::{EngineBackend, SonateId};
+use sonate::{Engine, Id, Params};
 
 pub struct DirectBackend {
     engine: Engine,
@@ -18,20 +18,20 @@ impl EngineBackend for DirectBackend {
         self.engine.add_stylesheet(&css);
     }
 
-    fn create_node(&self, node_id: LoliteId, text: Option<String>) {
+    fn create_node(&self, node_id: SonateId, text: Option<String>) {
         let _ = self.engine.create_node(Id::from_u64(node_id), text);
     }
 
-    fn set_parent(&self, parent_id: LoliteId, child_id: LoliteId) {
+    fn set_parent(&self, parent_id: SonateId, child_id: SonateId) {
         self.engine
             .set_parent(Id::from_u64(parent_id), Id::from_u64(child_id));
     }
 
-    fn set_attribute(&self, node_id: LoliteId, key: String, value: String) {
+    fn set_attribute(&self, node_id: SonateId, key: String, value: String) {
         self.engine.set_attribute(Id::from_u64(node_id), key, value);
     }
 
-    fn root_id(&self) -> LoliteId {
+    fn root_id(&self) -> SonateId {
         self.engine.root_id().as_u64()
     }
 
@@ -39,7 +39,7 @@ impl EngineBackend for DirectBackend {
         match self.engine.run(Params { on_click: None }) {
             Ok(()) => 0,
             Err(err) => {
-                eprintln!("lolite_run failed: {:?}", err);
+                eprintln!("sonate_run failed: {:?}", err);
                 -1
             }
         }

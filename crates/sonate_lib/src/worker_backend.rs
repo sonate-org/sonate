@@ -1,4 +1,4 @@
-use crate::engine_backend::{EngineBackend, LoliteId};
+use crate::engine_backend::{EngineBackend, SonateId};
 use ipc_channel::ipc::{self, IpcOneShotServer, IpcSender};
 use std::os::raw::c_int;
 use std::path::PathBuf;
@@ -7,14 +7,14 @@ use std::process::{Child, Command, Stdio};
 pub struct WorkerBackend {
     handle: usize,
     process: Child,
-    sender: IpcSender<lolite_common::WorkerRequest>,
+    sender: IpcSender<sonate_common::WorkerRequest>,
 }
 
 impl WorkerBackend {
     pub fn new(handle: usize) -> std::io::Result<Self> {
         // Worker connects back and sends an IpcSender that we can use to send requests.
         let (server, server_name) =
-            IpcOneShotServer::<IpcSender<lolite_common::WorkerRequest>>::new()
+            IpcOneShotServer::<IpcSender<sonate_common::WorkerRequest>>::new()
                 .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
 
         let process = spawn_worker("ipc_channel", &server_name)?;
@@ -36,7 +36,7 @@ impl WorkerBackend {
     fn init_internal(&self) {
         if let Err(e) = self
             .sender
-            .send(lolite_common::WorkerRequest::InitInternal {
+            .send(sonate_common::WorkerRequest::InitInternal {
                 handle: self.handle as u64,
             })
         {
@@ -45,7 +45,7 @@ impl WorkerBackend {
     }
 
     fn shutdown(&self) {
-        let _ = self.sender.send(lolite_common::WorkerRequest::Shutdown);
+        let _ = self.sender.send(sonate_common::WorkerRequest::Shutdown);
     }
 }
 
@@ -53,7 +53,7 @@ impl EngineBackend for WorkerBackend {
     fn add_stylesheet(&self, css: String) {
         if let Err(e) = self
             .sender
-            .send(lolite_common::WorkerRequest::AddStylesheet {
+            .send(sonate_common::WorkerRequest::AddStylesheet {
                 handle: self.handle as u64,
                 css,
             })
@@ -62,8 +62,8 @@ impl EngineBackend for WorkerBackend {
         }
     }
 
-    fn create_node(&self, node_id: LoliteId, text: Option<String>) {
-        if let Err(e) = self.sender.send(lolite_common::WorkerRequest::CreateNode {
+    fn create_node(&self, node_id: SonateId, text: Option<String>) {
+        if let Err(e) = self.sender.send(sonate_common::WorkerRequest::CreateNode {
             handle: self.handle as u64,
             node_id,
             text,
@@ -72,8 +72,8 @@ impl EngineBackend for WorkerBackend {
         }
     }
 
-    fn set_parent(&self, parent_id: LoliteId, child_id: LoliteId) {
-        if let Err(e) = self.sender.send(lolite_common::WorkerRequest::SetParent {
+    fn set_parent(&self, parent_id: SonateId, child_id: SonateId) {
+        if let Err(e) = self.sender.send(sonate_common::WorkerRequest::SetParent {
             handle: self.handle as u64,
             parent_id,
             child_id,
@@ -82,10 +82,10 @@ impl EngineBackend for WorkerBackend {
         }
     }
 
-    fn set_attribute(&self, node_id: LoliteId, key: String, value: String) {
+    fn set_attribute(&self, node_id: SonateId, key: String, value: String) {
         if let Err(e) = self
             .sender
-            .send(lolite_common::WorkerRequest::SetAttribute {
+            .send(sonate_common::WorkerRequest::SetAttribute {
                 handle: self.handle as u64,
                 node_id,
                 key,
@@ -96,7 +96,7 @@ impl EngineBackend for WorkerBackend {
         }
     }
 
-    fn root_id(&self) -> LoliteId {
+    fn root_id(&self) -> SonateId {
         let (reply_tx, reply_rx) = match ipc::channel::<u64>() {
             Ok(ch) => ch,
             Err(e) => {
@@ -105,7 +105,7 @@ impl EngineBackend for WorkerBackend {
             }
         };
 
-        if let Err(e) = self.sender.send(lolite_common::WorkerRequest::RootId {
+        if let Err(e) = self.sender.send(sonate_common::WorkerRequest::RootId {
             handle: self.handle as u64,
             reply_to: reply_tx,
         }) {
@@ -131,7 +131,7 @@ impl EngineBackend for WorkerBackend {
             }
         };
 
-        if let Err(e) = self.sender.send(lolite_common::WorkerRequest::Run {
+        if let Err(e) = self.sender.send(sonate_common::WorkerRequest::Run {
             handle: self.handle as u64,
             reply_to: reply_tx,
         }) {
@@ -157,7 +157,7 @@ impl EngineBackend for WorkerBackend {
             }
         };
 
-        if let Err(e) = self.sender.send(lolite_common::WorkerRequest::Destroy {
+        if let Err(e) = self.sender.send(sonate_common::WorkerRequest::Destroy {
             handle: self.handle as u64,
             reply_to: reply_tx,
         }) {
@@ -183,9 +183,9 @@ impl Drop for WorkerBackend {
 }
 
 #[cfg(windows)]
-const WORKER_FILE: &str = "lolite_worker.exe";
+const WORKER_FILE: &str = "sonate_worker.exe";
 #[cfg(not(windows))]
-const WORKER_FILE: &str = "lolite_worker";
+const WORKER_FILE: &str = "sonate_worker";
 
 fn spawn_worker(method: &str, connection_key: &str) -> std::io::Result<Child> {
     let worker_path = resolve_worker_path().expect("Failed to resolve worker path");
@@ -201,6 +201,11 @@ fn spawn_worker(method: &str, connection_key: &str) -> std::io::Result<Child> {
 }
 
 fn resolve_worker_path() -> Option<PathBuf> {
+    if let Ok(path) = std::env::var("SONATE_WORKER_PATH") {
+        return Some(PathBuf::from(path));
+    }
+
+    // Backwards-compatible env var.
     if let Ok(path) = std::env::var("LOLITE_WORKER_PATH") {
         return Some(PathBuf::from(path));
     }

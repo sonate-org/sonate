@@ -1,4 +1,4 @@
-use lolite_macros::MergeProperties;
+use sonate_macros::MergeProperties;
 
 #[derive(Clone, Copy, Default, Debug, PartialEq)]
 pub struct Rgba {

@@ -1,8 +1,9 @@
 [package]
-name = "lolite_common"
+name = "sonate_worker"
 version.workspace = true
 edition.workspace = true
 
 [dependencies]
-serde = { version = "1.0", features = ["derive"] }
 ipc-channel = { workspace = true }
+libloading = "0.8.6"
+sonate_common = { path = "../sonate_common" }

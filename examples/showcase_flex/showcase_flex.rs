@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
-use lolite::{Engine, Id, Params};
+use sonate::{Engine, Id, Params};
 
 fn next_id() -> Id {
     use std::sync::atomic::{AtomicU64, Ordering};

@@ -1,6 +1,6 @@
 use ipc_channel::ipc;
 use libloading::Library;
-use lolite_common::WorkerRequest;
+use sonate_common::WorkerRequest;
 use std::env;
 use std::ffi::CString;
 use std::os::raw::c_char;
@@ -8,14 +8,14 @@ use std::path::{Path, PathBuf};
 
 type EngineHandle = usize;
 
-type LoliteInitInternal = unsafe extern "C" fn(EngineHandle);
-type LoliteAddStylesheet = unsafe extern "C" fn(EngineHandle, *const c_char);
-type LoliteCreateNode = unsafe extern "C" fn(EngineHandle, u64, *const c_char) -> u64;
-type LoliteSetParent = unsafe extern "C" fn(EngineHandle, u64, u64);
-type LoliteSetAttribute = unsafe extern "C" fn(EngineHandle, u64, *const c_char, *const c_char);
-type LoliteRootId = unsafe extern "C" fn(EngineHandle) -> u64;
-type LoliteRun = unsafe extern "C" fn(EngineHandle) -> i32;
-type LoliteDestroy = unsafe extern "C" fn(EngineHandle) -> i32;
+type SonateInitInternal = unsafe extern "C" fn(EngineHandle);
+type SonateAddStylesheet = unsafe extern "C" fn(EngineHandle, *const c_char);
+type SonateCreateNode = unsafe extern "C" fn(EngineHandle, u64, *const c_char) -> u64;
+type SonateSetParent = unsafe extern "C" fn(EngineHandle, u64, u64);
+type SonateSetAttribute = unsafe extern "C" fn(EngineHandle, u64, *const c_char, *const c_char);
+type SonateRootId = unsafe extern "C" fn(EngineHandle) -> u64;
+type SonateRun = unsafe extern "C" fn(EngineHandle) -> i32;
+type SonateDestroy = unsafe extern "C" fn(EngineHandle) -> i32;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -44,40 +44,40 @@ fn main() {
         .send(tx)
         .expect("worker: failed to send channel sender to host");
 
-    // Load lolite dynamic library once and keep it alive for the whole process.
+    // Load sonate dynamic library once and keep it alive for the whole process.
     let lib_path = resolve_library_path();
     let lib = unsafe {
         Library::new(&lib_path).unwrap_or_else(|e| {
-            eprintln!("worker: failed to load lolite library at {lib_path:?}: {e}");
+            eprintln!("worker: failed to load sonate library at {lib_path:?}: {e}");
             std::process::exit(3);
         })
     };
 
     unsafe {
-        let lolite_init_internal: libloading::Symbol<LoliteInitInternal> = lib
-            .get(b"lolite_init_internal\0")
-            .expect("worker: missing symbol lolite_init_internal");
-        let lolite_add_stylesheet: libloading::Symbol<LoliteAddStylesheet> = lib
-            .get(b"lolite_add_stylesheet\0")
-            .expect("worker: missing symbol lolite_add_stylesheet");
-        let lolite_create_node: libloading::Symbol<LoliteCreateNode> = lib
-            .get(b"lolite_create_node\0")
-            .expect("worker: missing symbol lolite_create_node");
-        let lolite_set_parent: libloading::Symbol<LoliteSetParent> = lib
-            .get(b"lolite_set_parent\0")
-            .expect("worker: missing symbol lolite_set_parent");
-        let lolite_set_attribute: libloading::Symbol<LoliteSetAttribute> = lib
-            .get(b"lolite_set_attribute\0")
-            .expect("worker: missing symbol lolite_set_attribute");
-        let lolite_root_id: libloading::Symbol<LoliteRootId> = lib
-            .get(b"lolite_root_id\0")
-            .expect("worker: missing symbol lolite_root_id");
-        let lolite_run: libloading::Symbol<LoliteRun> = lib
-            .get(b"lolite_run\0")
-            .expect("worker: missing symbol lolite_run");
-        let lolite_destroy: libloading::Symbol<LoliteDestroy> = lib
-            .get(b"lolite_destroy\0")
-            .expect("worker: missing symbol lolite_destroy");
+        let sonate_init_internal: libloading::Symbol<SonateInitInternal> = lib
+            .get(b"sonate_init_internal\0")
+            .expect("worker: missing symbol sonate_init_internal");
+        let sonate_add_stylesheet: libloading::Symbol<SonateAddStylesheet> = lib
+            .get(b"sonate_add_stylesheet\0")
+            .expect("worker: missing symbol sonate_add_stylesheet");
+        let sonate_create_node: libloading::Symbol<SonateCreateNode> = lib
+            .get(b"sonate_create_node\0")
+            .expect("worker: missing symbol sonate_create_node");
+        let sonate_set_parent: libloading::Symbol<SonateSetParent> = lib
+            .get(b"sonate_set_parent\0")
+            .expect("worker: missing symbol sonate_set_parent");
+        let sonate_set_attribute: libloading::Symbol<SonateSetAttribute> = lib
+            .get(b"sonate_set_attribute\0")
+            .expect("worker: missing symbol sonate_set_attribute");
+        let sonate_root_id: libloading::Symbol<SonateRootId> = lib
+            .get(b"sonate_root_id\0")
+            .expect("worker: missing symbol sonate_root_id");
+        let sonate_run: libloading::Symbol<SonateRun> = lib
+            .get(b"sonate_run\0")
+            .expect("worker: missing symbol sonate_run");
+        let sonate_destroy: libloading::Symbol<SonateDestroy> = lib
+            .get(b"sonate_destroy\0")
+            .expect("worker: missing symbol sonate_destroy");
 
         loop {
             let msg = match rx.recv() {
@@ -90,11 +90,11 @@ fn main() {
 
             match msg {
                 WorkerRequest::InitInternal { handle } => {
-                    lolite_init_internal(handle as EngineHandle);
+                    sonate_init_internal(handle as EngineHandle);
                 }
                 WorkerRequest::AddStylesheet { handle, css } => match CString::new(css) {
                     Ok(c_css) => {
-                        lolite_add_stylesheet(handle as EngineHandle, c_css.as_ptr());
+                        sonate_add_stylesheet(handle as EngineHandle, c_css.as_ptr());
                     }
                     Err(_) => {
                         eprintln!("worker: stylesheet contains interior NUL byte");
@@ -107,7 +107,7 @@ fn main() {
                 } => {
                     match text {
                         None => {
-                            let _ = lolite_create_node(
+                            let _ = sonate_create_node(
                                 handle as EngineHandle,
                                 node_id,
                                 std::ptr::null(),
@@ -115,7 +115,7 @@ fn main() {
                         }
                         Some(s) => match CString::new(s) {
                             Ok(c_text) => {
-                                let _ = lolite_create_node(
+                                let _ = sonate_create_node(
                                     handle as EngineHandle,
                                     node_id,
                                     c_text.as_ptr(),
@@ -132,7 +132,7 @@ fn main() {
                     parent_id,
                     child_id,
                 } => {
-                    lolite_set_parent(handle as EngineHandle, parent_id, child_id);
+                    sonate_set_parent(handle as EngineHandle, parent_id, child_id);
                 }
                 WorkerRequest::SetAttribute {
                     handle,
@@ -155,7 +155,7 @@ fn main() {
                         }
                     };
 
-                    lolite_set_attribute(
+                    sonate_set_attribute(
                         handle as EngineHandle,
                         node_id,
                         c_key.as_ptr(),
@@ -163,15 +163,15 @@ fn main() {
                     );
                 }
                 WorkerRequest::RootId { handle, reply_to } => {
-                    let id = lolite_root_id(handle as EngineHandle);
+                    let id = sonate_root_id(handle as EngineHandle);
                     let _ = reply_to.send(id);
                 }
                 WorkerRequest::Run { handle, reply_to } => {
-                    let code = lolite_run(handle as EngineHandle);
+                    let code = sonate_run(handle as EngineHandle);
                     let _ = reply_to.send(code);
                 }
                 WorkerRequest::Destroy { handle, reply_to } => {
-                    let code = lolite_destroy(handle as EngineHandle);
+                    let code = sonate_destroy(handle as EngineHandle);
                     let _ = reply_to.send(code);
                 }
                 WorkerRequest::Shutdown => {
@@ -183,6 +183,11 @@ fn main() {
 }
 
 fn resolve_library_path() -> PathBuf {
+    if let Ok(path) = std::env::var("SONATE_LIBRARY_PATH") {
+        return PathBuf::from(path);
+    }
+
+    // Backwards-compatible env var.
     if let Ok(path) = std::env::var("LOLITE_LIBRARY_PATH") {
         return PathBuf::from(path);
     }
@@ -203,10 +208,10 @@ fn resolve_library_path() -> PathBuf {
 
 fn default_library_name() -> String {
     if cfg!(target_os = "windows") {
-        "lolite.dll".to_string()
+        "sonate.dll".to_string()
     } else if cfg!(target_os = "macos") {
-        "liblolite.dylib".to_string()
+        "libsonate.dylib".to_string()
     } else {
-        "liblolite.so".to_string()
+        "libsonate.so".to_string()
     }
 }
