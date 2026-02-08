@@ -4,6 +4,11 @@ use crate::{
     text::{default_text_measurer, FontSpec, TextMeasurer},
     Id,
 };
+
+// Many layout tests do `use super::*;` and refer to `Selector::...`.
+// Keep this import in the module namespace for those tests.
+#[allow(unused_imports)]
+use crate::style::Selector;
 use std::{cell::RefCell, collections::HashMap, rc::Rc, sync::Arc};
 
 #[derive(Default)]
