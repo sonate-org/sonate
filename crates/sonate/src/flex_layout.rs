@@ -830,23 +830,11 @@ fn resolve_style(node: &Rc<RefCell<Node>>, ctx: &LayoutContext, fallback: &Style
     // Start with existing style as base.
     let mut style = node_borrow.layout.style.as_ref().clone();
 
-    // Apply CSS rules in stylesheet order.
-    let tag_name = node_borrow.attributes.get("tag").map(|s| s.as_str());
-    let class_attr = node_borrow.attributes.get("class").map(|s| s.as_str());
-
-    for rule in &ctx.style_sheet.rules {
-        let matches = match &rule.selector {
-            crate::style::Selector::Tag(tag) => tag_name.is_some_and(|t| t == tag.as_str()),
-            crate::style::Selector::Class(class_name) => class_attr
-                .is_some_and(|classes| classes.split_whitespace().any(|c| c == class_name)),
-        };
-
-        if matches {
-            for declaration in &rule.declarations {
-                style.merge(declaration);
-            }
-        }
-    }
+    crate::style_matching::apply_matching_rules(
+        &mut style,
+        &node_borrow.attributes,
+        &ctx.style_sheet,
+    );
 
     // Best-effort inheritance for anonymous items.
     if node_borrow.attributes.is_empty() && node_borrow.children.is_empty() {

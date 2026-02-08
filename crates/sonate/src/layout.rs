@@ -1,6 +1,6 @@
 use crate::{
     flex_layout::FlexLayoutEngine,
-    style::{BoxSizing, Length, Selector, Style, StyleSheet},
+    style::{BoxSizing, Length, Style, StyleSheet},
     text::{default_text_measurer, FontSpec, TextMeasurer},
     Id,
 };
@@ -196,25 +196,11 @@ impl LayoutContext {
             // Start with existing style as base (this preserves manually set properties like flex_wrap)
             let mut style = node_borrow.layout.style.as_ref().clone();
 
-            // Apply CSS rules on top of existing style.
-            // The `class` attribute is treated as a whitespace-separated list of classes.
-            // Tag selectors use the node's `tag` attribute (populated by the HTML loader).
-            let tag_name = node_borrow.attributes.get("tag").map(|s| s.as_str());
-            let class_attr = node_borrow.attributes.get("class").map(|s| s.as_str());
-
-            for rule in &self.style_sheet.rules {
-                let matches = match &rule.selector {
-                    Selector::Tag(tag) => tag_name.is_some_and(|t| t == tag.as_str()),
-                    Selector::Class(class_name) => class_attr
-                        .is_some_and(|classes| classes.split_whitespace().any(|c| c == class_name)),
-                };
-
-                if matches {
-                    for declaration in &rule.declarations {
-                        style.merge(declaration);
-                    }
-                }
-            }
+            crate::style_matching::apply_matching_rules(
+                &mut style,
+                &node_borrow.attributes,
+                &self.style_sheet,
+            );
             style
         };
 

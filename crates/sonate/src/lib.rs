@@ -5,6 +5,7 @@ mod flex_layout;
 mod layout;
 mod painter;
 mod style;
+mod style_matching;
 mod text;
 mod windowing;
 
