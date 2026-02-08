@@ -198,19 +198,20 @@ impl LayoutContext {
 
             // Apply CSS rules on top of existing style.
             // The `class` attribute is treated as a whitespace-separated list of classes.
-            if let Some(class_attr) = node_borrow.attributes.get("class") {
-                for class_name in class_attr.split_whitespace() {
-                    let selector = Selector::Class(class_name.to_string());
+            // Tag selectors use the node's `tag` attribute (populated by the HTML loader).
+            let tag_name = node_borrow.attributes.get("tag").map(|s| s.as_str());
+            let class_attr = node_borrow.attributes.get("class").map(|s| s.as_str());
 
-                    if let Some(rule) = self
-                        .style_sheet
-                        .rules
-                        .iter()
-                        .find(|rule| rule.selector == selector)
-                    {
-                        for declaration in &rule.declarations {
-                            style.merge(declaration);
-                        }
+            for rule in &self.style_sheet.rules {
+                let matches = match &rule.selector {
+                    Selector::Tag(tag) => tag_name.is_some_and(|t| t == tag.as_str()),
+                    Selector::Class(class_name) => class_attr
+                        .is_some_and(|classes| classes.split_whitespace().any(|c| c == class_name)),
+                };
+
+                if matches {
+                    for declaration in &rule.declarations {
+                        style.merge(declaration);
                     }
                 }
             }
@@ -414,3 +415,6 @@ mod flex_layout_margin_tests;
 
 #[cfg(test)]
 mod margin_tests;
+
+#[cfg(test)]
+mod tag_selector_tests;

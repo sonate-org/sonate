@@ -830,19 +830,20 @@ fn resolve_style(node: &Rc<RefCell<Node>>, ctx: &LayoutContext, fallback: &Style
     // Start with existing style as base.
     let mut style = node_borrow.layout.style.as_ref().clone();
 
-    // Apply CSS rules for class selector.
-    if let Some(class_attr) = node_borrow.attributes.get("class") {
-        for class_name in class_attr.split_whitespace() {
-            let selector = crate::style::Selector::Class(class_name.to_string());
-            if let Some(rule) = ctx
-                .style_sheet
-                .rules
-                .iter()
-                .find(|rule| rule.selector == selector)
-            {
-                for declaration in &rule.declarations {
-                    style.merge(declaration);
-                }
+    // Apply CSS rules in stylesheet order.
+    let tag_name = node_borrow.attributes.get("tag").map(|s| s.as_str());
+    let class_attr = node_borrow.attributes.get("class").map(|s| s.as_str());
+
+    for rule in &ctx.style_sheet.rules {
+        let matches = match &rule.selector {
+            crate::style::Selector::Tag(tag) => tag_name.is_some_and(|t| t == tag.as_str()),
+            crate::style::Selector::Class(class_name) => class_attr
+                .is_some_and(|classes| classes.split_whitespace().any(|c| c == class_name)),
+        };
+
+        if matches {
+            for declaration in &rule.declarations {
+                style.merge(declaration);
             }
         }
     }

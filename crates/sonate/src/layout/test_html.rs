@@ -79,6 +79,13 @@ impl Reader {
             let node = self.ctx.document.create_node(id, text);
             self.ctx.document.set_parent(parent, node).unwrap();
 
+            // Store element tag for tag selector matching.
+            self.ctx.document.set_attribute(
+                node,
+                "tag".to_owned(),
+                element.name.to_ascii_lowercase(),
+            );
+
             // get id
             if let Some(id_attr) = &element.id {
                 self.nodes_by_id.insert(id_attr.to_owned(), node);

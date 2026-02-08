@@ -64,6 +64,9 @@ fn copy_nodes(
             engine.create_node(id, text);
             engine.set_parent(parent, id);
 
+            // Store element tag for tag selector matching.
+            engine.set_attribute(id, "tag".to_owned(), element.name.to_ascii_lowercase());
+
             // Preserve element id as an attribute.
             if let Some(id_attr) = &element.id {
                 engine.set_attribute(id, "id".to_owned(), id_attr.to_owned());

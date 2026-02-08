@@ -57,7 +57,7 @@ impl<'i> QualifiedRuleParser<'i> for CssParser {
             Ok(Selector::Class(class_name.to_string()))
         } else {
             let name = input.expect_ident()?;
-            Ok(Selector::Tag(name.to_string()))
+            Ok(Selector::Tag(name.as_ref().to_ascii_lowercase()))
         }
     }
 
