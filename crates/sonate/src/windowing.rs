@@ -99,6 +99,8 @@ fn run_with_backend_impl<'a, B: RenderingBackend>(
             self.backend = Some(B::new(event_loop).expect("Failed to create rendering backend"));
 
             if let Some(ref backend) = self.backend {
+                let size = backend.window_inner_size();
+                (self.params.on_resize)(size.width, size.height);
                 backend.request_redraw();
             }
         }
@@ -122,8 +124,22 @@ fn run_with_backend_impl<'a, B: RenderingBackend>(
             let backend = self.backend.as_mut().unwrap();
 
             // First, let the backend handle any backend-specific events
-            if backend.handle_window_event(&event) {
-                return; // Event was handled by the backend
+            let backend_handled = backend.handle_window_event(&event);
+
+            // Keep the layout thread's viewport size in sync with the actual window.
+            match &event {
+                WindowEvent::Resized(new_size) => {
+                    (self.params.on_resize)(new_size.width, new_size.height);
+                }
+                WindowEvent::ScaleFactorChanged { .. } => {
+                    let size = backend.window_inner_size();
+                    (self.params.on_resize)(size.width, size.height);
+                }
+                _ => {
+                    if backend_handled {
+                        return;
+                    }
+                }
             }
 
             // Handle common events

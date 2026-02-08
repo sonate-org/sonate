@@ -223,6 +223,10 @@ impl RenderingBackend for OpenGlBackend {
         }
     }
 
+    fn window_inner_size(&self) -> winit::dpi::PhysicalSize<u32> {
+        self.env.window.inner_size()
+    }
+
     fn render(&mut self, params: &mut Params) {
         (params.on_draw)(self.env.surface.canvas());
         self.env.gr_context.flush_and_submit();

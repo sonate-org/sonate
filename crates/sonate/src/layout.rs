@@ -162,6 +162,7 @@ pub struct LayoutContext {
     pub style_sheet: StyleSheet,
     flex_layout_engine: FlexLayoutEngine,
     pub text_measurer: Arc<dyn TextMeasurer>,
+    viewport_size: Size,
 }
 
 impl LayoutContext {
@@ -171,7 +172,15 @@ impl LayoutContext {
             style_sheet: StyleSheet::new(),
             flex_layout_engine: FlexLayoutEngine::new(),
             text_measurer: default_text_measurer(),
+            viewport_size: Size {
+                width: 800.0,
+                height: 500.0,
+            },
         }
+    }
+
+    pub fn set_viewport_size(&mut self, width: f64, height: f64) {
+        self.viewport_size = Size { width, height };
     }
 
     pub fn layout(&mut self) {
@@ -290,8 +299,22 @@ impl LayoutContext {
             node_borrow.layout.style = Arc::new(style);
         } else {
             // Container node - handle flexbox layout
-            let container_width = resolve_border_box(style.width, 800.0, padding_w, border_w);
-            let container_height = resolve_border_box(style.height, 500.0, padding_h, border_h);
+            let is_root = node.borrow().parent.is_none();
+            let fallback_width = if is_root {
+                self.viewport_size.width
+            } else {
+                800.0
+            };
+            let fallback_height = if is_root {
+                self.viewport_size.height
+            } else {
+                500.0
+            };
+
+            let container_width =
+                resolve_border_box(style.width, fallback_width, padding_w, border_w);
+            let container_height =
+                resolve_border_box(style.height, fallback_height, padding_h, border_h);
 
             // Set container dimensions
             {

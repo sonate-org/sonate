@@ -87,6 +87,7 @@ impl Engine {
 
         let this1 = self.clone();
         let this2 = self.clone();
+        let resize_sender = self.sender.clone();
 
         let mut params = windowing::Params {
             on_draw: Box::new(move |canvas| {
@@ -103,6 +104,9 @@ impl Engine {
                         on_click(x, y, elements);
                     }
                 }
+            }),
+            on_resize: Box::new(move |width, height| {
+                let _ = resize_sender.send(Command::SetViewportSize(width as f64, height as f64));
             }),
         };
 

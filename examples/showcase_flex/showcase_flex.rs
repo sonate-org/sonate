@@ -208,6 +208,7 @@ fn main() {
     gap: 10px;
     padding: 10px;
     background-color: #bbbbbb;
+    width: 200px;
     height: 500px;
 }
 
@@ -224,9 +225,8 @@ fn main() {
     display: flex;
     flex-direction: row;
     padding: 10px;
-    width: 700px;
-    height: 260px;
     background-color: #eeeeee;
+    flex: 1;
 }
 
 .wrap { flex-wrap: wrap; }

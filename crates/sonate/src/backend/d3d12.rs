@@ -148,6 +148,10 @@ impl RenderingBackend for D3D12Backend {
         }
     }
 
+    fn window_inner_size(&self) -> winit::dpi::PhysicalSize<u32> {
+        self.window.inner_size()
+    }
+
     fn render(&mut self, params: &mut Params) {
         let index = unsafe { self.swap_chain.GetCurrentBackBufferIndex() };
         if self.surfaces[index as usize].is_none() {

@@ -14,6 +14,7 @@ pub(crate) enum Command {
     CreateNode(Id, Option<String>),
     SetParent(Id, Id),
     SetAttribute(Id, String, String),
+    SetViewportSize(f64, f64),
     #[allow(unused)]
     Layout,
 }
@@ -79,6 +80,18 @@ pub(crate) fn handle_commands(
                     ctx.document.set_attribute(id, k, v);
                     if deadline.is_none() {
                         deadline = Some(Instant::now() + Duration::from_millis(100));
+                    }
+                }
+                Command::SetViewportSize(width, height) => {
+                    if width > 0.0 && height > 0.0 {
+                        ctx.set_viewport_size(width, height);
+
+                        // Keep resize responsive without relayouting on every single event.
+                        let new_deadline = Instant::now() + Duration::from_millis(16);
+                        deadline = Some(match deadline {
+                            Some(existing) => existing.min(new_deadline),
+                            None => new_deadline,
+                        });
                     }
                 }
                 Command::Layout => {

@@ -13,6 +13,7 @@ pub mod metal;
 pub struct Params {
     pub on_draw: Box<dyn FnMut(&Canvas)>,
     pub on_click: Box<dyn FnMut(f64, f64)>, // x, y coordinates
+    pub on_resize: Box<dyn FnMut(u32, u32)>, // width, height in physical pixels
 }
 
 /// State shared across all backends for input handling
@@ -41,6 +42,9 @@ pub trait RenderingBackend {
 
     /// Handle window events specific to this backend
     fn handle_window_event(&mut self, event: &WindowEvent) -> bool;
+
+    /// Get the current window inner size (physical pixels)
+    fn window_inner_size(&self) -> winit::dpi::PhysicalSize<u32>;
 
     /// Render a frame
     fn render(&mut self, params: &mut Params);
