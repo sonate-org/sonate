@@ -1849,7 +1849,7 @@ dependencies = [
  "glutin-winit",
  "html_parser",
  "metal",
- "objc",
+ "objc2 0.6.3",
  "parking_lot",
  "raw-window-handle",
  "skia-safe",
