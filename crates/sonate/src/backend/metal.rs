@@ -29,6 +29,7 @@ const BUFFER_COUNT: usize = 3;
 /// Metal rendering backend implementation for macOS
 pub struct MetalBackend {
     window: Window,
+    #[allow(dead_code)]
     device: Device,
     layer: MetalLayer,
     direct_context: DirectContext,
@@ -104,7 +105,7 @@ impl RenderingBackend for MetalBackend {
         };
 
         // Create Skia Metal DirectContext
-        let direct_context = unsafe { make_metal(&backend_context, None) }
+        let direct_context = make_metal(&backend_context, None)
             .ok_or_else(|| anyhow::anyhow!("Failed to create Metal DirectContext"))?;
 
         let mut backend = Self {
