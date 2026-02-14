@@ -12,7 +12,7 @@ use metal::{
     foreign_types::{ForeignType, ForeignTypeRef},
     Device, MetalLayer,
 };
-use objc::runtime::YES;
+use objc2::runtime::{AnyObject, Bool};
 use raw_window_handle::HasWindowHandle;
 use skia_safe::{
     gpu::{
@@ -29,6 +29,7 @@ const BUFFER_COUNT: usize = 3;
 /// Metal rendering backend implementation for macOS
 pub struct MetalBackend {
     window: Window,
+    #[allow(dead_code)]
     device: Device,
     layer: MetalLayer,
     direct_context: DirectContext,
@@ -79,16 +80,19 @@ impl RenderingBackend for MetalBackend {
 
         // Set up the layer with the window
         unsafe {
-            use objc::{msg_send, sel, sel_impl};
+            use objc2::msg_send;
 
             if let Ok(window_handle) = window.window_handle() {
                 match window_handle.as_raw() {
                     raw_window_handle::RawWindowHandle::AppKit(handle) => {
                         let ns_view = handle.ns_view;
 
+                        let ns_view: *mut AnyObject = ns_view.as_ptr() as *mut AnyObject;
+                        let layer_obj: *mut AnyObject = self::MetalBackend::layer_as_objc(&layer);
+
                         // Set layer on the view
-                        let _: () = msg_send![ns_view.as_ptr() as *mut objc::runtime::Object, setLayer: layer.as_ref()];
-                        let _: () = msg_send![ns_view.as_ptr() as *mut objc::runtime::Object, setWantsLayer: YES];
+                        let _: () = msg_send![ns_view, setLayer: layer_obj];
+                        let _: () = msg_send![ns_view, setWantsLayer: Bool::YES];
                     }
                     _ => {}
                 }
@@ -104,7 +108,7 @@ impl RenderingBackend for MetalBackend {
         };
 
         // Create Skia Metal DirectContext
-        let direct_context = unsafe { make_metal(&backend_context, None) }
+        let direct_context = make_metal(&backend_context, None)
             .ok_or_else(|| anyhow::anyhow!("Failed to create Metal DirectContext"))?;
 
         let mut backend = Self {
@@ -212,6 +216,10 @@ impl RenderingBackend for MetalBackend {
 }
 
 impl MetalBackend {
+    fn layer_as_objc(layer: &MetalLayer) -> *mut AnyObject {
+        layer.as_ptr() as *mut AnyObject
+    }
+
     fn recreate_surfaces(&mut self, width: u32, height: u32) -> Result<()> {
         // Update layer drawable size and DPI scale factor
         let scale_factor = self.window.scale_factor();

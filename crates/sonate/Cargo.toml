@@ -29,7 +29,7 @@ windows = { version = "0.61.3", features = [
 [target.'cfg(target_os = "macos")'.dependencies]
 skia-safe = { version = "0.87.0", features = ["metal"] }
 metal = "0.27"
-objc = "0.2"
+objc2 = "0.6"
 raw-window-handle = "0.6"
 core-graphics-types = "0.1"
 
