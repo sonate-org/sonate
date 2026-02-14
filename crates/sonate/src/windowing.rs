@@ -90,6 +90,7 @@ fn run_with_backend_impl<'a, B: RenderingBackend>(
     struct Application<'a, B: RenderingBackend> {
         backend: Option<B>,
         params: &'a mut crate::backend::Params,
+        scale_factor: f64,
     }
 
     impl<'a, B: RenderingBackend> ApplicationHandler<WindowMessage> for Application<'a, B> {
@@ -99,8 +100,11 @@ fn run_with_backend_impl<'a, B: RenderingBackend>(
             self.backend = Some(B::new(event_loop).expect("Failed to create rendering backend"));
 
             if let Some(ref backend) = self.backend {
-                let size = backend.window_inner_size();
-                (self.params.on_resize)(size.width, size.height);
+                self.scale_factor = backend.scale_factor();
+
+                let physical_size = backend.window_inner_size();
+                let logical_size = physical_size.to_logical::<f64>(self.scale_factor);
+                (self.params.on_resize)(logical_size.width, logical_size.height);
                 backend.request_redraw();
             }
         }
@@ -129,11 +133,14 @@ fn run_with_backend_impl<'a, B: RenderingBackend>(
             // Keep the layout thread's viewport size in sync with the actual window.
             match &event {
                 WindowEvent::Resized(new_size) => {
-                    (self.params.on_resize)(new_size.width, new_size.height);
+                    let logical_size = new_size.to_logical::<f64>(self.scale_factor);
+                    (self.params.on_resize)(logical_size.width, logical_size.height);
                 }
-                WindowEvent::ScaleFactorChanged { .. } => {
-                    let size = backend.window_inner_size();
-                    (self.params.on_resize)(size.width, size.height);
+                WindowEvent::ScaleFactorChanged { scale_factor, .. } => {
+                    self.scale_factor = *scale_factor;
+                    let physical_size = backend.window_inner_size();
+                    let logical_size = physical_size.to_logical::<f64>(self.scale_factor);
+                    (self.params.on_resize)(logical_size.width, logical_size.height);
                 }
                 _ => {
                     if backend_handled {
@@ -167,7 +174,8 @@ fn run_with_backend_impl<'a, B: RenderingBackend>(
                     }
                 }
                 WindowEvent::CursorMoved { position, .. } => {
-                    backend.input_state_mut().cursor_position = Some(position);
+                    let logical_position = position.to_logical::<f64>(self.scale_factor);
+                    backend.input_state_mut().cursor_position = Some(logical_position);
                 }
                 WindowEvent::RedrawRequested => backend.render(self.params),
                 WindowEvent::CloseRequested => event_loop.exit(),
@@ -181,6 +189,7 @@ fn run_with_backend_impl<'a, B: RenderingBackend>(
     let mut application = Application::<'a, B> {
         backend: None,
         params,
+        scale_factor: 1.0,
     };
 
     event_loop.run_app(&mut application)?;

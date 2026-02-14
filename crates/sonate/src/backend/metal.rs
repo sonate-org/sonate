@@ -54,17 +54,9 @@ impl RenderingBackend for MetalBackend {
             .create_window(window_attributes)
             .expect("Failed to create window");
 
-        let logical_size = window.inner_size();
-        let physical_size = window.outer_size();
-
-        // Get the actual pixel size (accounting for DPI scaling)
-        let (width, height): (u32, u32) = logical_size.into();
-        let (physical_width, physical_height): (u32, u32) = physical_size.into();
-
-        println!(
-            "Logical size: {}x{}, Physical size: {}x{}",
-            width, height, physical_width, physical_height
-        );
+        // winit reports inner_size in physical pixels.
+        let physical_size = window.inner_size();
+        let (width, height): (u32, u32) = physical_size.into();
 
         // Create Metal device
         let device = Device::system_default()
@@ -80,7 +72,7 @@ impl RenderingBackend for MetalBackend {
         let scale_factor = window.scale_factor();
         layer.set_contents_scale(scale_factor as f64);
 
-        // Use logical size for Metal layer to match the coordinate system
+        // CAMetalLayer drawable_size is in physical pixels.
         layer.set_drawable_size(CGSize::new(width as f64, height as f64));
 
         println!("Scale factor: {}", scale_factor);
@@ -152,6 +144,10 @@ impl RenderingBackend for MetalBackend {
         self.window.inner_size()
     }
 
+    fn scale_factor(&self) -> f64 {
+        self.window.scale_factor()
+    }
+
     fn render(&mut self, params: &mut Params) {
         // Get next drawable from layer
         let drawable = match self.layer.next_drawable() {
@@ -183,8 +179,15 @@ impl RenderingBackend for MetalBackend {
         if let Some(mut surface) = surface {
             let canvas = surface.canvas();
 
+            // Render in logical pixels (points) while targeting a physical-pixel framebuffer.
+            let scale_factor = self.window.scale_factor() as f32;
+            canvas.save();
+            canvas.scale((scale_factor, scale_factor));
+
             // Call the draw callback
             (params.on_draw)(canvas);
+
+            canvas.restore();
 
             // Flush and present
             self.direct_context
