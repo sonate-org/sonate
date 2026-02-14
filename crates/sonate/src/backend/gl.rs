@@ -227,8 +227,18 @@ impl RenderingBackend for OpenGlBackend {
         self.env.window.inner_size()
     }
 
+    fn scale_factor(&self) -> f64 {
+        self.env.window.scale_factor()
+    }
+
     fn render(&mut self, params: &mut Params) {
-        (params.on_draw)(self.env.surface.canvas());
+        let canvas = self.env.surface.canvas();
+        let scale_factor = self.env.window.scale_factor() as f32;
+        canvas.save();
+        canvas.scale((scale_factor, scale_factor));
+        (params.on_draw)(canvas);
+        canvas.restore();
+
         self.env.gr_context.flush_and_submit();
         let _ = self.env.gl_surface.swap_buffers(&self.env.gl_context);
     }

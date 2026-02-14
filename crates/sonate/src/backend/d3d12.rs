@@ -152,6 +152,10 @@ impl RenderingBackend for D3D12Backend {
         self.window.inner_size()
     }
 
+    fn scale_factor(&self) -> f64 {
+        self.window.scale_factor()
+    }
+
     fn render(&mut self, params: &mut Params) {
         let index = unsafe { self.swap_chain.GetCurrentBackBufferIndex() };
         if self.surfaces[index as usize].is_none() {
@@ -164,7 +168,12 @@ impl RenderingBackend for D3D12Backend {
         };
         let canvas = surface.canvas();
 
+        let scale_factor = self.window.scale_factor() as f32;
+        canvas.save();
+        canvas.scale((scale_factor, scale_factor));
         (params.on_draw)(canvas);
+        canvas.restore();
+
         self.direct_context.flush_and_submit_surface(surface, None);
         // Extra flush to ensure state transitions back to PRESENT/COMMON before Present
         self.direct_context.flush_and_submit();

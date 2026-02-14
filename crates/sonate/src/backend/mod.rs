@@ -12,15 +12,15 @@ pub mod metal;
 /// Common parameters shared across all rendering backends
 pub struct Params {
     pub on_draw: Box<dyn FnMut(&Canvas)>,
-    pub on_click: Box<dyn FnMut(f64, f64)>, // x, y coordinates
-    pub on_resize: Box<dyn FnMut(u32, u32)>, // width, height in physical pixels
+    pub on_click: Box<dyn FnMut(f64, f64)>, // x, y coordinates in logical pixels (points)
+    pub on_resize: Box<dyn FnMut(f64, f64)>, // width, height in logical pixels (points)
 }
 
 /// State shared across all backends for input handling
 pub struct InputState {
     pub x: f32,
     pub y: f32,
-    pub cursor_position: Option<winit::dpi::PhysicalPosition<f64>>,
+    pub cursor_position: Option<winit::dpi::LogicalPosition<f64>>,
 }
 
 impl Default for InputState {
@@ -45,6 +45,9 @@ pub trait RenderingBackend {
 
     /// Get the current window inner size (physical pixels)
     fn window_inner_size(&self) -> winit::dpi::PhysicalSize<u32>;
+
+    /// Get the current window scale factor (physical pixels per logical pixel)
+    fn scale_factor(&self) -> f64;
 
     /// Render a frame
     fn render(&mut self, params: &mut Params);
