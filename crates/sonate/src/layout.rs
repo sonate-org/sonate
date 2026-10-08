@@ -33,6 +33,8 @@ impl ScrollState {
 pub struct Layout {
     pub bounds: Rect,
     pub style: Arc<Style>,
+    /// For text and text inputs: where the text goes (see `sonate_layout::TextBox`).
+    pub text_box: Option<Rect>,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -676,6 +678,8 @@ fn use_legacy_layout() -> bool {
 pub struct RenderNode {
     pub id: Id,
     pub bounds: Rect,
+    /// Where the text goes, if the node has text.
+    pub text_box: Option<Rect>,
     pub style: Arc<Style>,
     pub text: Option<String>,
     pub text_input_state: Option<TextInputState>,
@@ -765,6 +769,7 @@ impl StackingContext {
             out.push(RenderOp::DrawBackgroundBorder(RenderNode {
                 id: owner.id,
                 bounds: owner.bounds,
+                text_box: owner.text_box,
                 style: owner.style.clone(),
                 text: owner.text.clone(),
                 text_input_state: owner.text_input_state.clone(),
@@ -794,6 +799,7 @@ impl StackingContext {
             out.push(RenderOp::DrawText(RenderNode {
                 id: owner.id,
                 bounds: owner.bounds,
+                text_box: owner.text_box,
                 style: owner.style.clone(),
                 text: owner.text.clone(),
                 text_input_state: owner.text_input_state.clone(),
@@ -930,11 +936,12 @@ pub fn build_render_tree_with_stacking(node: Rc<RefCell<Node>>) -> (RenderNode, 
 }
 
 fn build_render_tree_with_ctx(node: Rc<RefCell<Node>>, ctx: &mut StackingContext) -> RenderNode {
-    let (id, bounds, style, text, text_input_state, children_nodes) = {
+    let (id, bounds, text_box, style, text, text_input_state, children_nodes) = {
         let nb = node.borrow();
         (
             nb.id,
             nb.layout.bounds,
+            nb.layout.text_box,
             nb.layout.style.clone(),
             nb.text.clone(),
             nb.text_input_state.clone(),
@@ -948,6 +955,7 @@ fn build_render_tree_with_ctx(node: Rc<RefCell<Node>>, ctx: &mut StackingContext
         owner_node: Some(RenderNode {
             id,
             bounds,
+            text_box,
             style: style.clone(),
             text: text.clone(),
             text_input_state: text_input_state.clone(),
@@ -970,6 +978,7 @@ fn build_render_tree_with_ctx(node: Rc<RefCell<Node>>, ctx: &mut StackingContext
     RenderNode {
         id,
         bounds,
+        text_box,
         style,
         text,
         text_input_state,

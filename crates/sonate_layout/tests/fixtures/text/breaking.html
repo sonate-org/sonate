@@ -1,0 +1,10 @@
+<!--
+overflow-wrap and word-break let long words break between letters, and change min-content widths.
+@matrix .t overflow-wrap: normal | break-word | anywhere
+@matrix .t word-break: normal | break-all
+-->
+<div id="root" style="width: 200px; height: 200px; align-items: flex-start">
+  <div class="t" style="width: 60px">Supercalifragilistic is long</div>
+  <div class="t">Abcdefghij klm</div>
+  <div style="width: 150px; flex-shrink: 0"></div>
+</div>

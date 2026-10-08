@@ -1,6 +1,7 @@
 //! Snapshots written by the bless tool (`tools/bless`): the fixture as Chrome parsed it plus the
 //! layout Chrome produced, for every case of the fixture's `@matrix`.
 
+use crate::text::{OverflowWrap, TextAlign, TextStyle, TextTransform, WhiteSpace, WordBreak};
 use serde_json::Value;
 use std::collections::BTreeMap;
 
@@ -56,6 +57,10 @@ pub struct SnapshotNode {
     pub rect: Rect4,
     /// Computed values of the fixture's `@check` properties, as `getComputedStyle` reports them.
     pub checks: BTreeMap<String, String>,
+    /// For text: the text properties that affect line breaking and alignment.
+    pub text_style: TextStyle,
+    /// For text: Chrome's line boxes relative to the element's border box.
+    pub lines: Option<Vec<Rect4>>,
 }
 
 impl SnapshotCase {
@@ -172,14 +177,7 @@ fn parse_node(node: &Value) -> Result<SnapshotNode, String> {
         .transpose()?
         .unwrap_or_default();
 
-    let rect = node["rect"].as_array().ok_or("node without rect")?;
-    if rect.len() != 4 {
-        return Err("rect must have 4 values".to_owned());
-    }
-    let mut parsed_rect = [0.0; 4];
-    for (target, value) in parsed_rect.iter_mut().zip(rect) {
-        *target = value.as_f64().ok_or("rect values must be numbers")?;
-    }
+    let parsed_rect = rect4(&node["rect"])?;
 
     let checks = node["checks"]
         .as_object()
@@ -192,8 +190,15 @@ fn parse_node(node: &Value) -> Result<SnapshotNode, String> {
         .transpose()?
         .unwrap_or_default();
 
+    let lines = node["lines"]
+        .as_array()
+        .map(|lines| lines.iter().map(rect4).collect::<Result<Vec<_>, String>>())
+        .transpose()?;
+
     Ok(SnapshotNode {
         checks,
+        text_style: text_style(&node["ts"])?,
+        lines,
         depth: node["d"].as_u64().ok_or("node without depth")? as usize,
         label: string(&node["label"]).unwrap_or_else(|_| "div".to_owned()),
         style,
@@ -208,4 +213,90 @@ fn string(value: &Value) -> Result<String, String> {
         .as_str()
         .map(str::to_owned)
         .ok_or_else(|| format!("expected a string, got {value}"))
+}
+
+fn rect4(value: &Value) -> Result<Rect4, String> {
+    let values = value.as_array().ok_or("expected a rect")?;
+    if values.len() != 4 {
+        return Err("rect must have 4 values".to_owned());
+    }
+    let mut rect = [0.0; 4];
+    for (target, value) in rect.iter_mut().zip(values) {
+        *target = value.as_f64().ok_or("rect values must be numbers")?;
+    }
+    Ok(rect)
+}
+
+/// The text properties recorded as `ts`, with Chrome's computed values.
+fn text_style(value: &Value) -> Result<TextStyle, String> {
+    let mut style = TextStyle::default();
+    let Some(values) = value.as_object() else {
+        return Ok(style);
+    };
+    let px = |value: &str| {
+        value
+            .strip_suffix("px")
+            .and_then(|number| number.parse::<f64>().ok())
+            .ok_or_else(|| format!("expected px, got `{value}`"))
+    };
+    for (property, value) in values {
+        let value = value.as_str().ok_or("text style values must be strings")?;
+        let unsupported = || format!("unsupported {property}: {value}");
+        match property.as_str() {
+            "white-space" => {
+                style.white_space = match value {
+                    "normal" => WhiteSpace::Normal,
+                    "nowrap" => WhiteSpace::NoWrap,
+                    "pre" => WhiteSpace::Pre,
+                    "pre-wrap" => WhiteSpace::PreWrap,
+                    "pre-line" => WhiteSpace::PreLine,
+                    "break-spaces" => WhiteSpace::BreakSpaces,
+                    _ => return Err(unsupported()),
+                }
+            }
+            "text-transform" => {
+                style.text_transform = match value {
+                    "none" => TextTransform::None,
+                    "uppercase" => TextTransform::Uppercase,
+                    "lowercase" => TextTransform::Lowercase,
+                    "capitalize" => TextTransform::Capitalize,
+                    _ => return Err(unsupported()),
+                }
+            }
+            "overflow-wrap" => {
+                style.overflow_wrap = match value {
+                    "normal" => OverflowWrap::Normal,
+                    "break-word" => OverflowWrap::BreakWord,
+                    "anywhere" => OverflowWrap::Anywhere,
+                    _ => return Err(unsupported()),
+                }
+            }
+            "word-break" => {
+                style.word_break = match value {
+                    "normal" => WordBreak::Normal,
+                    "break-all" => WordBreak::BreakAll,
+                    "keep-all" => WordBreak::KeepAll,
+                    _ => return Err(unsupported()),
+                }
+            }
+            "text-align" => {
+                style.text_align = match value {
+                    "start" => TextAlign::Start,
+                    "end" => TextAlign::End,
+                    "left" => TextAlign::Left,
+                    "right" => TextAlign::Right,
+                    "center" => TextAlign::Center,
+                    "justify" => TextAlign::Justify,
+                    _ => return Err(unsupported()),
+                }
+            }
+            "letter-spacing" if value == "normal" => {}
+            "letter-spacing" => style.letter_spacing = px(value)?,
+            "word-spacing" => style.word_spacing = px(value)?,
+            "line-height" if value == "normal" => {}
+            "line-height" => style.line_height = Some(px(value)?),
+            _ => return Err(format!("unsupported text property {property}")),
+        }
+    }
+    Ok(style)
 }

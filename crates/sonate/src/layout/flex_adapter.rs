@@ -13,6 +13,7 @@ use crate::style::{
 use crate::text::{FontSpec, TextMeasurer};
 use crate::Id;
 use sonate_layout as engine;
+use sonate_layout::text::{TextStyle, WhiteSpace};
 use sonate_layout::{AvailableSpace, MeasureInput, MeasureOutput, NodeId};
 use std::{cell::RefCell, collections::HashMap, rc::Rc, sync::Arc};
 
@@ -20,9 +21,9 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc, sync::Arc};
 enum Content {
     None,
     /// Text that wraps at whitespace.
-    Text(String, FontSpec),
+    Text(String, FontSpec, TextStyle),
     /// The single line of a text input, whitespace kept.
-    TextInput(String, FontSpec),
+    TextInput(String, FontSpec, TextStyle),
 }
 
 /// A node of the layout tree, indexed by its `NodeId`.
@@ -65,11 +66,12 @@ fn build(
     let borrowed = node.borrow();
     let style = borrowed.layout.style.as_ref();
     let font = FontSpec::from_style(style);
+    let text_style = crate::text::text_style(style);
     let content = if style.widget.is_some_and(|widget| widget.is_text_input()) {
-        Content::TextInput(borrowed.text.clone().unwrap_or_default(), font.clone())
+        Content::TextInput(borrowed.text.clone().unwrap_or_default(), font.clone(), text_style)
     } else {
         match &borrowed.text {
-            Some(text) if child_ids.is_empty() => Content::Text(text.clone(), font.clone()),
+            Some(text) if child_ids.is_empty() => Content::Text(text.clone(), font.clone(), text_style),
             _ => Content::None,
         }
     };
@@ -77,8 +79,11 @@ fn build(
     let children = if measured { &[][..] } else { &child_ids[..] };
 
     let mut layout_style = convert_style(style, &font);
-    // Whitespace-only text doesn't generate a flex item (CSS Flexbox §4).
-    if matches!(&content, Content::Text(text, _) if text.trim().is_empty()) {
+    // Whitespace-only text doesn't generate a flex item (CSS Flexbox §4), unless spaces are
+    // preserved.
+    if matches!(&content, Content::Text(text, _, style)
+        if text.trim().is_empty() && matches!(style.white_space, WhiteSpace::Normal | WhiteSpace::NoWrap | WhiteSpace::PreLine))
+    {
         layout_style.display = engine::Display::None;
     }
     let id = tree.push(layout_style, children, measured);
@@ -90,42 +95,31 @@ fn build(
     id
 }
 
-/// Measures text the way Chrome sizes the anonymous block around it: an unknown width is the
-/// fit-content width, and the text never wraps narrower than its longest word.
+/// Measures text with the shared line breaking of `sonate_layout::text`.
 fn measure(measurer: &dyn TextMeasurer, content: &Content, input: MeasureInput) -> MeasureOutput {
-    match content {
-        Content::None => MeasureOutput::default(),
-        Content::TextInput(text, font) => {
-            let size = measurer.measure_unwrapped(text, font);
-            MeasureOutput {
-                size: engine::Size::new(
-                    input.known.width.unwrap_or(size.width),
-                    input.known.height.unwrap_or(size.height),
-                ),
-                first_baseline: Some(measurer.ascent(font)),
-            }
-        }
-        Content::Text(text, font) => {
-            let max_content = measurer.measure_wrapped(text, font, f64::INFINITY);
-            let min_content = measurer
-                .min_content_width(text, font)
-                .min(max_content.width);
-            let width = input.known.width.unwrap_or(match input.available.width {
-                AvailableSpace::Definite(space) => space.min(max_content.width).max(min_content),
-                AvailableSpace::MinContent => min_content,
-                AvailableSpace::MaxContent => max_content.width,
-            });
-            let wrap_width = width.max(min_content).min(max_content.width);
-            let height = input
-                .known
-                .height
-                .unwrap_or_else(|| measurer.measure_wrapped(text, font, wrap_width).height);
-            MeasureOutput {
-                size: engine::Size::new(width, height),
-                first_baseline: (!text.trim().is_empty()).then(|| measurer.ascent(font)),
-            }
-        }
+    let (text, font, style) = match content {
+        Content::None => return MeasureOutput::default(),
+        Content::Text(text, font, style) => (text, font, *style),
+        // A text input is one line that keeps its spaces.
+        Content::TextInput(text, font, style) => (
+            text,
+            font,
+            TextStyle {
+                white_space: WhiteSpace::Pre,
+                ..*style
+            },
+        ),
+    };
+    let mut output = sonate_layout::text::measure_text(text, &style, measurer.metrics(font), input, &mut |run| {
+        measurer.advance(run, font)
+    });
+    if let Content::TextInput(..) = content {
+        // An empty input is still one line high.
+        let line_height = measurer.metrics(font).line_height(&style);
+        output.size.height = input.known.height.unwrap_or(output.size.height.max(line_height));
+        output.first_baseline = Some(measurer.metrics(font).baseline(&style));
     }
+    output
 }
 
 /// Writes absolute bounds; children of scroll containers move by the clamped scroll offset.
@@ -144,6 +138,14 @@ fn write_back(
     {
         let mut node = entries[id.index()].node.borrow_mut();
         node.layout.bounds = Rect::new(x, y, layout.size.width, layout.size.height);
+        node.layout.text_box = layout.text_box.map(|text_box| {
+            Rect::new(
+                x + text_box.location.x,
+                y + text_box.location.y,
+                text_box.size.width,
+                text_box.size.height,
+            )
+        });
 
         let style = node.layout.style.clone();
         if matches!(
@@ -190,7 +192,7 @@ fn write_back(
 /// Converts Sonate's computed style to the engine's style. Unset properties get their CSS
 /// initial values; `em` lengths resolve against the node's font size.
 fn convert_style(style: &Style, font: &FontSpec) -> engine::Style {
-    let em = font.size_px as f64;
+    let em = font.size_px();
     // After the cascade, lengths are px, percentages or math with both (other units are
     // handled for styles set without the cascade).
     let to_px = |length: &Length| match length {

@@ -279,3 +279,36 @@ fn test_parse_layout_properties() {
     );
     assert_eq!(style.font_size, Some(Length::Px(20.0)));
 }
+
+#[test]
+fn test_parse_font_properties() {
+    use crate::style::{FontStyle, FontWeight, LineHeight, TextAlign, WhiteSpace};
+    let style = |css: &str| {
+        let mut style = Style::default();
+        for declaration in crate::css_parser::parse_declarations(css) {
+            style.merge(&declaration);
+        }
+        style
+    };
+
+    let font = style("font: italic bold 12px/1.5 \"Fira Sans\", Arial, sans-serif");
+    assert_eq!(font.font_style, Some(FontStyle::Italic));
+    assert_eq!(font.font_weight, Some(FontWeight::Number(700)));
+    assert_eq!(font.font_size, Some(Length::Px(12.0)));
+    assert_eq!(font.line_height, Some(LineHeight::Number(1.5)));
+    assert_eq!(font.font_family.as_deref(), Some("\"Fira Sans\", Arial, sans-serif"));
+
+    // The shorthand resets what it leaves out.
+    let reset = style("font-weight: 900; line-height: 3; font: 10px Ahem");
+    assert_eq!(reset.font_weight, Some(FontWeight::Number(400)));
+    assert_eq!(reset.line_height, Some(LineHeight::Normal));
+
+    let families = style("font-family: 'Ahem', Times New Roman, SERIF");
+    assert_eq!(families.font_family.as_deref(), Some("Ahem, \"Times New Roman\", serif"));
+    assert_eq!(style("font-weight: bolder").font_weight, Some(FontWeight::Bolder));
+    assert_eq!(style("font-size: small").font_size, Some(Length::Px(13.0)));
+    assert_eq!(style("text-align: center").text_align, Some(TextAlign::Center));
+    assert_eq!(style("white-space: pre-wrap").white_space, Some(WhiteSpace::PreWrap));
+    assert_eq!(style("letter-spacing: normal").letter_spacing, Some(Length::Auto));
+    assert!(style("font-weight: 1001").font_weight.is_none());
+}

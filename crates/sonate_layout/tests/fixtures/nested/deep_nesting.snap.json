@@ -32,7 +32,7 @@
         {"d":11,"label":".level","style":{"padding-top":"3px","padding-right":"3px","padding-bottom":"3px","padding-left":"3px","border-top-width":"1px","border-right-width":"1px","border-bottom-width":"1px","border-left-width":"1px","flex-direction":"column","flex-grow":1,"flex-basis":"0%"},"rect":[14,4,270,270]},
         {"d":12,"label":"div","style":{"width":"10px","height":"10px"},"rect":[4,4,10,10]},
         {"d":12,"label":".level","style":{"padding-top":"3px","padding-right":"3px","padding-bottom":"3px","padding-left":"3px","border-top-width":"1px","border-right-width":"1px","border-bottom-width":"1px","border-left-width":"1px","flex-grow":1,"flex-basis":"0%"},"rect":[4,14,262,252]},
-        {"d":13,"label":"div","style":{},"text":"Deep","font":10,"rect":[4,4,40,244]},
+        {"d":13,"label":"div","style":{},"text":"Deep","font":10,"ts":{"line-height":"10px"},"lines":[[0,0,40,10]],"rect":[4,4,40,244]},
         {"d":13,"label":"div","style":{"width":"10px","height":"10px"},"rect":[44,4,10,10]}
       ]
     },
@@ -65,7 +65,7 @@
         {"d":11,"label":".level","style":{"padding-top":"3px","padding-right":"3px","padding-bottom":"3px","padding-left":"3px","border-top-width":"1px","border-right-width":"1px","border-bottom-width":"1px","border-left-width":"1px","flex-direction":"column","align-items":"center","flex-grow":1,"flex-basis":"0%"},"rect":[14,4,66,36]},
         {"d":12,"label":"div","style":{"width":"10px","height":"10px"},"rect":[28,4,10,10]},
         {"d":12,"label":".level","style":{"padding-top":"3px","padding-right":"3px","padding-bottom":"3px","padding-left":"3px","border-top-width":"1px","border-right-width":"1px","border-bottom-width":"1px","border-left-width":"1px","align-items":"center","flex-grow":1,"flex-basis":"0%"},"rect":[4,14,58,18]},
-        {"d":13,"label":"div","style":{},"text":"Deep","font":10,"rect":[4,4,40,10]},
+        {"d":13,"label":"div","style":{},"text":"Deep","font":10,"ts":{"line-height":"10px"},"lines":[[0,0,40,10]],"rect":[4,4,40,10]},
         {"d":13,"label":"div","style":{"width":"10px","height":"10px"},"rect":[44,4,10,10]}
       ]
     }

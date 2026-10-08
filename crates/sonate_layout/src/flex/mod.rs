@@ -8,7 +8,7 @@
 //! directions and `wrap-reverse` are handled.
 
 mod abspos;
-mod alignment;
+pub(crate) mod alignment;
 mod baseline;
 mod cross_size;
 mod flexible_lengths;
@@ -278,6 +278,7 @@ pub(crate) fn compute_flexbox(ctx: &mut Context, id: NodeId, input: LayoutInput)
                 size,
                 content_size: size,
                 first_baseline: None,
+                text_box: None,
             };
         }
     }
@@ -323,6 +324,7 @@ pub(crate) fn compute_flexbox(ctx: &mut Context, id: NodeId, input: LayoutInput)
             size,
             content_size: size,
             first_baseline: None,
+            text_box: None,
         };
     }
 
@@ -367,6 +369,7 @@ pub(crate) fn compute_flexbox(ctx: &mut Context, id: NodeId, input: LayoutInput)
                 size: output.size,
                 content_size: output.content_size,
                 first_baseline: output.first_baseline,
+                text_box: output.text_box,
             };
             overflow = extend_overflow(overflow, &layout, item.resolved_margin);
             ctx.tree.set_layout(item.id, layout);
@@ -391,6 +394,7 @@ pub(crate) fn compute_flexbox(ctx: &mut Context, id: NodeId, input: LayoutInput)
         size,
         content_size,
         first_baseline: baseline::container_baseline(&container, &items, &lines, &locations, inner_cross),
+        text_box: None,
     }
 }
 

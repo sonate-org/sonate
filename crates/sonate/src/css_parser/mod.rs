@@ -1,5 +1,6 @@
 mod borders;
 mod colors;
+mod fonts;
 mod named_colors;
 mod parser;
 mod selectors;

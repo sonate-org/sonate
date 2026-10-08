@@ -83,6 +83,7 @@ at the end, so reverse directions and `wrap-reverse` share the same code.
 | Intrinsic sizes of flex containers (§9.9), as Chrome computes them | ✅ |
 | `position: absolute` children: static position (§4.1), insets, shrink-to-fit sizes | ✅ |
 | `display: none` | ✅ |
+| Text in measured leaves: line breaking (`white-space`, `overflow-wrap`, `word-break`), spacing, `text-transform`, line heights and baselines (`sonate_layout::text`); the text is placed like Chrome's anonymous flex item, so `justify-content`/`align-items` position it and `text-align` aligns its lines | ✅ |
 | `flex-basis: content`, `aspect-ratio`, `safe`/`unsafe` alignment, `last baseline` | ❌ |
 | `visibility: collapse`, writing modes, `direction: rtl` | ❌ |
 | Block, inline and grid layout | ❌ (every box is a flex container) |

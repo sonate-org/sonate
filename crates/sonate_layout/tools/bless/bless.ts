@@ -224,12 +224,20 @@ async function installInPage(checks: string[], allowedTags: string[]): Promise<v
     "transform": "none",
     "float": "none",
     "visibility": "visible",
-    "line-height": "1",
+    "text-indent": "0px",
+    "font-variant-caps": "normal",
+    "zoom": "1",
+  };
+  // Text properties recorded for text nodes (`ts`), with their initial values.
+  const TEXT_INITIAL: Record<string, string> = {
+    "white-space": "normal",
+    "text-transform": "none",
+    "overflow-wrap": "normal",
+    "word-break": "normal",
+    "text-align": "start",
     "letter-spacing": "normal",
     "word-spacing": "0px",
-    "text-indent": "0px",
-    "white-space-collapse": "collapse",
-    "zoom": "1",
+    "line-height": "normal",
   };
 
   const round = (value: number) => Math.round(value * 1e6) / 1e6;
@@ -324,23 +332,33 @@ async function installInPage(checks: string[], allowedTags: string[]): Promise<v
     );
     if (texts.length > 0) {
       if (element.children.length > 0) fail(`${label}: mixes text and elements`);
-      const text = texts.map((child) => child.textContent).join(" ").replace(/\s+/g, " ").trim();
-      if (!/^[A-Za-z ]+$/.test(text)) fail(`${label}: text may only contain letters and spaces`);
+      // The raw text: white-space processing is part of what the engine implements.
+      const text = [...element.childNodes].map((child) => child.textContent ?? "").join("");
+      if (!/^[\x20-\x7e\n\t]*$/.test(text)) fail(`${label}: text may only contain printable ASCII`);
       node.text = text;
       node.font = parseFloat(String(computed.get("font-size")));
 
+      const css = getComputedStyle(element);
+      const textStyle: Record<string, string> = {};
+      for (const [property, initial] of Object.entries(TEXT_INITIAL)) {
+        const value = css.getPropertyValue(property);
+        if (value !== initial) textStyle[property] = value;
+      }
+      if (Object.keys(textStyle).length > 0) node.ts = textStyle;
+
       if (box) {
+        // Line boxes of the text, as browsers report them for a range over it.
         const range = document.createRange();
         range.selectNodeContents(element);
-        const textBox = range.getBoundingClientRect();
-        const css = getComputedStyle(element);
-        const contentX = box.x + parseFloat(css.borderLeftWidth) + parseFloat(css.paddingLeft);
-        const contentY = box.y + parseFloat(css.borderTopWidth) + parseFloat(css.paddingTop);
-        if (Math.abs(textBox.x - contentX) > 0.01 || Math.abs(textBox.y - contentY) > 0.01) {
-          warnings.push(
-            `${label}: the text is not at the content-box origin; Sonate treats text elements as leaves and does not position the text inside them`,
-          );
-        }
+        node.lines = [...range.getClientRects()]
+          // Forced line breaks show up as empty rects.
+          .filter((line) => line.width > 0)
+          .map((line) => [
+            round(line.x - box.x),
+            round(line.y - box.y),
+            round(line.width),
+            round(line.height),
+          ]);
       }
     }
     node.rect = rect;

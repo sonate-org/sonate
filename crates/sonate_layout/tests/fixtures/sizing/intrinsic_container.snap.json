@@ -18,8 +18,8 @@
         {"d":2,"label":"div","style":{"width":"100px","height":"20px"},"rect":[5,25,100,20]},
         {"d":2,"label":"div","style":{"width":"100px","height":"20px"},"rect":[110,25,100,20]},
         {"d":1,"label":"#text-row","style":{},"rect":[0,100,300,10]},
-        {"d":2,"label":"div","style":{},"text":"Hello world","font":10,"rect":[0,0,110,10]},
-        {"d":2,"label":"div","style":{},"text":"and more text here","font":10,"rect":[110,0,180,10]}
+        {"d":2,"label":"div","style":{},"text":"Hello world","font":10,"ts":{"line-height":"10px"},"lines":[[0,0,110,10]],"rect":[0,0,110,10]},
+        {"d":2,"label":"div","style":{},"text":"and more text here","font":10,"ts":{"line-height":"10px"},"lines":[[0,0,180,10]],"rect":[110,0,180,10]}
       ]
     },
     {
@@ -37,8 +37,8 @@
         {"d":2,"label":"div","style":{"width":"100px","height":"20px"},"rect":[5,25,100,20]},
         {"d":2,"label":"div","style":{"width":"100px","height":"20px"},"rect":[110,25,100,20]},
         {"d":1,"label":"#text-row","style":{},"rect":[0,100,290,10]},
-        {"d":2,"label":"div","style":{},"text":"Hello world","font":10,"rect":[0,0,110,10]},
-        {"d":2,"label":"div","style":{},"text":"and more text here","font":10,"rect":[110,0,180,10]}
+        {"d":2,"label":"div","style":{},"text":"Hello world","font":10,"ts":{"line-height":"10px"},"lines":[[0,0,110,10]],"rect":[0,0,110,10]},
+        {"d":2,"label":"div","style":{},"text":"and more text here","font":10,"ts":{"line-height":"10px"},"lines":[[0,0,180,10]],"rect":[110,0,180,10]}
       ]
     },
     {
@@ -56,8 +56,8 @@
         {"d":2,"label":"div","style":{"width":"100px","height":"20px"},"rect":[5,25,100,20]},
         {"d":2,"label":"div","style":{"width":"100px","height":"20px"},"rect":[110,25,100,20]},
         {"d":1,"label":"#text-row","style":{},"rect":[5,100,290,10]},
-        {"d":2,"label":"div","style":{},"text":"Hello world","font":10,"rect":[0,0,110,10]},
-        {"d":2,"label":"div","style":{},"text":"and more text here","font":10,"rect":[110,0,180,10]}
+        {"d":2,"label":"div","style":{},"text":"Hello world","font":10,"ts":{"line-height":"10px"},"lines":[[0,0,110,10]],"rect":[0,0,110,10]},
+        {"d":2,"label":"div","style":{},"text":"and more text here","font":10,"ts":{"line-height":"10px"},"lines":[[0,0,180,10]],"rect":[110,0,180,10]}
       ]
     }
   ]

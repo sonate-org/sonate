@@ -1,0 +1,73 @@
+{
+  "schema": 1,
+  "hash": "98c7fb518f8a6f9d",
+  "chrome": "Chrome/153.0.8010.52/@78e5e45d4bb41035e17ea4da2cc257f496416ac9",
+  "cases": [
+    {
+      "params": ".t overflow-wrap=normal, .t word-break=normal",
+      "overrides": [[".t","overflow-wrap","normal"],[".t","word-break","normal"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"200px","height":"200px","align-items":"flex-start"},"rect":[0,0,200,200]},
+        {"d":1,"label":".t","style":{"width":"60px"},"text":"Supercalifragilistic is long","font":10,"ts":{"line-height":"10px"},"lines":[[0,0,200,10],[0,10,70,10]],"rect":[0,0,60,20]},
+        {"d":1,"label":".t","style":{},"text":"Abcdefghij klm","font":10,"ts":{"line-height":"10px"},"lines":[[0,0,100,10],[0,10,30,10]],"rect":[60,0,100,20]},
+        {"d":1,"label":"div","style":{"width":"150px","flex-shrink":0},"rect":[160,0,150,0]}
+      ]
+    },
+    {
+      "params": ".t overflow-wrap=normal, .t word-break=break-all",
+      "overrides": [[".t","overflow-wrap","normal"],[".t","word-break","break-all"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"200px","height":"200px","align-items":"flex-start"},"rect":[0,0,200,200]},
+        {"d":1,"label":".t","style":{"width":"60px"},"text":"Supercalifragilistic is long","font":10,"ts":{"word-break":"break-all","line-height":"10px"},"lines":[[0,0,10,10],[0,10,10,10],[0,20,10,10],[0,30,10,10],[0,40,10,10],[0,50,10,10],[0,60,10,10],[0,70,10,10],[0,80,10,10],[0,90,10,10],[0,100,10,10],[0,110,10,10],[0,120,10,10],[0,130,10,10],[0,140,10,10],[0,150,10,10],[0,160,10,10],[0,170,10,10],[0,180,10,10],[0,190,10,10],[0,200,10,10],[0,210,10,10],[0,220,10,10],[0,230,10,10],[0,240,10,10],[0,250,10,10]],"rect":[0,0,15,260]},
+        {"d":1,"label":".t","style":{},"text":"Abcdefghij klm","font":10,"ts":{"word-break":"break-all","line-height":"10px"},"lines":[[0,0,30,10],[0,10,30,10],[0,20,30,10],[0,30,30,10],[0,40,20,10]],"rect":[15,0,35,50]},
+        {"d":1,"label":"div","style":{"width":"150px","flex-shrink":0},"rect":[50,0,150,0]}
+      ]
+    },
+    {
+      "params": ".t overflow-wrap=break-word, .t word-break=normal",
+      "overrides": [[".t","overflow-wrap","break-word"],[".t","word-break","normal"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"200px","height":"200px","align-items":"flex-start"},"rect":[0,0,200,200]},
+        {"d":1,"label":".t","style":{"width":"60px"},"text":"Supercalifragilistic is long","font":10,"ts":{"overflow-wrap":"break-word","line-height":"10px"},"lines":[[0,0,200,10],[0,10,70,10]],"rect":[0,0,60,20]},
+        {"d":1,"label":".t","style":{},"text":"Abcdefghij klm","font":10,"ts":{"overflow-wrap":"break-word","line-height":"10px"},"lines":[[0,0,100,10],[0,10,30,10]],"rect":[60,0,100,20]},
+        {"d":1,"label":"div","style":{"width":"150px","flex-shrink":0},"rect":[160,0,150,0]}
+      ]
+    },
+    {
+      "params": ".t overflow-wrap=break-word, .t word-break=break-all",
+      "overrides": [[".t","overflow-wrap","break-word"],[".t","word-break","break-all"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"200px","height":"200px","align-items":"flex-start"},"rect":[0,0,200,200]},
+        {"d":1,"label":".t","style":{"width":"60px"},"text":"Supercalifragilistic is long","font":10,"ts":{"overflow-wrap":"break-word","word-break":"break-all","line-height":"10px"},"lines":[[0,0,10,10],[0,10,10,10],[0,20,10,10],[0,30,10,10],[0,40,10,10],[0,50,10,10],[0,60,10,10],[0,70,10,10],[0,80,10,10],[0,90,10,10],[0,100,10,10],[0,110,10,10],[0,120,10,10],[0,130,10,10],[0,140,10,10],[0,150,10,10],[0,160,10,10],[0,170,10,10],[0,180,10,10],[0,190,10,10],[0,200,10,10],[0,210,10,10],[0,220,10,10],[0,230,10,10],[0,240,10,10],[0,250,10,10]],"rect":[0,0,15,260]},
+        {"d":1,"label":".t","style":{},"text":"Abcdefghij klm","font":10,"ts":{"overflow-wrap":"break-word","word-break":"break-all","line-height":"10px"},"lines":[[0,0,30,10],[0,10,30,10],[0,20,30,10],[0,30,30,10],[0,40,20,10]],"rect":[15,0,35,50]},
+        {"d":1,"label":"div","style":{"width":"150px","flex-shrink":0},"rect":[50,0,150,0]}
+      ]
+    },
+    {
+      "params": ".t overflow-wrap=anywhere, .t word-break=normal",
+      "overrides": [[".t","overflow-wrap","anywhere"],[".t","word-break","normal"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"200px","height":"200px","align-items":"flex-start"},"rect":[0,0,200,200]},
+        {"d":1,"label":".t","style":{"width":"60px"},"text":"Supercalifragilistic is long","font":10,"ts":{"overflow-wrap":"anywhere","line-height":"10px"},"lines":[[0,0,10,10],[0,10,10,10],[0,20,10,10],[0,30,10,10],[0,40,10,10],[0,50,10,10],[0,60,10,10],[0,70,10,10],[0,80,10,10],[0,90,10,10],[0,100,10,10],[0,110,10,10],[0,120,10,10],[0,130,10,10],[0,140,10,10],[0,150,10,10],[0,160,10,10],[0,170,10,10],[0,180,10,10],[0,190,10,10],[0,200,10,10],[0,210,10,10],[0,220,10,10],[0,230,10,10],[0,240,10,10],[0,250,10,10]],"rect":[0,0,15,260]},
+        {"d":1,"label":".t","style":{},"text":"Abcdefghij klm","font":10,"ts":{"overflow-wrap":"anywhere","line-height":"10px"},"lines":[[0,0,30,10],[0,10,30,10],[0,20,30,10],[0,30,10,10],[0,40,30,10]],"rect":[15,0,35,50]},
+        {"d":1,"label":"div","style":{"width":"150px","flex-shrink":0},"rect":[50,0,150,0]}
+      ]
+    },
+    {
+      "params": ".t overflow-wrap=anywhere, .t word-break=break-all",
+      "overrides": [[".t","overflow-wrap","anywhere"],[".t","word-break","break-all"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"200px","height":"200px","align-items":"flex-start"},"rect":[0,0,200,200]},
+        {"d":1,"label":".t","style":{"width":"60px"},"text":"Supercalifragilistic is long","font":10,"ts":{"overflow-wrap":"anywhere","word-break":"break-all","line-height":"10px"},"lines":[[0,0,10,10],[0,10,10,10],[0,20,10,10],[0,30,10,10],[0,40,10,10],[0,50,10,10],[0,60,10,10],[0,70,10,10],[0,80,10,10],[0,90,10,10],[0,100,10,10],[0,110,10,10],[0,120,10,10],[0,130,10,10],[0,140,10,10],[0,150,10,10],[0,160,10,10],[0,170,10,10],[0,180,10,10],[0,190,10,10],[0,200,10,10],[0,210,10,10],[0,220,10,10],[0,230,10,10],[0,240,10,10],[0,250,10,10]],"rect":[0,0,15,260]},
+        {"d":1,"label":".t","style":{},"text":"Abcdefghij klm","font":10,"ts":{"overflow-wrap":"anywhere","word-break":"break-all","line-height":"10px"},"lines":[[0,0,30,10],[0,10,30,10],[0,20,30,10],[0,30,30,10],[0,40,20,10]],"rect":[15,0,35,50]},
+        {"d":1,"label":"div","style":{"width":"150px","flex-shrink":0},"rect":[50,0,150,0]}
+      ]
+    }
+  ]
+}

@@ -115,6 +115,7 @@ pub(crate) fn layout_absolute_child(
         size,
         content_size: output.content_size,
         first_baseline: output.first_baseline,
+        text_box: output.text_box,
     };
     ctx.tree.set_layout(child, layout);
     layout

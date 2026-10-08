@@ -360,6 +360,42 @@ pub enum Overflow {
     Auto,
 }
 
+/// `font-weight`; `Bolder` and `Lighter` become numbers in the computed value.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FontWeight {
+    Number(u16),
+    Bolder,
+    Lighter,
+}
+
+/// `font-style`.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum FontStyle {
+    #[default]
+    Normal,
+    Italic,
+    Oblique,
+}
+
+/// `line-height`; lengths and percentages become `Length(Length::Px)` in the computed value.
+#[derive(Clone, Debug, PartialEq)]
+pub enum LineHeight {
+    Normal,
+    /// A multiple of the font size, inherited as the number.
+    Number(f64),
+    Length(Length),
+}
+
+/// `text-overflow`.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum TextOverflow {
+    #[default]
+    Clip,
+    Ellipsis,
+}
+
+pub use sonate_layout::text::{OverflowWrap, TextAlign, TextTransform, WhiteSpace, WordBreak};
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Widget {
     None,
@@ -415,8 +451,21 @@ pub struct Style {
     pub custom_properties: Option<Arc<std::collections::BTreeMap<String, String>>>,
 
     // Text / font properties
+    /// A family list as written, e.g. `"Fira Sans", sans-serif`.
     pub font_family: Option<String>,
     pub font_size: Option<Length>,
+    pub font_weight: Option<FontWeight>,
+    pub font_style: Option<FontStyle>,
+    pub line_height: Option<LineHeight>,
+    pub text_align: Option<TextAlign>,
+    pub white_space: Option<WhiteSpace>,
+    pub text_transform: Option<TextTransform>,
+    pub overflow_wrap: Option<OverflowWrap>,
+    pub word_break: Option<WordBreak>,
+    /// `normal` is `Length::Px(0.0)`.
+    pub letter_spacing: Option<Length>,
+    pub word_spacing: Option<Length>,
+    pub text_overflow: Option<TextOverflow>,
 
     // Flexbox container properties
     pub flex_direction: Option<FlexDirection>,
@@ -438,19 +487,44 @@ pub struct Style {
 
 pub struct StyleSheet {
     pub rules: Vec<Rule>,
+    /// `@font-face` rules.
+    pub font_faces: Vec<FontFace>,
+}
+
+/// A `@font-face` rule.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct FontFace {
+    pub family: String,
+    /// Tried in order.
+    pub sources: Vec<FontSource>,
+    /// The weight the face provides (400 when not given).
+    pub weight: u16,
+    pub italic: bool,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum FontSource {
+    /// A font file; relative paths resolve against the working directory.
+    Url(String),
+    /// An installed font.
+    Local(String),
 }
 
 impl std::fmt::Debug for StyleSheet {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("StyleSheet")
             .field("rules", &self.rules)
+            .field("font_faces", &self.font_faces)
             .finish()
     }
 }
 
 impl StyleSheet {
     pub fn new() -> Self {
-        Self { rules: vec![] }
+        Self {
+            rules: vec![],
+            font_faces: vec![],
+        }
     }
 
     pub fn add_rule(&mut self, rule: Rule) {

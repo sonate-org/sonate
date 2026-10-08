@@ -9,8 +9,8 @@
       "warnings": [],
       "nodes": [
         {"d":0,"label":"#root","style":{"width":"300px","height":"100px"},"rect":[0,0,300,100],"checks":{"color":"rgb(0, 0, 0)","background-color":"rgba(0, 0, 0, 0)"}},
-        {"d":1,"label":".a","style":{},"text":"a","font":10,"rect":[0,0,10,100],"checks":{"color":"rgb(255, 0, 0)","background-color":"rgba(0, 0, 0, 0)"}},
-        {"d":1,"label":".b","style":{},"text":"b","font":10,"rect":[10,0,10,100],"checks":{"color":"rgb(0, 0, 255)","background-color":"rgba(0, 0, 0, 0)"}}
+        {"d":1,"label":".a","style":{},"text":"a","font":10,"ts":{"line-height":"10px"},"lines":[[0,0,10,10]],"rect":[0,0,10,100],"checks":{"color":"rgb(255, 0, 0)","background-color":"rgba(0, 0, 0, 0)"}},
+        {"d":1,"label":".b","style":{},"text":"b","font":10,"ts":{"line-height":"10px"},"lines":[[0,0,10,10]],"rect":[10,0,10,100],"checks":{"color":"rgb(0, 0, 255)","background-color":"rgba(0, 0, 0, 0)"}}
       ]
     }
   ]

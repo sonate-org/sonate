@@ -1,9 +1,10 @@
 use crate::{
     layout::{Rect as LayoutRect, RenderOp, RenderSnapshot},
     scrollbar::{collect_scrollbar_thumbs, ScrollbarAxis, THUMB_CORNER_RADIUS},
-    style::{BorderStyle, Length, Rgba},
-    text::{break_lines, FontSpec, SkiaTextMeasurer},
+    style::{BorderStyle, Length, Overflow, Rgba, TextOverflow},
+    text::{text_style, FontSpec, SkiaTextMeasurer, TextMeasurer},
 };
+use sonate_layout::text as text_layout;
 use skia_safe::{Canvas, ClipOp, Color, Color4f, Paint, Path, RRect, Rect};
 
 pub struct Painter<'a> {
@@ -210,25 +211,97 @@ impl<'a> Painter<'a> {
         }
     }
 
+    /// Draws wrapped text line by line, the way the layout measured it.
+    #[allow(clippy::too_many_arguments)]
+    fn paint_lines(
+        &mut self,
+        text: &str,
+        font: &skia_safe::Font,
+        font_spec: &FontSpec,
+        measurer: &SkiaTextMeasurer,
+        style: &crate::style::Style,
+        text_box: LayoutRect,
+        content_box: LayoutRect,
+        paint: &Paint,
+    ) {
+        let text_style = text_style(style);
+        let metrics = measurer.metrics(font_spec);
+        let line_height = metrics.line_height(&text_style);
+        let baseline = metrics.baseline(&text_style);
+        let mut advance = |run: &str| measurer.advance(run, font_spec);
+        let min_content = text_layout::min_content_width(text, &text_style, &mut advance);
+        let lines = text_layout::break_lines(text, &text_style, text_box.width.max(min_content), &mut advance);
+
+        // `text-overflow: ellipsis` shortens lines that overflow a clipping element. (Unlike in
+        // Chrome, it applies to the element's own text, since that is always in a flex item.)
+        let ellipsis = style.text_overflow == Some(TextOverflow::Ellipsis)
+            && matches!(
+                style.overflow,
+                Some(Overflow::Hidden | Overflow::Scroll | Overflow::Auto)
+            );
+
+        for (index, line) in lines.iter().enumerate() {
+            let (offset, width) = text_layout::align_line(line, text_style.text_align, text_box.width);
+            let y = (text_box.y + index as f64 * line_height + baseline) as f32;
+            let mut x = text_box.x + offset;
+
+            let mut content = line.text.clone();
+            if ellipsis && line.width > content_box.x + content_box.width - x + 0.01 {
+                let available = content_box.x + content_box.width - x - advance("…");
+                while !content.is_empty() && measure_spaced(&content, &text_style, &mut advance) > available {
+                    content.pop();
+                }
+                content.push('…');
+            }
+
+            // Justified lines spread their free space over the spaces.
+            let spaces = content.chars().filter(|&c| c == ' ').count();
+            let justify_extra = if width > line.width && spaces > 0 {
+                (width - line.width) / spaces as f64
+            } else {
+                0.0
+            };
+            if text_style.letter_spacing == 0.0 && text_style.word_spacing == 0.0 && justify_extra == 0.0 {
+                self.canvas.draw_str(&content, (x as f32, y), font, paint);
+                continue;
+            }
+            for c in content.chars() {
+                let c = c.to_string();
+                self.canvas.draw_str(&c, (x as f32, y), font, paint);
+                x += advance(&c) + text_style.letter_spacing;
+                if c == " " {
+                    x += text_style.word_spacing + justify_extra;
+                }
+            }
+        }
+    }
+
     fn paint_text(&mut self, node: &crate::layout::RenderNode) {
         let style = &node.style;
 
         let font_spec = FontSpec::from_style(style);
         let font = SkiaTextMeasurer::make_font(&font_spec);
         let (_scale, metrics) = font.metrics();
+        let measurer = SkiaTextMeasurer::new();
+        let text_style = text_style(style);
+        let font_metrics = measurer.metrics(&font_spec);
 
-        // Text starts at the content box.
+        // The text goes into the box the layout placed it in, else the content box.
         let padding = style.padding.resolved();
         let border = style.border_width.resolved();
-        let content_x = node.bounds.x + padding.left.to_px() + border.left.to_px();
-        let content_y = node.bounds.y + padding.top.to_px() + border.top.to_px();
-        let content_width = node.bounds.width
-            - padding.left.to_px()
-            - padding.right.to_px()
-            - border.left.to_px()
-            - border.right.to_px();
-        let x = content_x as f32;
-        let baseline_y = (content_y + (-metrics.ascent as f64)) as f32;
+        let content_box = LayoutRect {
+            x: node.bounds.x + padding.left.to_px() + border.left.to_px(),
+            y: node.bounds.y + padding.top.to_px() + border.top.to_px(),
+            width: node.bounds.width
+                - padding.left.to_px()
+                - padding.right.to_px()
+                - border.left.to_px()
+                - border.right.to_px(),
+            height: 0.0,
+        };
+        let text_box = node.text_box.unwrap_or(content_box);
+        let x = text_box.x as f32;
+        let baseline_y = (text_box.y + font_metrics.baseline(&text_style)) as f32;
         let is_text_input = style.widget.is_some_and(|widget| widget.is_text_input());
 
         if let Some(text) = &node.text {
@@ -245,19 +318,7 @@ impl<'a> Painter<'a> {
             if is_text_input {
                 self.canvas.draw_str(text, (x, baseline_y), &font, &paint);
             } else {
-                // Wrap like the layout measured it (see `TextMeasurer::measure_wrapped`).
-                let line_height = SkiaTextMeasurer::line_height(&font);
-                let mut measure = |text: &str| font.measure_str(text, None).0 as f64;
-                // Like the layout, never wrap narrower than the longest word.
-                let longest_word = text
-                    .split_whitespace()
-                    .map(&mut measure)
-                    .fold(0.0, f64::max);
-                let lines = break_lines(text, content_width.max(longest_word), &mut measure);
-                for (index, (line, _)) in lines.iter().enumerate() {
-                    let y = baseline_y + (index as f64 * line_height) as f32;
-                    self.canvas.draw_str(line, (x, y), &font, &paint);
-                }
+                self.paint_lines(text, &font, &font_spec, &measurer, style, text_box, content_box, &paint);
             }
         }
 
@@ -327,4 +388,11 @@ impl ToColor4f for Rgba {
             color.a() as f32 / 255.0,
         )
     }
+}
+
+/// The width of a run including letter and word spacing.
+fn measure_spaced(text: &str, style: &text_layout::TextStyle, advance: &mut dyn FnMut(&str) -> f64) -> f64 {
+    let characters = text.chars().count() as f64;
+    let spaces = text.chars().filter(|&c| c == ' ').count() as f64;
+    advance(text) + style.letter_spacing * characters + style.word_spacing * spaces
 }

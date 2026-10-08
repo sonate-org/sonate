@@ -5,7 +5,9 @@
 
 use super::test_html::load_layout_fixture;
 use super::{build_render_snapshot, LayoutContext, Node};
-use crate::style::{Display, Length, Rgba, Style};
+use crate::style::{
+    Display, FontStyle, FontWeight, Length, OverflowWrap, Rgba, Style, WhiteSpace, WordBreak,
+};
 use crate::Id;
 use sonate_layout::testing::harness::{self, CaseOutput, Suite};
 use sonate_layout::testing::snapshot::SnapshotCase;
@@ -37,6 +39,7 @@ fn layout_case(html: &str, case: &SnapshotCase) -> Result<CaseOutput, String> {
 
     let mut rects = Vec::new();
     let mut values = Vec::new();
+    let mut lines = Vec::new();
     for (&id, snapshot_node) in ids.iter().zip(&case.nodes) {
         let node = ctx.document.get_node(id).ok_or("missing fixture node")?;
         let node = node.borrow();
@@ -46,6 +49,23 @@ fn layout_case(html: &str, case: &SnapshotCase) -> Result<CaseOutput, String> {
             .map(|parent| parent.borrow().layout.bounds)
             .unwrap_or_default();
         let bounds = node.layout.bounds;
+        // Line boxes relative to the border box, computed like the painter places the text.
+        lines.push(match (&node.text, node.layout.text_box) {
+            (Some(text), Some(text_box)) if node.children.is_empty() => {
+                crate::text::line_rects(&*ctx.text_measurer, text, &node.layout.style, text_box.width)
+                    .into_iter()
+                    .map(|[x, y, width, height]| {
+                        [
+                            text_box.x - bounds.x + x,
+                            text_box.y - bounds.y + y,
+                            width,
+                            height,
+                        ]
+                    })
+                    .collect()
+            }
+            _ => Vec::new(),
+        });
         rects.push([
             bounds.x - parent.x,
             bounds.y - parent.y,
@@ -65,6 +85,7 @@ fn layout_case(html: &str, case: &SnapshotCase) -> Result<CaseOutput, String> {
     Ok(CaseOutput {
         rects,
         values: Some(values),
+        lines: Some(lines),
     })
 }
 
@@ -133,6 +154,53 @@ fn computed_value(style: &Style, property: &str) -> Option<String> {
             .as_ref()
             .and_then(|custom| custom.get(name).cloned())
             .unwrap_or_default(),
+        "font-family" => style.font_family.clone().unwrap_or_default(),
+        "font-weight" => match style.font_weight {
+            Some(FontWeight::Number(weight)) => weight.to_string(),
+            _ => "400".to_owned(),
+        },
+        "font-style" => match style.font_style.unwrap_or_default() {
+            FontStyle::Normal => "normal",
+            FontStyle::Italic => "italic",
+            FontStyle::Oblique => "oblique",
+        }
+        .to_owned(),
+        "line-height" => match crate::text::text_style(style).line_height {
+            Some(px) => format!("{}px", css_number(px)),
+            None => "normal".to_owned(),
+        },
+        "letter-spacing" => match &style.letter_spacing {
+            None | Some(Length::Auto) => "normal".to_owned(),
+            Some(length) => format!("{}px", css_number(length.to_px())),
+        },
+        "word-spacing" => format!(
+            "{}px",
+            css_number(style.word_spacing.as_ref().map_or(0.0, Length::to_px))
+        ),
+        "text-align" => format!("{:?}", style.text_align.unwrap_or_default()).to_lowercase(),
+        "white-space" => match style.white_space.unwrap_or_default() {
+            WhiteSpace::Normal => "normal",
+            WhiteSpace::NoWrap => "nowrap",
+            WhiteSpace::Pre => "pre",
+            WhiteSpace::PreWrap => "pre-wrap",
+            WhiteSpace::PreLine => "pre-line",
+            WhiteSpace::BreakSpaces => "break-spaces",
+        }
+        .to_owned(),
+        "text-transform" => format!("{:?}", style.text_transform.unwrap_or_default()).to_lowercase(),
+        "overflow-wrap" => match style.overflow_wrap.unwrap_or_default() {
+            OverflowWrap::Normal => "normal",
+            OverflowWrap::BreakWord => "break-word",
+            OverflowWrap::Anywhere => "anywhere",
+        }
+        .to_owned(),
+        "word-break" => match style.word_break.unwrap_or_default() {
+            WordBreak::Normal => "normal",
+            WordBreak::BreakAll => "break-all",
+            WordBreak::KeepAll => "keep-all",
+        }
+        .to_owned(),
+        "text-overflow" => format!("{:?}", style.text_overflow.unwrap_or_default()).to_lowercase(),
         "display" => match style.display {
             Some(Display::None) => "none".to_owned(),
             _ => "flex".to_owned(),

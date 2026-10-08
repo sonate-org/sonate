@@ -41,9 +41,11 @@ One line saying what this checks.
   layout (selectors, the cascade, colors) can be tested too. The layout engine's own suite
   ignores them.
 - **`@tolerance 0.25`** loosens the comparison for this fixture (the default is 1/16 px).
-- **Text** may only be an element's only child and may only contain letters and spaces. It uses
-  the [Ahem](../../tools/bless/AHEM_LICENSE.txt) font: every glyph is a 1em square, so
-  `Hello world` at the default 10px is exactly 110×10. Lines break at spaces.
+- **Text** may only be an element's only child and may only contain printable ASCII and
+  newlines; it is recorded as written, since white-space processing is part of what's tested.
+  It uses the [Ahem](../../tools/bless/AHEM_LICENSE.txt) font: every glyph is a 1em square, so
+  `Hello world` at the default 10px is exactly 110×10. Chrome's line boxes of every text are
+  recorded too, and Sonate's suite compares them (touching pieces of a line are merged first).
 - **Borders** need a style to have a width: `border: 2px solid`.
 - Only the properties `sonate_layout` understands may change; bless rejects anything else
   (`writing-mode`, `aspect-ratio`, …) rather than recording a layout the engine can't

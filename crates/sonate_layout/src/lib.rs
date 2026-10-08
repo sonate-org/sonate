@@ -12,6 +12,7 @@ mod geometry;
 mod leaf;
 mod resolve;
 mod style;
+pub mod text;
 mod tree;
 
 #[cfg(feature = "testing")]
@@ -24,4 +25,4 @@ pub use style::{
     AlignContent, AlignItems, BoxSizing, Dimension, Display, FlexDirection, FlexWrap,
     JustifyContent, LengthPercentage, Overflow, Position, Style,
 };
-pub use tree::{Layout, LayoutTree, NodeId};
+pub use tree::{Layout, LayoutTree, NodeId, TextBox};

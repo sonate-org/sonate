@@ -1,0 +1,23 @@
+<!--
+Font properties: weights (incl. bolder/lighter relative to the parent), styles, the font
+shorthand, size keywords and family lists.
+@check font-family font-weight font-style font-size line-height text-transform
+-->
+<div id="root" style="width: 400px; height: 200px; align-items: flex-start">
+  <div class="bold"><div class="bolder">x</div><div class="lighter">y</div></div>
+  <div class="short">s</div>
+  <div class="families">f</div>
+  <div class="keywords">k</div>
+  <div class="oblique">o</div>
+  <div class="upper">up</div>
+</div>
+<style>
+  .bold { font-weight: bold; }
+  .bolder { font-weight: bolder; }
+  .lighter { font-weight: lighter; }
+  .short { font: italic 600 15px/2 Ahem, monospace; }
+  .families { font-family: "Ahem", 'Fira Sans', Times New Roman, serif; }
+  .keywords { font-size: small; }
+  .oblique { font-style: oblique; font-weight: 300; }
+  .upper { text-transform: uppercase; }
+</style>

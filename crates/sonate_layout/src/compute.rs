@@ -74,6 +74,8 @@ pub(crate) struct LayoutOutput {
     pub content_size: Size<f64>,
     /// Distance from the border-box top to the first baseline.
     pub first_baseline: Option<f64>,
+    /// See [`Layout::text_box`].
+    pub text_box: Option<crate::tree::TextBox>,
 }
 
 pub(crate) struct Context<'a, 'm> {
@@ -186,6 +188,7 @@ pub fn compute_layout(
             size: output.size,
             content_size: output.content_size,
             first_baseline: output.first_baseline,
+            text_box: output.text_box,
         },
     );
 }

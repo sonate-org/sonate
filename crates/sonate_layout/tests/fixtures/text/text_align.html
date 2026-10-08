@@ -1,0 +1,10 @@
+<!--
+text-align moves lines within the anonymous block around the text: visible on wrapped text, and
+on single lines only where that block is stretched (column direction).
+@matrix #root flex-direction: row | column
+@matrix .t text-align: start | center | right | justify | end
+-->
+<div id="root" style="width: 200px; height: 200px">
+  <div class="t" style="width: 100px">aa bb cc ddd</div>
+  <div class="t" style="width: 100px">Hi</div>
+</div>

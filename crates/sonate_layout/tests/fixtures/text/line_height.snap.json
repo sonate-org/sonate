@@ -1,0 +1,62 @@
+{
+  "schema": 1,
+  "hash": "b685c081bbe7e1ed",
+  "chrome": "Chrome/153.0.8010.52/@78e5e45d4bb41035e17ea4da2cc257f496416ac9",
+  "cases": [
+    {
+      "params": ".t line-height=normal",
+      "overrides": [[".t","line-height","normal"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"300px","height":"300px","flex-wrap":"wrap","align-items":"baseline","align-content":"flex-start"},"rect":[0,0,300,300]},
+        {"d":1,"label":".t","style":{"width":"50px"},"text":"aa bb cc","font":10,"lines":[[0,0,50,10],[0,10,20,10]],"rect":[0,8,50,20]},
+        {"d":1,"label":".t","style":{"font-size":"20px"},"text":"Big","font":20,"lines":[[0,0,60,20]],"rect":[50,0,60,20]},
+        {"d":1,"label":".t","style":{"padding-top":"5px","padding-right":"5px","padding-bottom":"5px","padding-left":"5px"},"text":"Pad","font":10,"lines":[[5,5,30,10]],"rect":[110,3,40,20]}
+      ]
+    },
+    {
+      "params": ".t line-height=1.5",
+      "overrides": [[".t","line-height","1.5"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"300px","height":"300px","flex-wrap":"wrap","align-items":"baseline","align-content":"flex-start"},"rect":[0,0,300,300]},
+        {"d":1,"label":".t","style":{"width":"50px"},"text":"aa bb cc","font":10,"ts":{"line-height":"15px"},"lines":[[0,2,50,10],[0,17,20,10]],"rect":[0,11,50,30]},
+        {"d":1,"label":".t","style":{"font-size":"20px"},"text":"Big","font":20,"ts":{"line-height":"30px"},"lines":[[0,5,60,20]],"rect":[50,0,60,30]},
+        {"d":1,"label":".t","style":{"padding-top":"5px","padding-right":"5px","padding-bottom":"5px","padding-left":"5px"},"text":"Pad","font":10,"ts":{"line-height":"15px"},"lines":[[5,7,30,10]],"rect":[110,6,40,25]}
+      ]
+    },
+    {
+      "params": ".t line-height=20px",
+      "overrides": [[".t","line-height","20px"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"300px","height":"300px","flex-wrap":"wrap","align-items":"baseline","align-content":"flex-start"},"rect":[0,0,300,300]},
+        {"d":1,"label":".t","style":{"width":"50px"},"text":"aa bb cc","font":10,"ts":{"line-height":"20px"},"lines":[[0,5,50,10],[0,25,20,10]],"rect":[0,5,50,40]},
+        {"d":1,"label":".t","style":{"font-size":"20px"},"text":"Big","font":20,"ts":{"line-height":"20px"},"lines":[[0,0,60,20]],"rect":[50,2,60,20]},
+        {"d":1,"label":".t","style":{"padding-top":"5px","padding-right":"5px","padding-bottom":"5px","padding-left":"5px"},"text":"Pad","font":10,"ts":{"line-height":"20px"},"lines":[[5,10,30,10]],"rect":[110,0,40,30]}
+      ]
+    },
+    {
+      "params": ".t line-height=200%",
+      "overrides": [[".t","line-height","200%"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"300px","height":"300px","flex-wrap":"wrap","align-items":"baseline","align-content":"flex-start"},"rect":[0,0,300,300]},
+        {"d":1,"label":".t","style":{"width":"50px"},"text":"aa bb cc","font":10,"ts":{"line-height":"20px"},"lines":[[0,5,50,10],[0,25,20,10]],"rect":[0,13,50,40]},
+        {"d":1,"label":".t","style":{"font-size":"20px"},"text":"Big","font":20,"ts":{"line-height":"40px"},"lines":[[0,10,60,20]],"rect":[50,0,60,40]},
+        {"d":1,"label":".t","style":{"padding-top":"5px","padding-right":"5px","padding-bottom":"5px","padding-left":"5px"},"text":"Pad","font":10,"ts":{"line-height":"20px"},"lines":[[5,10,30,10]],"rect":[110,8,40,30]}
+      ]
+    },
+    {
+      "params": ".t line-height=0.5",
+      "overrides": [[".t","line-height","0.5"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"300px","height":"300px","flex-wrap":"wrap","align-items":"baseline","align-content":"flex-start"},"rect":[0,0,300,300]},
+        {"d":1,"label":".t","style":{"width":"50px"},"text":"aa bb cc","font":10,"ts":{"line-height":"5px"},"lines":[[0,-3,50,10],[0,2,20,10]],"rect":[0,6,50,10]},
+        {"d":1,"label":".t","style":{"font-size":"20px"},"text":"Big","font":20,"ts":{"line-height":"10px"},"lines":[[0,-5,60,20]],"rect":[50,0,60,10]},
+        {"d":1,"label":".t","style":{"padding-top":"5px","padding-right":"5px","padding-bottom":"5px","padding-left":"5px"},"text":"Pad","font":10,"ts":{"line-height":"5px"},"lines":[[5,2,30,10]],"rect":[110,1,40,15]}
+      ]
+    }
+  ]
+}

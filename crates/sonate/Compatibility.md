@@ -16,8 +16,8 @@ These tables lists the specifications enumerated in **Section 2 (Classification 
 | [Generated Content, Automatic Numbering, and Lists](https://www.w3.org/TR/CSS2/generate.html) | |
 | [Paged Media](https://www.w3.org/TR/CSS2/page.html) | |
 | [Colors and Backgrounds](https://www.w3.org/TR/CSS2/colors.html) | Colors are supported |
-| [Fonts](https://www.w3.org/TR/CSS2/fonts.html) | |
-| [Text](https://www.w3.org/TR/CSS2/text.html) | |
+| [Fonts](https://www.w3.org/TR/CSS2/fonts.html) | Supported except `font-variant` (accepted in `font`, not rendered) |
+| [Text](https://www.w3.org/TR/CSS2/text.html) | `text-align`, `letter-spacing`, `word-spacing`, `text-transform`, `white-space`. No `text-indent` or `text-decoration` |
 | [Tables](https://www.w3.org/TR/CSS2/tables.html) | |
 | [User Interface](https://www.w3.org/TR/CSS2/ui.html) | |
 
@@ -38,11 +38,11 @@ These tables lists the specifications enumerated in **Section 2 (Classification 
 | CSS Color Module Level 4 | [CSS-COLOR-4](https://www.w3.org/TR/css-color-4/) | Partial support. Missing `opacity`, `color: inherit`, `lab`, `lch`, `oklab`, `oklch`, `color`, `currentcolor`. Only sRGB color space supported. |
 | CSS Backgrounds and Borders Module Level 3 | [CSS-BACKGROUNDS-3](https://www.w3.org/TR/css-backgrounds-3/) | Partial support. Only background colors and solid borders are supported. Different `border-width` properties for each side is not supported. |
 | CSS Images Module Level 3 | [CSS-IMAGES-3](https://www.w3.org/TR/css-images-3/) | |
-| CSS Fonts Module Level 3 | [CSS-FONTS-3](https://www.w3.org/TR/css-fonts-3/) | |
+| CSS Fonts Module Level 3 | [CSS-FONTS-3](https://www.w3.org/TR/css-fonts-3/) | Partial support. `font-family` lists with generic families, `font-weight` (incl. `bolder`/`lighter`), `font-style`, `font-size` (incl. keywords), the `font` shorthand and `@font-face` with `url()`/`local()` sources (synthetic bold and italic when a face is missing). No `font-variant-*`, `font-feature-settings` or `unicode-range` |
 | CSS Writing Modes Level 3 | [CSS-WRITING-MODES-3](https://www.w3.org/TR/css-writing-modes-3/) | |
 | CSS Multi-column Layout Module Level 1 | [CSS-MULTICOL-1](https://www.w3.org/TR/css-multicol-1/) | |
 | CSS Flexible Box Layout Module Level 1 | [CSS-FLEXBOX-1](https://www.w3.org/TR/css-flexbox-1/) | Supported except `flex-basis: content` and `visibility: collapse`; checked against Chrome. See [sonate_layout](../sonate_layout/README.md#spec-coverage) |
-| CSS Basic User Interface Module Level 3 | [CSS-UI-3](https://www.w3.org/TR/css-ui-3/) | |
+| CSS Basic User Interface Module Level 3 | [CSS-UI-3](https://www.w3.org/TR/css-ui-3/) | `text-overflow: ellipsis` (also on an element's own text, unlike browsers) |
 | CSS Containment Module Level 1 | [CSS-CONTAIN-1](https://www.w3.org/TR/css-contain-1/) | |
 | CSS Transforms Module Level 1 | [CSS-TRANSFORMS-1](https://www.w3.org/TR/css-transforms-1/) | |
 | Compositing and Blending Level 1 | [COMPOSITING](https://www.w3.org/TR/compositing-1/) | |
@@ -61,7 +61,7 @@ These tables lists the specifications enumerated in **Section 2 (Classification 
 | CSS Fragmentation Module Level 3 | [CSS-BREAK-3](https://www.w3.org/TR/css-break-3/) | |
 | CSS Box Alignment Module Level 3 | [CSS-ALIGN-3](https://www.w3.org/TR/css-align-3/) | Partial support. Flexbox alignment incl. `normal`, `start`, `end` and gaps; no `safe`/`unsafe`, `last baseline` or `left`/`right` |
 | CSS Shapes Module Level 1 | [CSS-SHAPES-1](https://www.w3.org/TR/css-shapes-1/) | |
-| CSS Text Module Level 3 | [CSS-TEXT-3](https://www.w3.org/TR/css-text-3/) | |
+| CSS Text Module Level 3 | [CSS-TEXT-3](https://www.w3.org/TR/css-text-3/) | Partial support. `white-space` (all values), `text-transform`, `overflow-wrap`, `word-break` (`normal`, `break-all`, `keep-all` as `normal`), `text-align` (incl. `justify`), `letter-spacing`, `word-spacing`. Line breaking at spaces only (no UAX #14 or hyphenation). Text is laid out like Chrome lays out an element's text in a flex container |
 | CSS Text Decoration Module Level 3 | [CSS-TEXT-DECOR-3](https://www.w3.org/TR/css-text-decor-3/) | |
 | CSS Masking Module Level 1 | [CSS-MASKING-1](https://www.w3.org/TR/css-masking-1/) | |
 | CSS Speech Module Level 1 | [CSS-SPEECH-1](https://www.w3.org/TR/css-speech-1/) | |

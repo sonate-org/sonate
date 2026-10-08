@@ -1,67 +1,39 @@
 //! Text measurement with the metrics of the Ahem test font, which the fixtures use in Chrome.
 //!
-//! Every glyph (including the space) is a 1em square, the line height is 1em (`line-height: 1`)
-//! and the baseline is 0.8em below the top of the line. Lines break at spaces only.
+//! Every glyph (including the space) is a 1em square, the ascent is 0.8em and the descent 0.2em,
+//! so the normal line height is 1em. Line breaking follows `crate::text`.
 
-use crate::{AvailableSpace, MeasureInput, MeasureOutput, Size};
+use crate::text::{self, FontMetrics, TextStyle};
+use crate::{MeasureInput, MeasureOutput};
 
-/// Measures `text` (whitespace already collapsed) at `font_size` px.
-///
-/// Mirrors how Chrome sizes the anonymous block around the text: an unknown width is the
-/// fit-content width, and the text never wraps narrower than its longest word.
-pub fn measure_text(text: &str, font_size: f64, input: MeasureInput) -> MeasureOutput {
-    let em = font_size;
-    let words: Vec<f64> = text
-        .split_whitespace()
-        .map(|word| word.chars().count() as f64 * em)
-        .collect();
-    if words.is_empty() {
-        return MeasureOutput {
-            size: input.known.map(|size| size.unwrap_or(0.0)),
-            first_baseline: None,
-        };
+/// The Ahem font's metrics at `font_size`.
+pub fn ahem_metrics(font_size: f64) -> FontMetrics {
+    FontMetrics {
+        ascent: 0.8 * font_size,
+        descent: 0.2 * font_size,
+        line_gap: 0.0,
     }
-
-    let min_content = words.iter().copied().fold(0.0, f64::max);
-    let max_content = words.iter().sum::<f64>() + em * (words.len() - 1) as f64;
-
-    let width = input.known.width.unwrap_or(match input.available.width {
-        AvailableSpace::Definite(space) => space.min(max_content).max(min_content),
-        AvailableSpace::MinContent => min_content,
-        AvailableSpace::MaxContent => max_content,
-    });
-    let line_count = count_lines(&words, width.clamp(min_content, max_content), em);
-    let height = input.known.height.unwrap_or(line_count as f64 * em);
-
-    MeasureOutput {
-        size: Size::new(width, height),
-        first_baseline: Some(0.8 * em),
-    }
+    .rounded()
 }
 
-/// Greedy line breaking; a trailing space hangs and does not count towards the line width.
-fn count_lines(words: &[f64], width: f64, space: f64) -> usize {
-    let mut lines = 1;
-    let mut line_width = words[0];
-    for &word in &words[1..] {
-        if line_width + space + word <= width + 1e-6 {
-            line_width += space + word;
-        } else {
-            lines += 1;
-            line_width = word;
-        }
-    }
-    lines
+/// Measures `text` at `font_size` px with the Ahem font.
+pub fn measure_text(text: &str, font_size: f64, style: &TextStyle, input: MeasureInput) -> MeasureOutput {
+    text::measure_text(text, style, ahem_metrics(font_size), input, &mut |run| {
+        run.chars().count() as f64 * font_size
+    })
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
+    use crate::{AvailableSpace, Size};
+
     fn measure(text: &str, known_width: Option<f64>, available: AvailableSpace) -> Size<f64> {
         measure_text(
             text,
             10.0,
+            &TextStyle::default(),
             MeasureInput {
                 known: Size::new(known_width, None),
                 available: Size::new(available, AvailableSpace::MaxContent),

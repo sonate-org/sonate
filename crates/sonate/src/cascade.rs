@@ -6,7 +6,9 @@ use crate::css_parser::{
     parse_declarations, parse_inline_style, resolve_custom_properties, substitute_var, Specificity,
 };
 use crate::layout::{Document, LayoutContext, Node};
-use crate::style::{CssWideKeyword, Declaration, Length, Style, StyleSheet};
+use crate::style::{
+    CssWideKeyword, Declaration, FontWeight, Length, LineHeight, Style, StyleSheet,
+};
 use crate::style_matching::{Element, ElementStates};
 use std::{cell::RefCell, collections::BTreeMap, rc::Rc, sync::Arc};
 
@@ -175,7 +177,36 @@ fn compute_style(
         lengths.root_font_size = lengths.font_size;
     }
     compute_lengths(&mut style, &lengths);
+    compute_font_weight(&mut style, parent);
+    style.line_height = match style.line_height.take() {
+        Some(LineHeight::Length(Length::Percent(percent))) => {
+            Some(LineHeight::Length(Length::Px(percent / 100.0 * lengths.font_size)))
+        }
+        Some(LineHeight::Length(length)) => Some(LineHeight::Length(lengths.compute(&length))),
+        other => other,
+    };
     style
+}
+
+/// `bolder` and `lighter` are relative to the parent's weight (CSS Fonts §2.2).
+fn compute_font_weight(style: &mut Style, parent: &Style) {
+    let parent_weight = match parent.font_weight {
+        Some(FontWeight::Number(weight)) => weight,
+        _ => 400,
+    };
+    style.font_weight = match style.font_weight {
+        Some(FontWeight::Bolder) => Some(FontWeight::Number(match parent_weight {
+            0..350 => 400,
+            350..550 => 700,
+            _ => 900,
+        })),
+        Some(FontWeight::Lighter) => Some(FontWeight::Number(match parent_weight {
+            0..550 => 100,
+            550..750 => 400,
+            _ => 700,
+        })),
+        other => other,
+    };
 }
 
 fn font_size_px(style: &Style) -> f64 {
@@ -193,6 +224,8 @@ fn compute_lengths(style: &mut Style, context: &LengthContext) {
         }
     };
     for length in [
+        &mut style.letter_spacing,
+        &mut style.word_spacing,
         &mut style.width,
         &mut style.height,
         &mut style.min_width,
@@ -303,7 +336,21 @@ fn inherit(style: &mut Style, parent: &Style) {
     style.custom_properties = parent.custom_properties.clone();
 }
 
-const INHERITED: &[&str] = &["color", "font-family", "font-size"];
+const INHERITED: &[&str] = &[
+    "color",
+    "font-family",
+    "font-size",
+    "font-weight",
+    "font-style",
+    "line-height",
+    "text-align",
+    "white-space",
+    "text-transform",
+    "overflow-wrap",
+    "word-break",
+    "letter-spacing",
+    "word-spacing",
+];
 
 pub fn is_inherited(property: &str) -> bool {
     INHERITED.contains(&property)
@@ -436,6 +483,18 @@ pub fn copy_property(target: &mut Style, source: &Style, property: &str) -> bool
         "column-gap" => copy!(column_gap),
         "font-size" => copy!(font_size),
         "font-family" => copy!(font_family),
+        "font-weight" => copy!(font_weight),
+        "font-style" => copy!(font_style),
+        "font" => copy!(font_family, font_size, font_weight, font_style, line_height),
+        "line-height" => copy!(line_height),
+        "text-align" => copy!(text_align),
+        "white-space" => copy!(white_space),
+        "text-transform" => copy!(text_transform),
+        "overflow-wrap" | "word-wrap" => copy!(overflow_wrap),
+        "word-break" => copy!(word_break),
+        "letter-spacing" => copy!(letter_spacing),
+        "word-spacing" => copy!(word_spacing),
+        "text-overflow" => copy!(text_overflow),
         _ => false,
     }
 }

@@ -194,6 +194,7 @@ pub(crate) fn handle_commands(
             Ok(cmd) => match cmd {
                 Command::AddStylesheet(css) => match parse_css(&css) {
                     Ok(sheet) => {
+                        crate::text::register_font_faces(&sheet.font_faces);
                         for rule in sheet.rules {
                             ctx.style_sheet.add_rule(rule);
                         }

@@ -27,6 +27,8 @@ pub struct CaseOutput {
     /// Each node's computed values of the fixture's `@check` properties, formatted like
     /// `getComputedStyle`. `None` skips the value checks.
     pub values: Option<Vec<BTreeMap<String, String>>>,
+    /// Each text node's line boxes relative to its border box. `None` skips the line checks.
+    pub lines: Option<Vec<Vec<Rect4>>>,
 }
 
 pub struct Suite {
@@ -306,6 +308,30 @@ fn compare(case: &SnapshotCase, output: &CaseOutput, tolerance: f64, key: &str) 
                 .collect()
         })
         .collect();
+    let mut value_errors = value_errors;
+    if let Some(lines) = &output.lines {
+        for (index, node) in case.nodes.iter().enumerate() {
+            let (Some(expected), Some(actual)) = (&node.lines, lines.get(index)) else {
+                continue;
+            };
+            // How a line splits into pieces doesn't matter, only where its text goes.
+            let (expected, actual) = (
+                merge_touching(expected, tolerance),
+                merge_touching(actual, tolerance),
+            );
+            let same = expected.len() == actual.len()
+                && expected
+                    .iter()
+                    .zip(&actual)
+                    .all(|(expected, actual)| (0..4).all(|i| !differs(expected[i], actual[i], tolerance)));
+            if !same {
+                let format = |lines: &[Rect4]| {
+                    lines.iter().map(|line| rect(*line)).collect::<Vec<_>>().join("; ")
+                };
+                value_errors[index].push(format!("lines [{}] (expected [{}])", format(&actual), format(&expected)));
+            }
+        }
+    }
     let wrong: Vec<bool> = rect_wrong
         .iter()
         .zip(&value_errors)
@@ -368,6 +394,24 @@ fn compare(case: &SnapshotCase, output: &CaseOutput, tolerance: f64, key: &str) 
         tree,
         report: report_case(key, &children, &labels, &expected, actual, &wrong),
     })
+}
+
+/// Merges line rects that continue each other on the same line.
+fn merge_touching(rects: &[Rect4], tolerance: f64) -> Vec<Rect4> {
+    let mut merged: Vec<Rect4> = Vec::new();
+    for &rect in rects {
+        match merged.last_mut() {
+            Some(last)
+                if !differs(last[1], rect[1], tolerance)
+                    && !differs(last[3], rect[3], tolerance)
+                    && !differs(last[0] + last[2], rect[0], tolerance) =>
+            {
+                last[2] = rect[0] + rect[2] - last[0];
+            }
+            _ => merged.push(rect),
+        }
+    }
+    merged
 }
 
 /// Whether two lengths differ by more than the tolerance; NaN always differs.

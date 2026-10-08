@@ -27,7 +27,7 @@ pub fn layout_case(case: &SnapshotCase) -> Result<CaseOutput, String> {
     }
     let mut measure = |id: NodeId, input| {
         let node = &case.nodes[node_index[id.index()]];
-        measure_text(node.text.as_deref().unwrap_or(""), node.font_size, input)
+        measure_text(node.text.as_deref().unwrap_or(""), node.font_size, &node.text_style, input)
     };
     compute_layout(
         &mut tree,
@@ -43,7 +43,11 @@ pub fn layout_case(case: &SnapshotCase) -> Result<CaseOutput, String> {
             [layout.location.x, layout.location.y, layout.size.width, layout.size.height]
         })
         .collect();
-    Ok(CaseOutput { rects, values: None })
+    Ok(CaseOutput {
+        rects,
+        values: None,
+        lines: None,
+    })
 }
 
 fn push_subtree(

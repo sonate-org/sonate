@@ -3,8 +3,10 @@ use super::selectors::{parse_selector_list, SelectorList};
 use super::variables::{contains_var, raw_value};
 use crate::style::{
     AlignContent, AlignItems, AlignSelf, BoxSizing, CssWideKeyword, Declaration, Directional,
-    Display, FlexDirection, FlexWrap, JustifyContent, Length, Overflow, Position, Rule, Style,
-    StyleSheet, Widget, ZIndex,
+    Display, FlexDirection, FlexWrap, FontFace, JustifyContent, Length, Overflow, OverflowWrap,
+    Position,
+    Rule, Style, StyleSheet, TextAlign, TextOverflow, TextTransform, WhiteSpace, Widget, WordBreak,
+    ZIndex,
 };
 use cssparser::{
     AtRuleParser, CowRcStr, DeclarationParser, Delimiter, ParseError, Parser, ParserInput, ParserState,
@@ -23,9 +25,8 @@ pub fn parse_css(css: &str) -> Result<StyleSheet, String> {
 
     for rule in rules {
         match rule {
-            Ok(parsed_rule) => {
-                stylesheet.add_rule(parsed_rule);
-            }
+            Ok(CssRule::Style(rule)) => stylesheet.add_rule(rule),
+            Ok(CssRule::FontFace(face)) => stylesheet.font_faces.push(face),
             Err(err) => {
                 eprintln!("CSS parsing error: {:?}", err);
             }
@@ -63,6 +64,12 @@ fn parse_declaration_list(css: &str, report_errors: bool) -> Vec<Declaration> {
         .collect()
 }
 
+/// A top-level rule.
+pub enum CssRule {
+    Style(Rule),
+    FontFace(FontFace),
+}
+
 /// CSS Parser implementation
 pub struct CssParser {
     // We can add state here if needed
@@ -76,7 +83,7 @@ impl CssParser {
 
 impl<'i> QualifiedRuleParser<'i> for CssParser {
     type Prelude = SelectorList;
-    type QualifiedRule = Rule;
+    type QualifiedRule = CssRule;
     type Error = ();
 
     fn parse_prelude<'t>(
@@ -106,17 +113,94 @@ impl<'i> QualifiedRuleParser<'i> for CssParser {
             }
         }
 
-        Ok(Rule {
+        Ok(CssRule::Style(Rule {
             selectors: prelude,
             declarations,
-        })
+        }))
     }
 }
 
 impl<'i> AtRuleParser<'i> for CssParser {
     type Prelude = ();
-    type AtRule = Rule;
+    type AtRule = CssRule;
     type Error = ();
+
+    fn parse_prelude<'t>(
+        &mut self,
+        name: CowRcStr<'i>,
+        input: &mut Parser<'i, 't>,
+    ) -> Result<Self::Prelude, ParseError<'i, Self::Error>> {
+        // Only `@font-face` is supported.
+        if name.eq_ignore_ascii_case("font-face") {
+            Ok(())
+        } else {
+            Err(input.new_custom_error(()))
+        }
+    }
+
+    fn parse_block<'t>(
+        &mut self,
+        _prelude: Self::Prelude,
+        _start: &ParserState,
+        input: &mut Parser<'i, 't>,
+    ) -> Result<Self::AtRule, ParseError<'i, Self::Error>> {
+        let mut parser = FontFaceParser {
+            face: FontFace {
+                weight: 400,
+                ..FontFace::default()
+            },
+            values: StyleDeclarationParser::new(),
+        };
+        for item in RuleBodyParser::new(input, &mut parser) {
+            if let Err(err) = item {
+                eprintln!("@font-face parsing error: {:?}", err);
+            }
+        }
+        Ok(CssRule::FontFace(parser.face))
+    }
+}
+
+/// The descriptors of a `@font-face` rule.
+struct FontFaceParser {
+    face: FontFace,
+    values: StyleDeclarationParser,
+}
+
+impl<'i> DeclarationParser<'i> for FontFaceParser {
+    type Declaration = ();
+    type Error = ();
+
+    fn parse_value<'t>(
+        &mut self,
+        name: CowRcStr<'i>,
+        input: &mut Parser<'i, 't>,
+        _declaration_start: &ParserState,
+    ) -> Result<(), ParseError<'i, ()>> {
+        self.values
+            .parse_font_face_descriptor(&name, input, &mut self.face)
+    }
+}
+
+impl<'i> AtRuleParser<'i> for FontFaceParser {
+    type Prelude = ();
+    type AtRule = ();
+    type Error = ();
+}
+
+impl<'i> QualifiedRuleParser<'i> for FontFaceParser {
+    type Prelude = ();
+    type QualifiedRule = ();
+    type Error = ();
+}
+
+impl<'i> RuleBodyItemParser<'i, (), ()> for FontFaceParser {
+    fn parse_qualified(&self) -> bool {
+        false
+    }
+
+    fn parse_declarations(&self) -> bool {
+        true
+    }
 }
 
 /// Declaration parser for style properties
@@ -518,7 +602,91 @@ impl StyleDeclarationParser {
                 style.max_height = Some(self.parse_max_size(input)?);
             }
             "font-size" => {
-                style.font_size = Some(self.parse_length_value(input)?);
+                style.font_size = Some(self.parse_font_size(input)?);
+            }
+            "font-family" => {
+                style.font_family = Some(self.parse_font_family(input)?);
+            }
+            "font-weight" => {
+                style.font_weight = Some(self.parse_font_weight(input)?);
+            }
+            "font-style" => {
+                style.font_style = Some(self.parse_font_style(input)?);
+            }
+            "font" => self.parse_font_shorthand(input, &mut style)?,
+            "line-height" => {
+                style.line_height = Some(self.parse_line_height(input)?);
+            }
+            "text-align" => {
+                let ident = input.expect_ident()?;
+                style.text_align = Some(match ident.to_ascii_lowercase().as_str() {
+                    "start" => TextAlign::Start,
+                    "end" => TextAlign::End,
+                    "left" => TextAlign::Left,
+                    "right" => TextAlign::Right,
+                    "center" => TextAlign::Center,
+                    "justify" => TextAlign::Justify,
+                    _ => return Err(input.new_error_for_next_token()),
+                });
+            }
+            "white-space" => {
+                let ident = input.expect_ident()?;
+                style.white_space = Some(match ident.to_ascii_lowercase().as_str() {
+                    "normal" => WhiteSpace::Normal,
+                    "nowrap" => WhiteSpace::NoWrap,
+                    "pre" => WhiteSpace::Pre,
+                    "pre-wrap" => WhiteSpace::PreWrap,
+                    "pre-line" => WhiteSpace::PreLine,
+                    "break-spaces" => WhiteSpace::BreakSpaces,
+                    _ => return Err(input.new_error_for_next_token()),
+                });
+            }
+            "text-transform" => {
+                let ident = input.expect_ident()?;
+                style.text_transform = Some(match ident.to_ascii_lowercase().as_str() {
+                    "none" => TextTransform::None,
+                    "uppercase" => TextTransform::Uppercase,
+                    "lowercase" => TextTransform::Lowercase,
+                    "capitalize" => TextTransform::Capitalize,
+                    _ => return Err(input.new_error_for_next_token()),
+                });
+            }
+            "overflow-wrap" | "word-wrap" => {
+                let ident = input.expect_ident()?;
+                style.overflow_wrap = Some(match ident.to_ascii_lowercase().as_str() {
+                    "normal" => OverflowWrap::Normal,
+                    "break-word" => OverflowWrap::BreakWord,
+                    "anywhere" => OverflowWrap::Anywhere,
+                    _ => return Err(input.new_error_for_next_token()),
+                });
+            }
+            "word-break" => {
+                let ident = input.expect_ident()?;
+                style.word_break = Some(match ident.to_ascii_lowercase().as_str() {
+                    "normal" => WordBreak::Normal,
+                    "break-all" => WordBreak::BreakAll,
+                    "keep-all" => WordBreak::KeepAll,
+                    // Deprecated: like `overflow-wrap: anywhere`.
+                    "break-word" => {
+                        style.overflow_wrap = Some(OverflowWrap::Anywhere);
+                        WordBreak::Normal
+                    }
+                    _ => return Err(input.new_error_for_next_token()),
+                });
+            }
+            "letter-spacing" => {
+                style.letter_spacing = Some(self.parse_spacing(input)?);
+            }
+            "word-spacing" => {
+                style.word_spacing = Some(self.parse_spacing(input)?);
+            }
+            "text-overflow" => {
+                let ident = input.expect_ident()?;
+                style.text_overflow = Some(match ident.to_ascii_lowercase().as_str() {
+                    "clip" => TextOverflow::Clip,
+                    "ellipsis" => TextOverflow::Ellipsis,
+                    _ => return Err(input.new_error_for_next_token()),
+                });
             }
             "flex-direction" => {
                 let ident = input.expect_ident()?;

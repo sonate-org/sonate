@@ -12,7 +12,7 @@
         {"d":1,"label":"#outer","style":{"min-width":"150px","max-width":"280px","padding-top":"5px","padding-right":"5px","padding-bottom":"5px","padding-left":"5px","flex-grow":1,"flex-basis":"300px"},"rect":[0,0,160,100]},
         {"d":2,"label":"div","style":{"min-width":"30px","flex-grow":1,"flex-basis":"0%"},"rect":[5,5,30,90]},
         {"d":2,"label":"div","style":{"max-width":"100px","flex-grow":2,"flex-basis":"50px"},"rect":[35,5,80,90]},
-        {"d":2,"label":"div","style":{"width":"40px"},"text":"Ab","font":10,"rect":[115,5,40,90]},
+        {"d":2,"label":"div","style":{"width":"40px"},"text":"Ab","font":10,"ts":{"line-height":"10px"},"lines":[[0,0,20,10]],"rect":[115,5,40,90]},
         {"d":1,"label":"div","style":{"flex-basis":"200px"},"rect":[160,0,40,100]}
       ]
     },
@@ -25,7 +25,7 @@
         {"d":1,"label":"#outer","style":{"min-width":"150px","max-width":"280px","padding-top":"5px","padding-right":"5px","padding-bottom":"5px","padding-left":"5px","flex-grow":1,"flex-basis":"300px"},"rect":[0,0,244,100]},
         {"d":2,"label":"div","style":{"min-width":"30px","flex-grow":1,"flex-basis":"0%"},"rect":[5,5,94,90]},
         {"d":2,"label":"div","style":{"max-width":"100px","flex-grow":2,"flex-basis":"50px"},"rect":[99,5,100,90]},
-        {"d":2,"label":"div","style":{"width":"40px"},"text":"Ab","font":10,"rect":[199,5,40,90]},
+        {"d":2,"label":"div","style":{"width":"40px"},"text":"Ab","font":10,"ts":{"line-height":"10px"},"lines":[[0,0,20,10]],"rect":[199,5,40,90]},
         {"d":1,"label":"div","style":{"flex-basis":"200px"},"rect":[244,0,156,100]}
       ]
     },
@@ -38,7 +38,7 @@
         {"d":1,"label":"#outer","style":{"min-width":"150px","max-width":"280px","padding-top":"5px","padding-right":"5px","padding-bottom":"5px","padding-left":"5px","flex-grow":1,"flex-basis":"300px"},"rect":[0,0,290,100]},
         {"d":2,"label":"div","style":{"min-width":"30px","flex-grow":1,"flex-basis":"0%"},"rect":[5,5,140,90]},
         {"d":2,"label":"div","style":{"max-width":"100px","flex-grow":2,"flex-basis":"50px"},"rect":[145,5,100,90]},
-        {"d":2,"label":"div","style":{"width":"40px"},"text":"Ab","font":10,"rect":[245,5,40,90]},
+        {"d":2,"label":"div","style":{"width":"40px"},"text":"Ab","font":10,"ts":{"line-height":"10px"},"lines":[[0,0,20,10]],"rect":[245,5,40,90]},
         {"d":1,"label":"div","style":{"flex-basis":"200px"},"rect":[290,0,200,100]}
       ]
     }

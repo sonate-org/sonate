@@ -12,7 +12,7 @@
         {"d":1,"label":"div","style":{"width":"40px","height":"40px"},"rect":[0,0,40,40]},
         {"d":1,"label":"#abs","style":{"position":"absolute","padding-top":"5px","padding-right":"5px","padding-bottom":"5px","padding-left":"5px","top":"20px","left":"20px","row-gap":"5px","column-gap":"5px"},"rect":[20,20,85,30]},
         {"d":2,"label":"div","style":{"width":"30px","height":"20px"},"rect":[5,5,30,20]},
-        {"d":2,"label":"div","style":{},"text":"Text","font":10,"rect":[40,5,40,20]},
+        {"d":2,"label":"div","style":{},"text":"Text","font":10,"ts":{"line-height":"10px"},"lines":[[0,0,40,10]],"rect":[40,5,40,20]},
         {"d":2,"label":"div","style":{"position":"absolute","width":"10px","height":"10px","right":"0px","bottom":"0px"},"rect":[75,20,10,10]},
         {"d":1,"label":"div","style":{"width":"40px","height":"40px"},"rect":[260,0,40,40]}
       ]
@@ -26,7 +26,7 @@
         {"d":1,"label":"div","style":{"width":"40px","height":"40px"},"rect":[0,0,40,40]},
         {"d":1,"label":"#abs","style":{"position":"absolute","padding-top":"5px","padding-right":"5px","padding-bottom":"5px","padding-left":"5px","top":"20px","left":"20px","flex-direction":"column","row-gap":"5px","column-gap":"5px"},"rect":[20,20,50,45]},
         {"d":2,"label":"div","style":{"width":"30px","height":"20px"},"rect":[5,5,30,20]},
-        {"d":2,"label":"div","style":{},"text":"Text","font":10,"rect":[5,30,40,10]},
+        {"d":2,"label":"div","style":{},"text":"Text","font":10,"ts":{"line-height":"10px"},"lines":[[0,0,40,10]],"rect":[5,30,40,10]},
         {"d":2,"label":"div","style":{"position":"absolute","width":"10px","height":"10px","right":"0px","bottom":"0px"},"rect":[40,35,10,10]},
         {"d":1,"label":"div","style":{"width":"40px","height":"40px"},"rect":[260,0,40,40]}
       ]

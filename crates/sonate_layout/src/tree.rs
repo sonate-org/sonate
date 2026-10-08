@@ -25,6 +25,17 @@ pub struct Layout {
     pub content_size: Size<f64>,
     /// Distance from the border-box top to the first baseline, if the box has one.
     pub first_baseline: Option<f64>,
+    /// For measured leaves: where their content (e.g. the text) goes, relative to the border
+    /// box. It is placed like the anonymous block around an element's text in Chrome.
+    pub text_box: Option<TextBox>,
+}
+
+/// The box a measured leaf's content occupies.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct TextBox {
+    /// Relative to the leaf's border box.
+    pub location: Point<f64>,
+    pub size: Size<f64>,
 }
 
 pub(crate) struct NodeData {

@@ -12,8 +12,8 @@
         {"d":1,"label":"#card","style":{"padding-top":"5px","padding-right":"5px","padding-bottom":"5px","padding-left":"5px","border-top-width":"1px","border-right-width":"1px","border-bottom-width":"1px","border-left-width":"1px","flex-direction":"column"},"rect":[0,0,120,92]},
         {"d":2,"label":"#title-row","style":{"align-items":"center","column-gap":"5px"},"rect":[6,6,108,70]},
         {"d":3,"label":"div","style":{"width":"20px","height":"20px","flex-shrink":0},"rect":[0,25,20,20]},
-        {"d":3,"label":"div","style":{},"text":"The quick brown fox jumps over the lazy dog","font":10,"rect":[25,0,83,70]},
-        {"d":2,"label":"div","style":{},"text":"Footer","font":10,"rect":[6,76,108,10]}
+        {"d":3,"label":"div","style":{},"text":"The quick brown fox jumps over the lazy dog","font":10,"ts":{"line-height":"10px"},"lines":[[0,0,30,10],[0,10,50,10],[0,20,50,10],[0,30,30,10],[0,40,50,10],[0,50,80,10],[0,60,80,10]],"rect":[25,0,83,70]},
+        {"d":2,"label":"div","style":{},"text":"Footer","font":10,"ts":{"line-height":"10px"},"lines":[[0,0,60,10]],"rect":[6,76,108,10]}
       ]
     },
     {
@@ -25,8 +25,8 @@
         {"d":1,"label":"#card","style":{"padding-top":"5px","padding-right":"5px","padding-bottom":"5px","padding-left":"5px","border-top-width":"1px","border-right-width":"1px","border-bottom-width":"1px","border-left-width":"1px","flex-direction":"column"},"rect":[0,0,120,92]},
         {"d":2,"label":"#title-row","style":{"align-items":"center","column-gap":"5px"},"rect":[6,6,108,70]},
         {"d":3,"label":"div","style":{"width":"20px","height":"20px","flex-shrink":0},"rect":[0,25,20,20]},
-        {"d":3,"label":"div","style":{},"text":"The quick brown fox jumps over the lazy dog","font":10,"rect":[25,0,83,70]},
-        {"d":2,"label":"div","style":{},"text":"Footer","font":10,"rect":[6,76,108,10]}
+        {"d":3,"label":"div","style":{},"text":"The quick brown fox jumps over the lazy dog","font":10,"ts":{"line-height":"10px"},"lines":[[0,0,30,10],[0,10,50,10],[0,20,50,10],[0,30,30,10],[0,40,50,10],[0,50,80,10],[0,60,80,10]],"rect":[25,0,83,70]},
+        {"d":2,"label":"div","style":{},"text":"Footer","font":10,"ts":{"line-height":"10px"},"lines":[[0,0,60,10]],"rect":[6,76,108,10]}
       ]
     },
     {
@@ -38,8 +38,8 @@
         {"d":1,"label":"#card","style":{"padding-top":"5px","padding-right":"5px","padding-bottom":"5px","padding-left":"5px","border-top-width":"1px","border-right-width":"1px","border-bottom-width":"1px","border-left-width":"1px","flex-direction":"column"},"rect":[0,0,240,52]},
         {"d":2,"label":"#title-row","style":{"align-items":"center","column-gap":"5px"},"rect":[6,6,228,30]},
         {"d":3,"label":"div","style":{"width":"20px","height":"20px","flex-shrink":0},"rect":[0,5,20,20]},
-        {"d":3,"label":"div","style":{},"text":"The quick brown fox jumps over the lazy dog","font":10,"rect":[25,0,203,30]},
-        {"d":2,"label":"div","style":{},"text":"Footer","font":10,"rect":[6,36,228,10]}
+        {"d":3,"label":"div","style":{},"text":"The quick brown fox jumps over the lazy dog","font":10,"ts":{"line-height":"10px"},"lines":[[0,0,190,10],[0,10,190,10],[0,20,30,10]],"rect":[25,0,203,30]},
+        {"d":2,"label":"div","style":{},"text":"Footer","font":10,"ts":{"line-height":"10px"},"lines":[[0,0,60,10]],"rect":[6,36,228,10]}
       ]
     },
     {
@@ -51,8 +51,8 @@
         {"d":1,"label":"#card","style":{"padding-top":"5px","padding-right":"5px","padding-bottom":"5px","padding-left":"5px","border-top-width":"1px","border-right-width":"1px","border-bottom-width":"1px","border-left-width":"1px","flex-direction":"column"},"rect":[0,0,240,52]},
         {"d":2,"label":"#title-row","style":{"align-items":"center","column-gap":"5px"},"rect":[6,6,228,30]},
         {"d":3,"label":"div","style":{"width":"20px","height":"20px","flex-shrink":0},"rect":[0,5,20,20]},
-        {"d":3,"label":"div","style":{},"text":"The quick brown fox jumps over the lazy dog","font":10,"rect":[25,0,203,30]},
-        {"d":2,"label":"div","style":{},"text":"Footer","font":10,"rect":[6,36,228,10]}
+        {"d":3,"label":"div","style":{},"text":"The quick brown fox jumps over the lazy dog","font":10,"ts":{"line-height":"10px"},"lines":[[0,0,190,10],[0,10,190,10],[0,20,30,10]],"rect":[25,0,203,30]},
+        {"d":2,"label":"div","style":{},"text":"Footer","font":10,"ts":{"line-height":"10px"},"lines":[[0,0,60,10]],"rect":[6,36,228,10]}
       ]
     }
   ]
