@@ -1,0 +1,15 @@
+<!--
+2D transforms move painting only: they apply around the transform origin, compose from right to
+left and carry the element's descendants along.
+@screenshot
+@matrix .box transform: translate(10px, 5px) | rotate(30deg) | scale(1.5, 0.5) | skewX(20deg) | rotate(45deg) scale(0.5) | translateX(50%) rotate(-0.25turn) | matrix(1, 0.2, -0.2, 1, 5, 0)
+-->
+<style>
+  .box { width: 50px; height: 40px; padding: 5px; background: rgb(60, 120, 220); border: 3px solid rgb(0, 0, 100) }
+  .inner { width: 20px; height: 15px; background: rgb(255, 200, 0) }
+</style>
+<div id="root" style="width: 300px; height: 120px; padding: 30px; gap: 40px; align-items: flex-start">
+  <div class="box"><div class="inner"></div></div>
+  <div class="box" style="transform-origin: 0 0"><div class="inner"></div></div>
+  <div class="box" style="transform-origin: right bottom; border-radius: 10px"><div class="inner" style="transform: rotate(45deg)"></div></div>
+</div>

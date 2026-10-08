@@ -36,6 +36,10 @@ interface Header {
   /** Computed values to record for every element (`@check`). */
   checks: string[];
   tolerance?: number;
+  /** Save a screenshot of every case (`@screenshot`). */
+  screenshot: boolean;
+  /** The share of pixels that may differ from the screenshot, in percent (`@pixels`). */
+  pixels?: number;
 }
 
 type OverrideList = [string, string, string][];
@@ -53,7 +57,7 @@ interface MeasuredCase {
 }
 
 function parseHeader(html: string): Header {
-  const header: Header = { axes: [], checks: [] };
+  const header: Header = { axes: [], checks: [], screenshot: false };
   const values = (text: string) => text.split("|").map((value) => value.trim()).filter(Boolean);
   for (const comment of html.matchAll(/<!--([\s\S]*?)-->/g)) {
     for (const raw of comment[1].split("\n")) {
@@ -71,6 +75,11 @@ function parseHeader(html: string): Header {
         header.axes.push({ selector: match[1], property: ":state", values: states });
       } else if (line.startsWith("@check")) {
         header.checks.push(...line.slice("@check".length).trim().split(/\s+/).filter(Boolean));
+      } else if (line === "@screenshot") {
+        header.screenshot = true;
+      } else if (line.startsWith("@pixels")) {
+        header.pixels = parseFloat(line.split(/\s+/)[1]);
+        if (!Number.isFinite(header.pixels)) throw new Error(`invalid @pixels: ${line}`);
       } else if (line.startsWith("@tolerance")) {
         header.tolerance = Number(line.split(/\s+/)[1]);
         if (!Number.isFinite(header.tolerance)) throw new Error(`invalid @tolerance: ${line}`);
@@ -126,7 +135,7 @@ function fixtureHash(html: string, baseCss: string): string {
  * elements for the mouse, and reads computed values and rects. Must be self-contained because
  * astral sends its source text to the page.
  */
-async function installInPage(checks: string[], allowedTags: string[]): Promise<void> {
+async function installInPage(checks: string[], allowedTags: string[], screenshot: boolean): Promise<void> {
   const fail = (message: string): never => {
     throw new Error(message);
   };
@@ -221,7 +230,6 @@ async function installInPage(checks: string[], allowedTags: string[]): Promise<v
     "writing-mode": "horizontal-tb",
     "direction": "ltr",
     "aspect-ratio": "auto",
-    "transform": "none",
     "float": "none",
     "visibility": "visible",
     "text-indent": "0px",
@@ -362,16 +370,16 @@ async function installInPage(checks: string[], allowedTags: string[]): Promise<v
       }
     }
     node.rect = rect;
-    if (checks.length > 0) {
-      const css = getComputedStyle(element);
-      node.checks = Object.fromEntries(checks.map((property) => [property, css.getPropertyValue(property)]));
-    }
+    if (checks.length > 0) node.checks = checkedValues.get(element);
     nodes.push(node);
 
     for (const child of element.children) {
       walk(child as HTMLElement, depth + 1, box, nodes, warnings);
     }
   };
+
+  // The `@check` values of every element in the case being measured.
+  let checkedValues = new Map<Element, Record<string, string>>();
 
   const target = (selector: string) => {
     const element = root.parentElement!.querySelector<HTMLElement>(selector);
@@ -422,9 +430,27 @@ async function installInPage(checks: string[], allowedTags: string[]): Promise<v
       (document.activeElement as HTMLElement | null)?.blur();
     },
     measure(): MeasuredCase {
+      const elements = [root, ...root.querySelectorAll<HTMLElement>("*")];
+      const transformed = elements.filter((element) => getComputedStyle(element).transform !== "none");
+      if (transformed.length > 0 && !screenshot && !checks.includes("transform")) {
+        fail("transforms only change painting; use them in @screenshot or @check transform fixtures");
+      }
+      // Read before transforms are switched off below.
+      checkedValues = new Map(elements.map((element) => {
+        const css = getComputedStyle(element);
+        return [element, Object.fromEntries(checks.map((property) => [property, css.getPropertyValue(property)]))];
+      }));
+      // Transforms don't affect layout, but they do move the rects browsers report.
+      const untransform = document.createElement("style");
+      untransform.textContent = "* { transform: none !important; }";
+      document.head.append(untransform);
       const nodes: Record<string, unknown>[] = [];
       const warnings: string[] = [];
-      walk(root, 0, new DOMRect(0, 0, 0, 0), nodes, warnings);
+      try {
+        walk(root, 0, new DOMRect(0, 0, 0, 0), nodes, warnings);
+      } finally {
+        untransform.remove();
+      }
       return { nodes, warnings };
     },
   };
@@ -434,16 +460,18 @@ function formatSnapshot(
   hash: string,
   chrome: string,
   header: Header,
-  cases: (Case & { measured: MeasuredCase })[],
+  cases: (Case & { measured: MeasuredCase; screenshot?: string })[],
 ): string {
   const lines = ["{", `  "schema": ${SCHEMA},`, `  "hash": "${hash}",`, `  "chrome": ${JSON.stringify(chrome)},`];
   if (header.tolerance !== undefined) lines.push(`  "tolerance": ${header.tolerance},`);
+  if (header.pixels !== undefined) lines.push(`  "pixels": ${header.pixels},`);
   lines.push(`  "cases": [`);
   cases.forEach((testCase, caseIndex) => {
     lines.push("    {");
     lines.push(`      "params": ${JSON.stringify(testCase.params)},`);
     lines.push(`      "overrides": ${JSON.stringify(testCase.overrides)},`);
     if (testCase.states.length > 0) lines.push(`      "states": ${JSON.stringify(testCase.states)},`);
+    if (testCase.screenshot) lines.push(`      "screenshot": ${JSON.stringify(testCase.screenshot)},`);
     lines.push(`      "warnings": ${JSON.stringify(testCase.measured.warnings)},`);
     lines.push(`      "nodes": [`);
     testCase.measured.nodes.forEach((node, nodeIndex) => {
@@ -573,12 +601,18 @@ async function main() {
         `http://127.0.0.1:${server.addr.port}/fixture/${relative(FIXTURES_DIR, path).replaceAll("\\", "/")}`,
         { waitUntil: "load" },
       );
-      await page.evaluate(installInPage, { args: [header.checks, ALLOWED_TAGS] });
+      await page.evaluate(installInPage, { args: [header.checks, ALLOWED_TAGS, header.screenshot] });
 
       // deno-lint-ignore no-explicit-any
       type Bless = any;
       const measured: MeasuredCase[] = [];
-      for (const testCase of cases) {
+      const screenshots: (string | undefined)[] = [];
+      const base = path.replace(/\.html$/, "");
+      for await (const entry of Deno.readDir(dirname(path))) {
+        const stale = join(dirname(path), entry.name);
+        if (stale.startsWith(`${base}.`) && entry.name.endsWith(".png")) await Deno.remove(stale);
+      }
+      for (const [caseIndex, testCase] of cases.entries()) {
         // Start without hover, press or focus: the mouse rests outside the fixture.
         await page.mouse.move(1199, 899);
         await page.evaluate(() => (window as Bless).__bless.blur());
@@ -602,14 +636,32 @@ async function main() {
             pressed = true;
           }
         }
-        measured.push(await page.evaluate(() => (window as Bless).__bless.measure() as MeasuredCase));
+        const result = await page.evaluate(() => (window as Bless).__bless.measure() as MeasuredCase);
+        measured.push(result);
+        if (header.screenshot) {
+          // The root's border box, which starts at the page origin.
+          const [, , width, height] = result.nodes[0].rect as number[];
+          const png = await page.screenshot({
+            format: "png",
+            clip: { x: 0, y: 0, width, height, scale: 1 },
+          });
+          const file = `${base}.${caseIndex}.png`;
+          await Deno.writeFile(file, png);
+          screenshots.push(file.slice(dirname(path).length + 1));
+        } else {
+          screenshots.push(undefined);
+        }
         if (pressed) await page.mouse.up();
       }
       const snapshot = formatSnapshot(
         fixtureHash(html, baseCss),
         chrome,
         header,
-        cases.map((testCase, index) => ({ ...testCase, measured: measured[index] })),
+        cases.map((testCase, index) => ({
+          ...testCase,
+          measured: measured[index],
+          screenshot: screenshots[index],
+        })),
       );
       await Deno.writeTextFile(path.replace(/\.html$/, ".snap.json"), snapshot);
       caseCount += cases.length;
@@ -617,7 +669,11 @@ async function main() {
       for (const warning of warnings) console.warn(`warning: ${name}: ${warning}`);
     } catch (error) {
       failed++;
-      const message = error instanceof Error ? error.message : String(error);
+      // Errors thrown inside the page arrive as CDP exception details.
+      const details = error as { exception?: { description?: string } } | null;
+      const message = error instanceof Error
+        ? error.message
+        : details?.exception?.description?.replace(/^Error: /, "") ?? JSON.stringify(error);
       console.error(`error: ${name}: ${message.split("\n")[0]}`);
     }
   }
@@ -626,7 +682,10 @@ async function main() {
   if (filters.length === 0) {
     const fixtureSet = new Set(all);
     for await (const snapshot of findSnapshots(FIXTURES_DIR)) {
-      if (!fixtureSet.has(snapshot.replace(/\.snap\.json$/, ".html"))) {
+      const fixture = snapshot.endsWith(".png")
+        ? snapshot.replace(/\.\d+\.png$/, ".html")
+        : snapshot.replace(/\.snap\.json$/, ".html");
+      if (!fixtureSet.has(fixture)) {
         await Deno.remove(snapshot);
         console.log(`removed orphaned ${relative(FIXTURES_DIR, snapshot)}`);
       }
@@ -648,6 +707,7 @@ async function* findSnapshots(dir: string): AsyncGenerator<string> {
     const path = join(dir, entry.name);
     if (entry.isDirectory) yield* findSnapshots(path);
     else if (entry.name.endsWith(".snap.json")) yield path;
+    else if (entry.name.endsWith(".png")) yield path;
   }
 }
 

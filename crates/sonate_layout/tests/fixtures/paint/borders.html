@@ -1,0 +1,17 @@
+<!--
+Per-side border widths and colors meet at diagonal joins; the 3D styles darken or lighten sides,
+except colors close to black or white.
+@screenshot
+@matrix .box border-style: solid | double | groove | ridge | inset | outset
+-->
+<style>
+  .box { width: 40px; height: 30px; border-color: rgb(200, 30, 30) rgb(30, 160, 30) rgb(30, 30, 200) rgb(220, 160, 0) }
+</style>
+<div id="root" style="width: 380px; height: 80px; padding: 10px; gap: 10px; align-items: flex-start; background: white">
+  <div class="box" style="border-width: 6px"></div>
+  <div class="box" style="border-width: 3px 9px 12px 6px"></div>
+  <div class="box" style="border-width: 12px; border-radius: 10px"></div>
+  <div class="box" style="border-width: 9px 0 9px 9px; border-radius: 20px 4px"></div>
+  <div class="box" style="border-width: 8px; border-color: black"></div>
+  <div class="box" style="border-width: 8px; border-color: rgb(240, 240, 240) white rgb(20, 20, 20) rgb(128, 128, 128)"></div>
+</div>

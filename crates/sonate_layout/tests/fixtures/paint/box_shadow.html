@@ -1,0 +1,14 @@
+<!--
+Outer and inset box shadows with offsets, blur and spread. Shadows follow the border radius,
+paint below the background and are clipped out of the box they belong to.
+@screenshot
+@matrix .box box-shadow: 4px 6px rgb(0, 0, 0) | 0px 0px 0px 6px rgb(255, 0, 0) | 3px 3px 8px rgba(0, 0, 0, 0.6) | inset 4px 4px rgb(0, 120, 0) | inset 0px 0px 10px 2px rgb(0, 0, 200) | 5px 5px rgb(255, 0, 0), -5px -5px 4px rgb(0, 0, 255) | 2px 2px 0px -2px rgb(0, 0, 0)
+-->
+<style>
+  .box { width: 50px; height: 40px; background: rgb(255, 230, 150) }
+</style>
+<div id="root" style="width: 260px; height: 80px; padding: 20px; gap: 30px; align-items: flex-start">
+  <div class="box"></div>
+  <div class="box" style="border-radius: 12px; border: 3px solid rgb(120, 60, 0)"></div>
+  <div class="box" style="border-radius: 50%; background: rgba(0, 0, 0, 0)"></div>
+</div>

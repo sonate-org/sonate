@@ -94,6 +94,17 @@ fn write_render_ops(ops: &[RenderOp], out: &mut String) {
             RenderOp::PushClip(rect) => {
                 out.push_str(&format!("[{index}] PushClip rect={:?}\n", rect));
             }
+            RenderOp::PushRoundedClip { bounds, .. } => {
+                out.push_str(&format!("[{index}] PushRoundedClip bounds={:?}\n", bounds));
+            }
+            RenderOp::PushTransform(matrix) => {
+                out.push_str(&format!("[{index}] PushTransform matrix={:?}\n", matrix));
+            }
+            RenderOp::PopTransform => out.push_str(&format!("[{index}] PopTransform\n")),
+            RenderOp::PushLayer(opacity) => {
+                out.push_str(&format!("[{index}] PushLayer opacity={opacity}\n"));
+            }
+            RenderOp::PopLayer => out.push_str(&format!("[{index}] PopLayer\n")),
             RenderOp::PopClip => {
                 out.push_str(&format!("[{index}] PopClip\n"));
             }

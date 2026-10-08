@@ -19,6 +19,8 @@ pub struct Snapshot {
     pub chrome: String,
     /// Per-fixture comparison tolerance in px (`<meta name="tolerance">`).
     pub tolerance: Option<f64>,
+    /// The share of pixels that may differ from a case's screenshot, in percent (`@pixels`).
+    pub pixels: Option<f64>,
     pub cases: Vec<SnapshotCase>,
 }
 
@@ -30,6 +32,8 @@ pub struct SnapshotCase {
     pub overrides: Vec<Override>,
     /// Interaction states from `@state`: `(selector, "hover" | "active" | "focus")`.
     pub states: Vec<(String, String)>,
+    /// Chrome's rendering of the root's border box (`@screenshot`): a PNG next to the fixture.
+    pub screenshot: Option<String>,
     /// Elements in pre-order; the first one is the fixture root.
     pub nodes: Vec<SnapshotNode>,
 }
@@ -113,6 +117,7 @@ pub fn parse(json: &str) -> Result<Snapshot, String> {
         hash: string(&root["hash"])?,
         chrome: string(&root["chrome"]).unwrap_or_default(),
         tolerance: root["tolerance"].as_f64(),
+        pixels: root["pixels"].as_f64(),
         cases,
     })
 }
@@ -154,6 +159,7 @@ fn parse_case(case: &Value) -> Result<SnapshotCase, String> {
         params: string(&case["params"]).unwrap_or_default(),
         overrides,
         states,
+        screenshot: case["screenshot"].as_str().map(str::to_owned),
         nodes,
     })
 }

@@ -563,7 +563,7 @@ impl LayoutContext {
         let padding = style.padding.resolved();
         let padding_w = padding.left.to_px() + padding.right.to_px();
         let padding_h = padding.top.to_px() + padding.bottom.to_px();
-        let border = style.border_width.resolved();
+        let border = style.used_border_width();
         let border_w = border.left.to_px() + border.right.to_px();
         let border_h = border.top.to_px() + border.bottom.to_px();
 
@@ -678,6 +678,8 @@ fn use_legacy_layout() -> bool {
 pub struct RenderNode {
     pub id: Id,
     pub bounds: Rect,
+    /// The node's 2D transform in its parent's coordinates, if it has one.
+    pub transform: Option<crate::transform::Affine>,
     /// Where the text goes, if the node has text.
     pub text_box: Option<Rect>,
     pub style: Arc<Style>,
@@ -691,7 +693,17 @@ pub enum RenderOp {
     DrawBackgroundBorder(RenderNode),
     DrawText(RenderNode),
     PushClip(Rect),
+    /// Clips to the padding box of an element with rounded corners: its border box `bounds`
+    /// rounded by the `border-radius` of `style`, inside its borders.
+    PushRoundedClip { bounds: Rect, style: Arc<Style> },
+    /// Ends a `PushClip` or `PushRoundedClip`.
     PopClip,
+    /// Applies to everything until the matching `PopTransform`.
+    PushTransform(crate::transform::Affine),
+    PopTransform,
+    /// Paints everything until the matching `PopLayer` into a group with this opacity.
+    PushLayer(f64),
+    PopLayer,
 }
 
 /// Snapshot types safe to share across threads.
@@ -766,9 +778,18 @@ impl StackingContext {
 
     fn write_render_ops(&self, out: &mut Vec<RenderOp>) {
         if let Some(owner) = &self.owner_node {
+            if let Some(matrix) = owner.transform {
+                out.push(RenderOp::PushTransform(matrix));
+            }
+            let opacity = owner.style.opacity.unwrap_or(1.0);
+            if opacity < 1.0 {
+                out.push(RenderOp::PushLayer(opacity));
+            }
+
             out.push(RenderOp::DrawBackgroundBorder(RenderNode {
                 id: owner.id,
                 bounds: owner.bounds,
+                transform: None,
                 text_box: owner.text_box,
                 style: owner.style.clone(),
                 text: owner.text.clone(),
@@ -781,7 +802,7 @@ impl StackingContext {
                 Some(Overflow::Hidden) | Some(Overflow::Scroll) | Some(Overflow::Auto)
             );
             if clips_overflow {
-                let border = owner.style.border_width.resolved();
+                let border = owner.style.used_border_width();
                 let left = border.left.to_px();
                 let top = border.top.to_px();
                 let right = border.right.to_px();
@@ -793,12 +814,25 @@ impl StackingContext {
                     width: (owner.bounds.width - left - right).max(0.0),
                     height: (owner.bounds.height - top - bottom).max(0.0),
                 };
-                out.push(RenderOp::PushClip(clip_rect));
+                let radius = &owner.style.border_radius;
+                let zero = |length: &Length| matches!(length, Length::Px(0.0) | Length::Percent(0.0));
+                let rounded = [&radius.top_left, &radius.top_right, &radius.bottom_right, &radius.bottom_left]
+                    .iter()
+                    .any(|corner| corner.as_ref().is_some_and(|corner| !zero(&corner.x) || !zero(&corner.y)));
+                out.push(if rounded {
+                    RenderOp::PushRoundedClip {
+                        bounds: owner.bounds,
+                        style: owner.style.clone(),
+                    }
+                } else {
+                    RenderOp::PushClip(clip_rect)
+                });
             }
 
             out.push(RenderOp::DrawText(RenderNode {
                 id: owner.id,
                 bounds: owner.bounds,
+                transform: None,
                 text_box: owner.text_box,
                 style: owner.style.clone(),
                 text: owner.text.clone(),
@@ -814,6 +848,12 @@ impl StackingContext {
 
             if clips_overflow {
                 out.push(RenderOp::PopClip);
+            }
+            if opacity < 1.0 {
+                out.push(RenderOp::PopLayer);
+            }
+            if owner.transform.is_some() {
+                out.push(RenderOp::PopTransform);
             }
             return;
         }
@@ -875,6 +915,15 @@ impl RenderNode {
                 return None;
             }
         }
+        // A transformed node and its descendants are hit in their untransformed coordinates.
+        let (x, y) = match self.transform {
+            Some(matrix) => {
+                let inverse = crate::transform::invert(matrix)?;
+                crate::transform::apply(inverse, x, y)
+            }
+            None => (x, y),
+        };
+        let clip = if self.transform.is_some() { None } else { clip };
 
         let contains_self = self.bounds.contains_point(x, y);
 
@@ -882,7 +931,7 @@ impl RenderNode {
         let descendant_clip = match self.style.overflow {
             Some(Overflow::Hidden) | Some(Overflow::Scroll) | Some(Overflow::Auto) => {
                 // Clip to padding-box (border-box inset by border widths).
-                let border = self.style.border_width.resolved();
+                let border = self.style.used_border_width();
                 let border_left = border.left.to_px();
                 let border_top = border.top.to_px();
                 let border_right = border.right.to_px();
@@ -951,10 +1000,12 @@ fn build_render_tree_with_ctx(node: Rc<RefCell<Node>>, ctx: &mut StackingContext
 
     let mut render_children = Vec::with_capacity(children_nodes.len());
 
+    let transform = crate::transform::element_transform(&style, bounds);
     let mut node_ctx = StackingContext {
         owner_node: Some(RenderNode {
             id,
             bounds,
+            transform,
             text_box,
             style: style.clone(),
             text: text.clone(),
@@ -978,6 +1029,7 @@ fn build_render_tree_with_ctx(node: Rc<RefCell<Node>>, ctx: &mut StackingContext
     RenderNode {
         id,
         bounds,
+        transform,
         text_box,
         style,
         text,

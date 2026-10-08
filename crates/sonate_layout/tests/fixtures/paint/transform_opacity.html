@@ -1,0 +1,13 @@
+<!--
+Transforms, opacity and overflow clipping combine: a clipped child is rotated with its parent and
+an opacity group is transformed as a whole.
+@screenshot
+-->
+<div id="root" style="width: 240px; height: 120px; padding: 25px; gap: 50px; align-items: flex-start">
+  <div style="width: 60px; height: 60px; overflow: hidden; transform: rotate(20deg); background: rgb(220, 220, 220)">
+    <div style="width: 50px; height: 50px; flex-shrink: 0; margin: 30px 0 0 30px; background: rgb(200, 0, 0)"></div>
+  </div>
+  <div style="width: 60px; height: 60px; opacity: 0.5; transform: scale(1.2) rotate(-15deg); background: rgb(0, 0, 200)">
+    <div style="width: 30px; height: 30px; flex-shrink: 0; margin: 15px; background: rgb(255, 200, 0)"></div>
+  </div>
+</div>

@@ -7,7 +7,7 @@
 
 use super::{LayoutContext, Node, Rect, ScrollState};
 use crate::style::{
-    AlignContent, AlignItems, AlignSelf, BorderStyle, BoxSizing, CalcNode, Display, FlexDirection,
+    AlignContent, AlignItems, AlignSelf, BoxSizing, CalcNode, Display, FlexDirection,
     FlexWrap, JustifyContent, Length, Overflow, Position, Style,
 };
 use crate::text::{FontSpec, TextMeasurer};
@@ -153,7 +153,7 @@ fn write_back(
             Some(Overflow::Scroll) | Some(Overflow::Auto)
         ) {
             if let Some(state) = scroll_state.get(&node.id) {
-                let border = style.border_width.resolved();
+                let border = style.used_border_width();
                 let max_scroll = |content: f64, size: f64, border_end: f64| {
                     if content > size {
                         (content - (size - border_end)).max(0.0)
@@ -219,10 +219,7 @@ fn convert_style(style: &Style, font: &FontSpec) -> engine::Style {
         None => engine::LengthPercentage::Px(0.0),
     };
     // Like the painter, a border is drawn unless its style is explicitly `none` or `hidden`.
-    let border = |width: &Option<Length>, style: Option<BorderStyle>| match style {
-        Some(BorderStyle::None | BorderStyle::Hidden) => 0.0,
-        _ => width.as_ref().map_or(0.0, |width| width.to_px().max(0.0)),
-    };
+    let border = style.used_border_width();
     let overflow = match style.overflow.unwrap_or_default() {
         Overflow::Visible => engine::Overflow::Visible,
         Overflow::Hidden => engine::Overflow::Hidden,
@@ -276,10 +273,10 @@ fn convert_style(style: &Style, font: &FontSpec) -> engine::Style {
             left: length_percentage(&style.padding.left),
         },
         border: engine::Edges {
-            top: border(&style.border_width.top, style.border_style.top),
-            right: border(&style.border_width.right, style.border_style.right),
-            bottom: border(&style.border_width.bottom, style.border_style.bottom),
-            left: border(&style.border_width.left, style.border_style.left),
+            top: border.top.to_px(),
+            right: border.right.to_px(),
+            bottom: border.bottom.to_px(),
+            left: border.left.to_px(),
         },
         flex_direction: match style.flex_direction.unwrap_or_default() {
             FlexDirection::Row => engine::FlexDirection::Row,

@@ -228,12 +228,6 @@ impl BorderRadius {
         }
     }
 
-    pub fn is_empty(&self) -> bool {
-        self.top_left.is_none()
-            && self.top_right.is_none()
-            && self.bottom_right.is_none()
-            && self.bottom_left.is_none()
-    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -360,6 +354,32 @@ pub enum Overflow {
     Auto,
 }
 
+/// One shadow of `box-shadow`.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BoxShadow {
+    pub offset_x: Length,
+    pub offset_y: Length,
+    pub blur: Length,
+    pub spread: Length,
+    /// `None` is `currentcolor`.
+    pub color: Option<Rgba>,
+    pub inset: bool,
+}
+
+/// A 2D transform function of `transform`.
+#[derive(Clone, Debug, PartialEq)]
+pub enum TransformFunction {
+    /// `matrix(a, b, c, d, e, f)`
+    Matrix([f64; 6]),
+    /// Percentages refer to the element's border box.
+    Translate(Length, Length),
+    Scale(f64, f64),
+    /// Degrees, clockwise.
+    Rotate(f64),
+    /// Degrees along x and y.
+    Skew(f64, f64),
+}
+
 /// `font-weight`; `Bolder` and `Lighter` become numbers in the computed value.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum FontWeight {
@@ -483,6 +503,33 @@ pub struct Style {
     pub align_self: Option<AlignSelf>,
     pub order: Option<i32>,
     pub z_index: Option<ZIndex>,
+
+    // Visual effects
+    /// Between 0 and 1.
+    pub opacity: Option<f64>,
+    /// `Some(empty)` is `none`.
+    pub box_shadow: Option<Arc<Vec<BoxShadow>>>,
+    /// `Some(empty)` is `none`.
+    pub transform: Option<Arc<Vec<TransformFunction>>>,
+    /// Horizontal and vertical position; the initial value is `50% 50%`.
+    pub transform_origin: Option<(Length, Length)>,
+}
+
+impl Style {
+    /// The used border widths in px. An unset width is `medium` (3px), and a side whose style
+    /// is unset (`none`), `none` or `hidden` has no border.
+    pub fn used_border_width(&self) -> Directional<Length> {
+        let side = |width: &Option<Length>, style: Option<BorderStyle>| match style {
+            None | Some(BorderStyle::None | BorderStyle::Hidden) => Length::Px(0.0),
+            Some(_) => Length::Px(width.as_ref().map_or(3.0, |width| width.to_px().max(0.0))),
+        };
+        Directional {
+            top: side(&self.border_width.top, self.border_style.top),
+            right: side(&self.border_width.right, self.border_style.right),
+            bottom: side(&self.border_width.bottom, self.border_style.bottom),
+            left: side(&self.border_width.left, self.border_style.left),
+        }
+    }
 }
 
 pub struct StyleSheet {

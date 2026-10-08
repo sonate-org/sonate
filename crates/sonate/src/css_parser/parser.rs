@@ -8,9 +8,10 @@ use crate::style::{
     Rule, Style, StyleSheet, TextAlign, TextOverflow, TextTransform, WhiteSpace, Widget, WordBreak,
     ZIndex,
 };
+use std::sync::Arc;
 use cssparser::{
     AtRuleParser, CowRcStr, DeclarationParser, Delimiter, ParseError, Parser, ParserInput, ParserState,
-    QualifiedRuleParser, RuleBodyItemParser, RuleBodyParser, StyleSheetParser,
+    QualifiedRuleParser, RuleBodyItemParser, RuleBodyParser, StyleSheetParser, Token,
 };
 
 /// Parse a CSS string into a StyleSheet
@@ -300,14 +301,14 @@ impl StyleDeclarationParser {
                 style.color = Some(self.parse_color_value(input)?);
             }
             "background" => {
-                // only support color for now
-                style.background_color = Some(self.parse_color_value(input)?);
+                self.parse_background_shorthand(input, &mut style)?;
             }
             "background-color" => {
                 style.background_color = Some(self.parse_color_value(input)?);
             }
             "border-color" => {
-                style.border_color = Directional::set_all(Some(self.parse_color_value(input)?));
+                style.border_color =
+                    self.parse_sides(input, |parser, input| parser.parse_color_value(input).map(Some))?;
             }
             "border-top-color" => {
                 self.parse_border_side_color(input, &mut style.border_color.top)?;
@@ -322,7 +323,12 @@ impl StyleDeclarationParser {
                 self.parse_border_side_color(input, &mut style.border_color.left)?;
             }
             "border-width" => {
-                style.border_width = Directional::set_all(Some(self.parse_length_value(input)?));
+                style.border_width = self.parse_sides(input, |parser, input| {
+                    parser
+                        .try_parse_line_width(input)?
+                        .map(Some)
+                        .ok_or_else(|| input.new_custom_error(()))
+                })?;
             }
             "border-top-width" => {
                 self.parse_border_side_width(input, &mut style.border_width.top)?;
@@ -337,11 +343,12 @@ impl StyleDeclarationParser {
                 self.parse_border_side_width(input, &mut style.border_width.left)?;
             }
             "border-style" => {
-                // Parse a single <line-style> value.
-                let v = self
-                    .try_parse_line_style(input)?
-                    .ok_or_else(|| input.new_error_for_next_token())?;
-                style.border_style = Directional::set_all(Some(v));
+                style.border_style = self.parse_sides(input, |parser, input| {
+                    parser
+                        .try_parse_line_style(input)?
+                        .map(Some)
+                        .ok_or_else(|| input.new_custom_error(()))
+                })?;
             }
             "border-top-style" => {
                 self.parse_border_side_style(input, &mut style.border_style.top)?;
@@ -679,6 +686,23 @@ impl StyleDeclarationParser {
             }
             "word-spacing" => {
                 style.word_spacing = Some(self.parse_spacing(input)?);
+            }
+            "opacity" => {
+                let opacity = match input.next()?.clone() {
+                    Token::Number { value, .. } => f64::from(value),
+                    Token::Percentage { unit_value, .. } => f64::from(unit_value),
+                    _ => return Err(input.new_custom_error(())),
+                };
+                style.opacity = Some(opacity.clamp(0.0, 1.0));
+            }
+            "box-shadow" => {
+                style.box_shadow = Some(Arc::new(self.parse_box_shadow(input)?));
+            }
+            "transform" => {
+                style.transform = Some(Arc::new(self.parse_transform(input)?));
+            }
+            "transform-origin" => {
+                style.transform_origin = Some(self.parse_transform_origin(input)?);
             }
             "text-overflow" => {
                 let ident = input.expect_ident()?;

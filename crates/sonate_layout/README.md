@@ -104,4 +104,6 @@ Where Chrome and the spec text differ, the engine follows Chrome:
 - `tests/known_failures.txt` lists fixture cases that may fail (empty today).
 - `tests/api.rs` covers what fixtures can't express, like the measure-call budget.
 - Sonate runs the same fixtures through its HTML and CSS pipeline
-  (`crates/sonate/src/layout/fixture_tests.rs`), with its own known-failures list.
+  (`crates/sonate/src/layout/fixture_tests.rs`), with its own known-failures list. It also
+  compares computed values (`@check`) and, for `@screenshot` fixtures like those in `paint/`,
+  its painted pixels with Chrome's.

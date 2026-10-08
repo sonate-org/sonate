@@ -12,10 +12,10 @@ These tables lists the specifications enumerated in **Section 2 (Classification 
 | [Box Model](https://www.w3.org/TR/CSS2/box.html) | Margins, padding and borders are supported |
 | [Visual Formatting Model](https://www.w3.org/TR/CSS2/visuren.html) | Partial support. Every box is a flex container; `position: absolute` and `display: none` are supported |
 | [Visual Formatting Model Details](https://www.w3.org/TR/CSS2/visudet.html) | |
-| [Visual Effects (Overflow and Clipping)](https://www.w3.org/TR/CSS2/visufx.html) | |
+| [Visual Effects (Overflow and Clipping)](https://www.w3.org/TR/CSS2/visufx.html) | `overflow` clips to the padding box, rounded by `border-radius`. No `clip` or `visibility` |
 | [Generated Content, Automatic Numbering, and Lists](https://www.w3.org/TR/CSS2/generate.html) | |
 | [Paged Media](https://www.w3.org/TR/CSS2/page.html) | |
-| [Colors and Backgrounds](https://www.w3.org/TR/CSS2/colors.html) | Colors are supported |
+| [Colors and Backgrounds](https://www.w3.org/TR/CSS2/colors.html) | Colors and background colors are supported. No background images |
 | [Fonts](https://www.w3.org/TR/CSS2/fonts.html) | Supported except `font-variant` (accepted in `font`, not rendered) |
 | [Text](https://www.w3.org/TR/CSS2/text.html) | `text-align`, `letter-spacing`, `word-spacing`, `text-transform`, `white-space`. No `text-indent` or `text-decoration` |
 | [Tables](https://www.w3.org/TR/CSS2/tables.html) | |
@@ -35,8 +35,8 @@ These tables lists the specifications enumerated in **Section 2 (Classification 
 | CSS Values and Units Module Level 3 | [CSS-VALUES-3](https://www.w3.org/TR/css-values-3/) | Lengths in `px`, `em`, `rem`, `vw`, `vh`, `vmin`, `vmax`, `in`, `cm`, `mm`, `Q`, `pt`, `pc` and `%`; `calc()` plus `min()`, `max()` and `clamp()` from Level 4. No `ex`/`ch`, angles in `calc()` or `attr()` |
 | CSS Custom Properties for Cascading Variables Module Level 1 | [CSS-VARIABLES-1](https://www.w3.org/TR/css-variables-1/) | Supported: inherited custom properties, `var()` with fallbacks, reference cycles and invalid-at-computed-value-time |
 | CSS Box Model Module Level 3 | [CSS-BOX-3](https://www.w3.org/TR/css-box-3/) | |
-| CSS Color Module Level 4 | [CSS-COLOR-4](https://www.w3.org/TR/css-color-4/) | Partial support. Missing `opacity`, `color: inherit`, `lab`, `lch`, `oklab`, `oklch`, `color`, `currentcolor`. Only sRGB color space supported. |
-| CSS Backgrounds and Borders Module Level 3 | [CSS-BACKGROUNDS-3](https://www.w3.org/TR/css-backgrounds-3/) | Partial support. Only background colors and solid borders are supported. Different `border-width` properties for each side is not supported. |
+| CSS Color Module Level 4 | [CSS-COLOR-4](https://www.w3.org/TR/css-color-4/) | Partial support, including `opacity` (as a number or percentage). Missing `lab`, `lch`, `oklab`, `oklch`, `color()` and the `currentcolor` keyword (unset border and shadow colors still use the text color). Only sRGB color space supported. |
+| CSS Backgrounds and Borders Module Level 3 | [CSS-BACKGROUNDS-3](https://www.w3.org/TR/css-backgrounds-3/) | Partial support: background colors (the `background` shorthand takes a color and `none`); borders with their own width, color and style per side, including `dashed`, `dotted`, `double`, `groove`, `ridge`, `inset` and `outset`; `border-radius` with elliptical corners; `box-shadow` with blur, spread, `inset` and several shadows. Painting is checked pixel by pixel against Chrome. No background images, `background-clip`/`background-origin` or `border-image` |
 | CSS Images Module Level 3 | [CSS-IMAGES-3](https://www.w3.org/TR/css-images-3/) | |
 | CSS Fonts Module Level 3 | [CSS-FONTS-3](https://www.w3.org/TR/css-fonts-3/) | Partial support. `font-family` lists with generic families, `font-weight` (incl. `bolder`/`lighter`), `font-style`, `font-size` (incl. keywords), the `font` shorthand and `@font-face` with `url()`/`local()` sources (synthetic bold and italic when a face is missing). No `font-variant-*`, `font-feature-settings` or `unicode-range` |
 | CSS Writing Modes Level 3 | [CSS-WRITING-MODES-3](https://www.w3.org/TR/css-writing-modes-3/) | |
@@ -44,7 +44,7 @@ These tables lists the specifications enumerated in **Section 2 (Classification 
 | CSS Flexible Box Layout Module Level 1 | [CSS-FLEXBOX-1](https://www.w3.org/TR/css-flexbox-1/) | Supported except `flex-basis: content` and `visibility: collapse`; checked against Chrome. See [sonate_layout](../sonate_layout/README.md#spec-coverage) |
 | CSS Basic User Interface Module Level 3 | [CSS-UI-3](https://www.w3.org/TR/css-ui-3/) | `text-overflow: ellipsis` (also on an element's own text, unlike browsers) |
 | CSS Containment Module Level 1 | [CSS-CONTAIN-1](https://www.w3.org/TR/css-contain-1/) | |
-| CSS Transforms Module Level 1 | [CSS-TRANSFORMS-1](https://www.w3.org/TR/css-transforms-1/) | |
+| CSS Transforms Module Level 1 | [CSS-TRANSFORMS-1](https://www.w3.org/TR/css-transforms-1/) | 2D transforms: `translate`, `scale`, `rotate`, `skew` (with their `X`/`Y` forms) and `matrix()`, around `transform-origin`; hit testing follows transforms. No `transform-box` |
 | Compositing and Blending Level 1 | [COMPOSITING](https://www.w3.org/TR/compositing-1/) | |
 | CSS Easing Functions Level 1 | [CSS-EASING-1](https://www.w3.org/TR/css-easing-1/) | |
 | CSS Counter Styles Level 3 | [CSS-COUNTER-STYLES-3](https://www.w3.org/TR/css-counter-styles-3/) | |

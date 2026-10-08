@@ -10,6 +10,7 @@ mod scrollbar_interaction;
 mod style;
 mod style_matching;
 mod text;
+mod transform;
 mod windowing;
 
 use crate::backend::InputKey;

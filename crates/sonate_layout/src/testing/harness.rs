@@ -29,6 +29,8 @@ pub struct CaseOutput {
     pub values: Option<Vec<BTreeMap<String, String>>>,
     /// Each text node's line boxes relative to its border box. `None` skips the line checks.
     pub lines: Option<Vec<Vec<Rect4>>>,
+    /// Other differences from Chrome, e.g. in the painted pixels.
+    pub problems: Vec<String>,
 }
 
 pub struct Suite {
@@ -338,7 +340,19 @@ fn compare(case: &SnapshotCase, output: &CaseOutput, tolerance: f64, key: &str) 
         .map(|(rect_wrong, errors)| *rect_wrong || !errors.is_empty())
         .collect();
     if !wrong.contains(&true) {
-        return None;
+        if output.problems.is_empty() {
+            return None;
+        }
+        let tree: String = output.problems.iter().map(|problem| format!("    {problem}\n")).collect();
+        return Some(CaseFailure {
+            summary: output.problems.join(", "),
+            report: format!(
+                "<section><h3>{}</h3><p>{}</p></section>",
+                escape(key),
+                escape(&output.problems.join("; "))
+            ),
+            tree,
+        });
     }
 
     let children = case.children();
@@ -387,6 +401,7 @@ fn compare(case: &SnapshotCase, output: &CaseOutput, tolerance: f64, key: &str) 
         })
         .collect();
     problems.extend(value_errors[first].iter().cloned());
+    problems.extend(output.problems.iter().cloned());
     let summary = format!("first wrong node {}: {}", path.join(" > "), problems.join(", "));
 
     Some(CaseFailure {

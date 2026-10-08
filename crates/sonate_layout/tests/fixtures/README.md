@@ -40,6 +40,15 @@ One line saying what this checks.
   reports them) for every element. Sonate's suite compares them, so CSS that doesn't affect
   layout (selectors, the cascade, colors) can be tested too. The layout engine's own suite
   ignores them.
+- **`@screenshot`** also records what Chrome paints: a PNG of the root's border box per case,
+  next to the fixture (`<name>.<case>.png`). Sonate's suite paints the same case and compares
+  the pixels: a pixel counts as different when a channel lies more than 24 outside the range
+  of Chrome's pixels around it, which tolerates anti-aliasing, and at most 0.2% of the pixels
+  may differ. Failing cases leave the painted image and a diff in `target/paint-fixtures`.
+  Use plain shapes; text rendering differs between font rasterizers.
+- **`@pixels 1.5`** raises the share of pixels that may differ, in percent.
+- **Transforms** don't change layout, so they're only allowed with `@screenshot` or
+  `@check transform`; rects are recorded without them.
 - **`@tolerance 0.25`** loosens the comparison for this fixture (the default is 1/16 px).
 - **Text** may only be an element's only child and may only contain printable ASCII and
   newlines; it is recorded as written, since white-space processing is part of what's tested.

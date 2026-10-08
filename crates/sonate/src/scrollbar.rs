@@ -73,7 +73,7 @@ fn scrollbar_thumbs_for_node(
         return Vec::new();
     }
 
-    let border = node.style.border_width.resolved();
+    let border = node.style.used_border_width();
     let clip_rect = Rect {
         x: node.bounds.x + border.left.to_px(),
         y: node.bounds.y + border.top.to_px(),
@@ -205,7 +205,7 @@ fn descendant_clip_for_node(node: &RenderNode, inherited_clip: Option<Rect>) -> 
         node.style.overflow,
         Some(Overflow::Hidden) | Some(Overflow::Scroll) | Some(Overflow::Auto)
     ) {
-        let border = node.style.border_width.resolved();
+        let border = node.style.used_border_width();
         let padding_box = Rect {
             x: node.bounds.x + border.left.to_px(),
             y: node.bounds.y + border.top.to_px(),

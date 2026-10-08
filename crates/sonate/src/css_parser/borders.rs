@@ -3,6 +3,62 @@ use crate::style::{BorderStyle, Directional, Length, Radius, Rgba, Style};
 use cssparser::{ParseError, Parser};
 
 impl StyleDeclarationParser {
+    /// One to four values for the top, right, bottom and left sides: a missing right side copies
+    /// the top, a missing bottom the top and a missing left the right.
+    pub(crate) fn parse_sides<'i, 't, T: Clone>(
+        &mut self,
+        input: &mut Parser<'i, 't>,
+        mut parse: impl FnMut(&mut Self, &mut Parser<'i, 't>) -> Result<T, ParseError<'i, ()>>,
+    ) -> Result<Directional<T>, ParseError<'i, ()>> {
+        let top = parse(self, input)?;
+        let mut rest = Vec::new();
+        while rest.len() < 3 {
+            match input.try_parse(|input| parse(self, input)) {
+                Ok(value) => rest.push(value),
+                Err(_) => break,
+            }
+        }
+        input.expect_exhausted()?;
+        let right = rest.first().cloned().unwrap_or_else(|| top.clone());
+        let bottom = rest.get(1).cloned().unwrap_or_else(|| top.clone());
+        let left = rest.get(2).cloned().unwrap_or_else(|| right.clone());
+        Ok(Directional {
+            top,
+            right,
+            bottom,
+            left,
+        })
+    }
+
+    /// `background`: Sonate paints only the color layer, so an image must be `none`. Leaving the
+    /// color out makes it transparent.
+    pub(crate) fn parse_background_shorthand<'i, 't>(
+        &mut self,
+        input: &mut Parser<'i, 't>,
+        style: &mut Style,
+    ) -> Result<(), ParseError<'i, ()>> {
+        let mut color = None;
+        let mut image = false;
+        while !input.is_exhausted() {
+            if !image
+                && input
+                    .try_parse(|input| input.expect_ident_matching("none"))
+                    .is_ok()
+            {
+                image = true;
+            } else if color.is_none() {
+                color = Some(self.parse_color_value(input)?);
+            } else {
+                return Err(input.new_error_for_next_token());
+            }
+        }
+        if color.is_none() && !image {
+            return Err(input.new_custom_error(()));
+        }
+        style.background_color = Some(color.unwrap_or_default());
+        Ok(())
+    }
+
     pub(crate) fn try_parse_line_width<'i, 't>(
         &mut self,
         input: &mut Parser<'i, 't>,

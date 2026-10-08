@@ -216,6 +216,7 @@ fn main() {
     padding: 10px 20px;
     border-radius: 5px;
     border-width: 1px;
+    border-style: solid;
     border-color: #0056b3;
     background-color: #dde9ff;
     width: 200px;
@@ -279,6 +280,7 @@ fn main() {
     height: 60px;
     margin: 10px;
     border-width: 2px;
+    border-style: solid;
     border-color: #000000;
     border-radius: 8px;
 }

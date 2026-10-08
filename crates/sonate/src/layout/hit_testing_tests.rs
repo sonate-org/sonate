@@ -1,5 +1,5 @@
 use super::*;
-use crate::style::{Directional, Length, Overflow, Style};
+use crate::style::{BorderStyle, Directional, Length, Overflow, Style};
 use std::sync::atomic::{AtomicU64, Ordering};
 
 fn next_test_id() -> Id {
@@ -263,6 +263,7 @@ fn test_find_element_at_position_respects_overflow_hidden_clip() {
         let mut style = Style::default();
         style.overflow = Some(Overflow::Hidden);
         style.border_width = Directional::set_all(Some(Length::Px(10.0)));
+        style.border_style = Directional::set_all(Some(BorderStyle::Solid));
         container_borrow.layout.style = std::sync::Arc::new(style);
     }
 
@@ -348,4 +349,19 @@ fn test_find_element_at_position_allows_overflow_visible_children_outside_parent
     assert_eq!(result[0], child_id);
     assert_eq!(result[1], container_id);
     assert_eq!(result[2], root_id);
+}
+
+#[test]
+fn test_find_element_at_position_follows_transforms() {
+    let (ctx, ids) = super::test_html::load_layout_fixture(
+        r#"<div id="root" style="width: 200px; height: 200px">
+            <div style="width: 100px; height: 20px; margin: 90px 50px; transform: rotate(90deg)"></div>
+        </div>"#,
+        &[],
+    );
+    let tree = build_render_snapshot(ctx.document.root_node()).root;
+
+    // Turned around its center (100, 100), the box covers x 90..110 and y 50..150.
+    assert_eq!(tree.find_element_at_position(100.0, 60.0).first(), Some(&ids[1]));
+    assert_eq!(tree.find_element_at_position(60.0, 100.0).first(), Some(&ids[0]));
 }

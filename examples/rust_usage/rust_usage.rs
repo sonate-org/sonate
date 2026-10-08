@@ -16,6 +16,7 @@ fn main() {
         .red_box {
             background-color: #ff0000;
             border-width: 2px;
+            border-style: solid;
             border-color: black;
             border-radius: 8px;
             margin: 10px;

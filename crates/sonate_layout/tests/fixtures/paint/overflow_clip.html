@@ -1,0 +1,15 @@
+<!--
+A clipping element cuts its content off at its padding box, rounded by the border radius minus
+the border width. The clip applies to transformed and translucent content as well.
+@screenshot
+@matrix .clip border-radius: 0px | 12px | 50% | 20px 0px 40px 4px
+-->
+<style>
+  .clip { width: 70px; height: 60px; overflow: hidden; background: rgb(220, 220, 220) }
+  .content { width: 60px; height: 50px; flex-shrink: 0; background: rgb(40, 110, 220) }
+</style>
+<div id="root" style="width: 300px; height: 90px; padding: 15px; gap: 20px; align-items: flex-start">
+  <div class="clip"><div class="content" style="margin: -10px 0 0 30px"></div></div>
+  <div class="clip" style="border: 6px solid rgb(240, 120, 0)"><div class="content" style="margin: 20px 0 0 -20px; opacity: 0.6"></div></div>
+  <div class="clip" style="padding: 5px"><div class="content" style="transform: rotate(30deg); margin: 15px"></div></div>
+</div>

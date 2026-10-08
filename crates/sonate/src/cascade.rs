@@ -7,7 +7,8 @@ use crate::css_parser::{
 };
 use crate::layout::{Document, LayoutContext, Node};
 use crate::style::{
-    CssWideKeyword, Declaration, FontWeight, Length, LineHeight, Style, StyleSheet,
+    BoxShadow, CssWideKeyword, Declaration, FontWeight, Length, LineHeight, Style, StyleSheet,
+    TransformFunction,
 };
 use crate::style_matching::{Element, ElementStates};
 use std::{cell::RefCell, collections::BTreeMap, rc::Rc, sync::Arc};
@@ -253,6 +254,34 @@ fn compute_lengths(style: &mut Style, context: &LengthContext) {
             compute(length);
         }
     }
+    if let Some(shadows) = &style.box_shadow {
+        let shadows = shadows
+            .iter()
+            .map(|shadow| BoxShadow {
+                offset_x: context.compute(&shadow.offset_x),
+                offset_y: context.compute(&shadow.offset_y),
+                blur: context.compute(&shadow.blur),
+                spread: context.compute(&shadow.spread),
+                ..shadow.clone()
+            })
+            .collect();
+        style.box_shadow = Some(Arc::new(shadows));
+    }
+    if let Some(functions) = &style.transform {
+        let functions = functions
+            .iter()
+            .map(|function| match function {
+                TransformFunction::Translate(x, y) => {
+                    TransformFunction::Translate(context.compute(x), context.compute(y))
+                }
+                other => other.clone(),
+            })
+            .collect();
+        style.transform = Some(Arc::new(functions));
+    }
+    if let Some((x, y)) = &style.transform_origin {
+        style.transform_origin = Some((context.compute(x), context.compute(y)));
+    }
     let radius = &mut style.border_radius;
     for corner in [
         &mut radius.top_left,
@@ -495,6 +524,10 @@ pub fn copy_property(target: &mut Style, source: &Style, property: &str) -> bool
         "letter-spacing" => copy!(letter_spacing),
         "word-spacing" => copy!(word_spacing),
         "text-overflow" => copy!(text_overflow),
+        "opacity" => copy!(opacity),
+        "box-shadow" => copy!(box_shadow),
+        "transform" => copy!(transform),
+        "transform-origin" => copy!(transform_origin),
         _ => false,
     }
 }

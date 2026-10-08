@@ -47,6 +47,7 @@ pub fn layout_case(case: &SnapshotCase) -> Result<CaseOutput, String> {
         rects,
         values: None,
         lines: None,
+        problems: Vec::new(),
     })
 }
 

@@ -1,5 +1,6 @@
 mod borders;
 mod colors;
+mod effects;
 mod fonts;
 mod named_colors;
 mod parser;
@@ -25,6 +26,9 @@ mod css_parser_tests;
 
 #[cfg(test)]
 mod border_tests;
+
+#[cfg(test)]
+mod effects_tests;
 
 #[cfg(test)]
 mod selector_tests;
