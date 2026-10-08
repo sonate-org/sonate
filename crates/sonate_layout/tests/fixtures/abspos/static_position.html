@@ -1,0 +1,11 @@
+<!--
+An absolutely positioned child without insets sits at its static position: placed as if it were
+the only flex item, using justify-content and its align-self.
+@matrix #root justify-content: flex-start | center | flex-end | space-between | space-around
+@matrix #root align-items: normal | flex-start | center | flex-end
+-->
+<div id="root" style="width: 200px; height: 100px; padding: 10px; border: 2px solid">
+  <div style="width: 50px; height: 30px"></div>
+  <div style="position: absolute; width: 40px; height: 20px"></div>
+  <div style="position: absolute">Abc</div>
+</div>

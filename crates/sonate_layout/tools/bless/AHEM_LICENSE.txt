@@ -1,0 +1,10 @@
+Ahem.ttf is the Ahem test font from the W3C web-platform-tests repository
+(https://github.com/web-platform-tests/wpt/blob/master/fonts/Ahem.ttf),
+developed by Todd Fahrner and Myles C. Maxfield.
+
+From the font's own copyright/licence record:
+
+  The Ahem font belongs to the public domain. In jurisdictions that do not
+  recognize public domain ownership of these files, the following Creative
+  Commons Zero declaration applies:
+  http://labs.creativecommons.org/licenses/zero-waive/1.0/us/legalcode

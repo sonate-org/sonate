@@ -1,0 +1,13 @@
+<!--
+Percentage sizes, insets and margins of absolutely positioned boxes resolve against the
+padding box; auto-sized boxes shrink to fit.
+@matrix #root padding: 0px | 10px 20px
+-->
+<div id="root" style="width: 300px; height: 200px; border: 4px solid">
+  <div style="position: absolute; left: 10%; right: 10%; top: 5%; height: 25%; padding: 2%"></div>
+  <div style="position: absolute; right: 0px; top: 0px; max-width: 80px">Text that wraps in a box</div>
+  <div style="position: absolute; left: 0px; bottom: 0px; flex-direction: column; padding: 4px">
+    <div style="width: 50%; height: 10px"></div>
+    <div>Shrink</div>
+  </div>
+</div>

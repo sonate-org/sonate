@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "hash": "f5f4e132e11a603e",
+  "chrome": "Chrome/153.0.8010.52/@78e5e45d4bb41035e17ea4da2cc257f496416ac9",
+  "cases": [
+    {
+      "params": "#nested flex-direction=row",
+      "overrides": [["#nested","flex-direction","row"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"400px","height":"300px","align-items":"flex-start"},"rect":[0,0,400,300]},
+        {"d":1,"label":"#nested","style":{"padding-top":"10px","padding-right":"10px","padding-bottom":"10px","padding-left":"10px","row-gap":"10px","column-gap":"10px"},"rect":[0,0,180,60]},
+        {"d":2,"label":"div","style":{"width":"50px","height":"20px","margin-top":"10px","margin-right":"10px","margin-bottom":"10px","margin-left":"10px"},"rect":[20,20,50,20]},
+        {"d":2,"label":"div","style":{"width":"60px","height":"20px","margin-top":"10px","margin-right":"10px","margin-bottom":"10px","margin-left":"10px"},"rect":[100,20,60,20]},
+        {"d":1,"label":"div","style":{"width":"70px","height":"35px"},"rect":[180,0,70,35]}
+      ]
+    },
+    {
+      "params": "#nested flex-direction=column",
+      "overrides": [["#nested","flex-direction","column"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"400px","height":"300px","align-items":"flex-start"},"rect":[0,0,400,300]},
+        {"d":1,"label":"#nested","style":{"padding-top":"10px","padding-right":"10px","padding-bottom":"10px","padding-left":"10px","flex-direction":"column","row-gap":"10px","column-gap":"10px"},"rect":[0,0,100,110]},
+        {"d":2,"label":"div","style":{"width":"50px","height":"20px","margin-top":"10px","margin-right":"10px","margin-bottom":"10px","margin-left":"10px"},"rect":[20,20,50,20]},
+        {"d":2,"label":"div","style":{"width":"60px","height":"20px","margin-top":"10px","margin-right":"10px","margin-bottom":"10px","margin-left":"10px"},"rect":[20,70,60,20]},
+        {"d":1,"label":"div","style":{"width":"70px","height":"35px"},"rect":[100,0,70,35]}
+      ]
+    }
+  ]
+}

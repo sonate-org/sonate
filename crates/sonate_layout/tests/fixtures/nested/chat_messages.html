@@ -1,0 +1,28 @@
+<!--
+A chat transcript: avatar plus a column of name and wrapping message text, in a narrow column.
+@matrix #root width: 150px | 260px
+@matrix .bubble align-self: flex-start | stretch
+-->
+<div id="root" style="width: 260px; height: 400px; flex-direction: column; padding: 8px; row-gap: 8px">
+  <div class="message" style="column-gap: 6px">
+    <div style="width: 24px; height: 24px; flex-shrink: 0"></div>
+    <div class="bubble" style="flex-direction: column; padding: 4px 6px; border: 1px solid; min-width: 0">
+      <div>Alice</div>
+      <div>Hey are you coming to the party tonight</div>
+    </div>
+  </div>
+  <div class="message" style="column-gap: 6px; flex-direction: row-reverse">
+    <div style="width: 24px; height: 24px; flex-shrink: 0"></div>
+    <div class="bubble" style="flex-direction: column; padding: 4px 6px; border: 1px solid">
+      <div>Bob</div>
+      <div>Sure</div>
+    </div>
+  </div>
+  <div class="message" style="column-gap: 6px">
+    <div style="width: 24px; height: 24px; flex-shrink: 0"></div>
+    <div class="bubble" style="flex-direction: column; padding: 4px 6px; border: 1px solid">
+      <div>Alice</div>
+      <div>Supercalifragilistic</div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,14 @@
+<!--
+Rows of wrapping text inside a column: each row's height depends on the width its items get.
+@matrix #root width: 100px | 160px | 300px
+-->
+<div id="root" style="width: 160px; height: 300px; flex-direction: column">
+  <div class="row" style="column-gap: 10px">
+    <div style="flex: 1">Hello world again</div>
+    <div style="flex: 1">Short</div>
+  </div>
+  <div class="row" style="padding: 5px">
+    <div style="width: 30px; height: 10px; flex-shrink: 0"></div>
+    <div>Some longer text that wraps</div>
+  </div>
+</div>

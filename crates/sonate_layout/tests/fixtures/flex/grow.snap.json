@@ -1,0 +1,106 @@
+{
+  "schema": 1,
+  "hash": "9df161cf4b3e4d07",
+  "chrome": "Chrome/153.0.8010.52/@78e5e45d4bb41035e17ea4da2cc257f496416ac9",
+  "cases": [
+    {
+      "params": "#root flex-direction=row, #b flex-basis=auto",
+      "overrides": [["#root","flex-direction","row"],["#b","flex-basis","auto"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"300px","height":"300px"},"rect":[0,0,300,300]},
+        {"d":1,"label":"#a","style":{"width":"50px","height":"50px","flex-grow":1},"rect":[0,0,110,50]},
+        {"d":1,"label":"#b","style":{"width":"40px","height":"40px","flex-grow":2},"rect":[110,0,160,40]},
+        {"d":1,"label":"#c","style":{"width":"30px","height":"30px"},"rect":[270,0,30,30]}
+      ]
+    },
+    {
+      "params": "#root flex-direction=row, #b flex-basis=0px",
+      "overrides": [["#root","flex-direction","row"],["#b","flex-basis","0px"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"300px","height":"300px"},"rect":[0,0,300,300]},
+        {"d":1,"label":"#a","style":{"width":"50px","height":"50px","flex-grow":1},"rect":[0,0,123.328125,50]},
+        {"d":1,"label":"#b","style":{"width":"40px","height":"40px","flex-grow":2,"flex-basis":"0px"},"rect":[123.328125,0,146.671875,40]},
+        {"d":1,"label":"#c","style":{"width":"30px","height":"30px"},"rect":[270,0,30,30]}
+      ]
+    },
+    {
+      "params": "#root flex-direction=row, #b flex-basis=30px",
+      "overrides": [["#root","flex-direction","row"],["#b","flex-basis","30px"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"300px","height":"300px"},"rect":[0,0,300,300]},
+        {"d":1,"label":"#a","style":{"width":"50px","height":"50px","flex-grow":1},"rect":[0,0,113.328125,50]},
+        {"d":1,"label":"#b","style":{"width":"40px","height":"40px","flex-grow":2,"flex-basis":"30px"},"rect":[113.328125,0,156.671875,40]},
+        {"d":1,"label":"#c","style":{"width":"30px","height":"30px"},"rect":[270,0,30,30]}
+      ]
+    },
+    {
+      "params": "#root flex-direction=column, #b flex-basis=auto",
+      "overrides": [["#root","flex-direction","column"],["#b","flex-basis","auto"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"300px","height":"300px","flex-direction":"column"},"rect":[0,0,300,300]},
+        {"d":1,"label":"#a","style":{"width":"50px","height":"50px","flex-grow":1},"rect":[0,0,50,110]},
+        {"d":1,"label":"#b","style":{"width":"40px","height":"40px","flex-grow":2},"rect":[0,110,40,160]},
+        {"d":1,"label":"#c","style":{"width":"30px","height":"30px"},"rect":[0,270,30,30]}
+      ]
+    },
+    {
+      "params": "#root flex-direction=column, #b flex-basis=0px",
+      "overrides": [["#root","flex-direction","column"],["#b","flex-basis","0px"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"300px","height":"300px","flex-direction":"column"},"rect":[0,0,300,300]},
+        {"d":1,"label":"#a","style":{"width":"50px","height":"50px","flex-grow":1},"rect":[0,0,50,123.328125]},
+        {"d":1,"label":"#b","style":{"width":"40px","height":"40px","flex-grow":2,"flex-basis":"0px"},"rect":[0,123.328125,40,146.671875]},
+        {"d":1,"label":"#c","style":{"width":"30px","height":"30px"},"rect":[0,270,30,30]}
+      ]
+    },
+    {
+      "params": "#root flex-direction=column, #b flex-basis=30px",
+      "overrides": [["#root","flex-direction","column"],["#b","flex-basis","30px"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"300px","height":"300px","flex-direction":"column"},"rect":[0,0,300,300]},
+        {"d":1,"label":"#a","style":{"width":"50px","height":"50px","flex-grow":1},"rect":[0,0,50,113.328125]},
+        {"d":1,"label":"#b","style":{"width":"40px","height":"40px","flex-grow":2,"flex-basis":"30px"},"rect":[0,113.328125,40,156.671875]},
+        {"d":1,"label":"#c","style":{"width":"30px","height":"30px"},"rect":[0,270,30,30]}
+      ]
+    },
+    {
+      "params": "#root flex-direction=row-reverse, #b flex-basis=auto",
+      "overrides": [["#root","flex-direction","row-reverse"],["#b","flex-basis","auto"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"300px","height":"300px","flex-direction":"row-reverse"},"rect":[0,0,300,300]},
+        {"d":1,"label":"#a","style":{"width":"50px","height":"50px","flex-grow":1},"rect":[190,0,110,50]},
+        {"d":1,"label":"#b","style":{"width":"40px","height":"40px","flex-grow":2},"rect":[30,0,160,40]},
+        {"d":1,"label":"#c","style":{"width":"30px","height":"30px"},"rect":[0,0,30,30]}
+      ]
+    },
+    {
+      "params": "#root flex-direction=row-reverse, #b flex-basis=0px",
+      "overrides": [["#root","flex-direction","row-reverse"],["#b","flex-basis","0px"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"300px","height":"300px","flex-direction":"row-reverse"},"rect":[0,0,300,300]},
+        {"d":1,"label":"#a","style":{"width":"50px","height":"50px","flex-grow":1},"rect":[176.671875,0,123.328125,50]},
+        {"d":1,"label":"#b","style":{"width":"40px","height":"40px","flex-grow":2,"flex-basis":"0px"},"rect":[30,0,146.671875,40]},
+        {"d":1,"label":"#c","style":{"width":"30px","height":"30px"},"rect":[0,0,30,30]}
+      ]
+    },
+    {
+      "params": "#root flex-direction=row-reverse, #b flex-basis=30px",
+      "overrides": [["#root","flex-direction","row-reverse"],["#b","flex-basis","30px"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"300px","height":"300px","flex-direction":"row-reverse"},"rect":[0,0,300,300]},
+        {"d":1,"label":"#a","style":{"width":"50px","height":"50px","flex-grow":1},"rect":[186.671875,0,113.328125,50]},
+        {"d":1,"label":"#b","style":{"width":"40px","height":"40px","flex-grow":2,"flex-basis":"30px"},"rect":[30,0,156.671875,40]},
+        {"d":1,"label":"#c","style":{"width":"30px","height":"30px"},"rect":[0,0,30,30]}
+      ]
+    }
+  ]
+}

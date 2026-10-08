@@ -157,7 +157,7 @@ pub enum BorderStyle {
     Outset,
 }
 
-#[derive(Clone, Copy, Default, Debug)]
+#[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
 pub enum Display {
     // Block,
     // Inline,
@@ -165,6 +165,16 @@ pub enum Display {
     #[default]
     Flex,
     // Grid,
+    None,
+}
+
+/// Every box is a containing block for absolutely positioned descendants, so `static` and
+/// `relative` behave the same.
+#[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
+pub enum Position {
+    #[default]
+    Relative,
+    Absolute,
 }
 
 #[derive(Clone, Copy, Default, Debug)]
@@ -188,6 +198,10 @@ pub enum FlexWrap {
 pub enum JustifyContent {
     #[default]
     FlexStart,
+    Normal,
+    Start,
+    End,
+    Stretch,
     FlexEnd,
     Center,
     SpaceBetween,
@@ -199,6 +213,9 @@ pub enum JustifyContent {
 pub enum AlignItems {
     #[default]
     Stretch,
+    Normal,
+    Start,
+    End,
     FlexStart,
     FlexEnd,
     Center,
@@ -209,6 +226,9 @@ pub enum AlignItems {
 pub enum AlignContent {
     #[default]
     Stretch,
+    Normal,
+    Start,
+    End,
     FlexStart,
     FlexEnd,
     Center,
@@ -221,6 +241,9 @@ pub enum AlignContent {
 pub enum AlignSelf {
     #[default]
     Auto,
+    Normal,
+    Start,
+    End,
     FlexStart,
     FlexEnd,
     Center,
@@ -264,7 +287,11 @@ pub enum ZIndex {
 
 #[derive(Clone, Default, Debug, MergeProperties)]
 pub struct Style {
-    pub display: Display,
+    pub display: Option<Display>,
+    pub position: Option<Position>,
+    /// `top`, `right`, `bottom` and `left`.
+    #[merge_by_method_call]
+    pub inset: Directional<Option<Length>>,
     pub widget: Option<Widget>,
     pub color: Option<Rgba>,
     pub background_color: Option<Rgba>,
@@ -284,6 +311,12 @@ pub struct Style {
     pub padding: Directional<Option<Length>>,
     pub width: Option<Length>,
     pub height: Option<Length>,
+    pub min_width: Option<Length>,
+    pub min_height: Option<Length>,
+    /// `Length::Auto` stands for `none`.
+    pub max_width: Option<Length>,
+    /// `Length::Auto` stands for `none`.
+    pub max_height: Option<Length>,
 
     // Text / font properties
     pub font_family: Option<String>,

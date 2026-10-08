@@ -1,0 +1,67 @@
+{
+  "schema": 1,
+  "hash": "9112dcd5421a6168",
+  "chrome": "Chrome/153.0.8010.52/@78e5e45d4bb41035e17ea4da2cc257f496416ac9",
+  "cases": [
+    {
+      "params": "#abs inset=10px auto auto 10px",
+      "overrides": [["#abs","inset","10px auto auto 10px"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"200px","height":"100px","padding-top":"10px","padding-right":"10px","padding-bottom":"10px","padding-left":"10px","border-top-width":"2px","border-right-width":"2px","border-bottom-width":"2px","border-left-width":"2px"},"rect":[0,0,224,124]},
+        {"d":1,"label":"#abs","style":{"position":"absolute","min-width":"20px","min-height":"10px","top":"10px","left":"10px"},"rect":[12,12,20,10]},
+        {"d":1,"label":"div","style":{"position":"absolute","width":"50px","height":"20px","margin-right":"auto","margin-left":"auto","top":"0px","right":"10px","left":"10px"},"rect":[87,2,50,20]},
+        {"d":1,"label":"div","style":{"position":"absolute","padding-top":"3px","padding-right":"3px","padding-bottom":"3px","padding-left":"3px","right":"0px","bottom":"0px"},"text":"Hello world","font":10,"rect":[106,106,116,16]},
+        {"d":1,"label":"div","style":{"position":"absolute","width":"30%","height":"20%","margin-top":"2px","margin-right":"2px","margin-bottom":"2px","margin-left":"2px","top":"50%","left":"50%"},"rect":[114,64,66,24]}
+      ]
+    },
+    {
+      "params": "#abs inset=10px 20px auto 30px",
+      "overrides": [["#abs","inset","10px 20px auto 30px"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"200px","height":"100px","padding-top":"10px","padding-right":"10px","padding-bottom":"10px","padding-left":"10px","border-top-width":"2px","border-right-width":"2px","border-bottom-width":"2px","border-left-width":"2px"},"rect":[0,0,224,124]},
+        {"d":1,"label":"#abs","style":{"position":"absolute","min-width":"20px","min-height":"10px","top":"10px","right":"20px","left":"30px"},"rect":[32,12,170,10]},
+        {"d":1,"label":"div","style":{"position":"absolute","width":"50px","height":"20px","margin-right":"auto","margin-left":"auto","top":"0px","right":"10px","left":"10px"},"rect":[87,2,50,20]},
+        {"d":1,"label":"div","style":{"position":"absolute","padding-top":"3px","padding-right":"3px","padding-bottom":"3px","padding-left":"3px","right":"0px","bottom":"0px"},"text":"Hello world","font":10,"rect":[106,106,116,16]},
+        {"d":1,"label":"div","style":{"position":"absolute","width":"30%","height":"20%","margin-top":"2px","margin-right":"2px","margin-bottom":"2px","margin-left":"2px","top":"50%","left":"50%"},"rect":[114,64,66,24]}
+      ]
+    },
+    {
+      "params": "#abs inset=auto 5px 5px auto",
+      "overrides": [["#abs","inset","auto 5px 5px auto"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"200px","height":"100px","padding-top":"10px","padding-right":"10px","padding-bottom":"10px","padding-left":"10px","border-top-width":"2px","border-right-width":"2px","border-bottom-width":"2px","border-left-width":"2px"},"rect":[0,0,224,124]},
+        {"d":1,"label":"#abs","style":{"position":"absolute","min-width":"20px","min-height":"10px","right":"5px","bottom":"5px"},"rect":[197,107,20,10]},
+        {"d":1,"label":"div","style":{"position":"absolute","width":"50px","height":"20px","margin-right":"auto","margin-left":"auto","top":"0px","right":"10px","left":"10px"},"rect":[87,2,50,20]},
+        {"d":1,"label":"div","style":{"position":"absolute","padding-top":"3px","padding-right":"3px","padding-bottom":"3px","padding-left":"3px","right":"0px","bottom":"0px"},"text":"Hello world","font":10,"rect":[106,106,116,16]},
+        {"d":1,"label":"div","style":{"position":"absolute","width":"30%","height":"20%","margin-top":"2px","margin-right":"2px","margin-bottom":"2px","margin-left":"2px","top":"50%","left":"50%"},"rect":[114,64,66,24]}
+      ]
+    },
+    {
+      "params": "#abs inset=10% 10% 10% 10%",
+      "overrides": [["#abs","inset","10% 10% 10% 10%"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"200px","height":"100px","padding-top":"10px","padding-right":"10px","padding-bottom":"10px","padding-left":"10px","border-top-width":"2px","border-right-width":"2px","border-bottom-width":"2px","border-left-width":"2px"},"rect":[0,0,224,124]},
+        {"d":1,"label":"#abs","style":{"position":"absolute","min-width":"20px","min-height":"10px","top":"10%","right":"10%","bottom":"10%","left":"10%"},"rect":[24,14,176,96]},
+        {"d":1,"label":"div","style":{"position":"absolute","width":"50px","height":"20px","margin-right":"auto","margin-left":"auto","top":"0px","right":"10px","left":"10px"},"rect":[87,2,50,20]},
+        {"d":1,"label":"div","style":{"position":"absolute","padding-top":"3px","padding-right":"3px","padding-bottom":"3px","padding-left":"3px","right":"0px","bottom":"0px"},"text":"Hello world","font":10,"rect":[106,106,116,16]},
+        {"d":1,"label":"div","style":{"position":"absolute","width":"30%","height":"20%","margin-top":"2px","margin-right":"2px","margin-bottom":"2px","margin-left":"2px","top":"50%","left":"50%"},"rect":[114,64,66,24]}
+      ]
+    },
+    {
+      "params": "#abs inset=0px",
+      "overrides": [["#abs","inset","0px"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"200px","height":"100px","padding-top":"10px","padding-right":"10px","padding-bottom":"10px","padding-left":"10px","border-top-width":"2px","border-right-width":"2px","border-bottom-width":"2px","border-left-width":"2px"},"rect":[0,0,224,124]},
+        {"d":1,"label":"#abs","style":{"position":"absolute","min-width":"20px","min-height":"10px","top":"0px","right":"0px","bottom":"0px","left":"0px"},"rect":[2,2,220,120]},
+        {"d":1,"label":"div","style":{"position":"absolute","width":"50px","height":"20px","margin-right":"auto","margin-left":"auto","top":"0px","right":"10px","left":"10px"},"rect":[87,2,50,20]},
+        {"d":1,"label":"div","style":{"position":"absolute","padding-top":"3px","padding-right":"3px","padding-bottom":"3px","padding-left":"3px","right":"0px","bottom":"0px"},"text":"Hello world","font":10,"rect":[106,106,116,16]},
+        {"d":1,"label":"div","style":{"position":"absolute","width":"30%","height":"20%","margin-top":"2px","margin-right":"2px","margin-bottom":"2px","margin-left":"2px","top":"50%","left":"50%"},"rect":[114,64,66,24]}
+      ]
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 use crate::css_parser::parse_css;
-use crate::style::{Display, Selector, Widget};
+use crate::style::{Display, FlexDirection, Length, Selector, Style, Widget};
 
 #[test]
 fn test_parse_simple_css_document() {
@@ -53,8 +53,8 @@ fn test_parse_simple_css_document() {
     let mut found_width = false;
 
     for declaration in &container_rule.declarations {
-        match declaration.display {
-            Display::Flex => found_display = true,
+        if declaration.display == Some(Display::Flex) {
+            found_display = true;
         }
         if declaration.background_color.is_some() {
             found_background = true;
@@ -222,4 +222,57 @@ fn test_parse_none_widget_property() {
     assert!(declarations
         .iter()
         .any(|declaration| declaration.widget == Some(Widget::None)));
+}
+
+#[test]
+fn test_parse_inline_style() {
+    let declarations = crate::css_parser::parse_inline_style("width: 50px; flex-direction: column");
+    let mut style = Style::default();
+    for declaration in &declarations {
+        style.merge(declaration);
+    }
+
+    assert_eq!(style.width, Some(Length::Px(50.0)));
+    assert!(matches!(style.flex_direction, Some(FlexDirection::Column)));
+}
+
+#[test]
+fn test_parse_flex_shorthand() {
+    let parse = |value: &str| {
+        let mut style = Style::default();
+        for declaration in crate::css_parser::parse_inline_style(&format!("flex: {value}")) {
+            style.merge(&declaration);
+        }
+        (style.flex_grow, style.flex_shrink, style.flex_basis)
+    };
+
+    assert_eq!(parse("1"), (Some(1.0), Some(1.0), Some(Length::Percent(0.0))));
+    assert_eq!(parse("2 3"), (Some(2.0), Some(3.0), Some(Length::Percent(0.0))));
+    assert_eq!(parse("1 1 50px"), (Some(1.0), Some(1.0), Some(Length::Px(50.0))));
+    assert_eq!(parse("100px"), (Some(1.0), Some(1.0), Some(Length::Px(100.0))));
+    assert_eq!(parse("auto"), (Some(1.0), Some(1.0), Some(Length::Auto)));
+    assert_eq!(parse("none"), (Some(0.0), Some(0.0), Some(Length::Auto)));
+}
+
+#[test]
+fn test_parse_layout_properties() {
+    let mut style = Style::default();
+    let css = "display: none; position: absolute; inset: 1px 2px; left: 5%; min-width: 10px; \
+               max-width: none; max-height: 50px; flex-flow: column wrap; gap: 4px 8px; font-size: 20px";
+    for declaration in crate::css_parser::parse_inline_style(css) {
+        style.merge(&declaration);
+    }
+
+    assert_eq!(style.display, Some(Display::None));
+    assert_eq!(style.position, Some(crate::style::Position::Absolute));
+    assert_eq!(style.inset.top, Some(Length::Px(1.0)));
+    assert_eq!(style.inset.right, Some(Length::Px(2.0)));
+    assert!(matches!(style.inset.left, Some(Length::Percent(p)) if (p - 5.0).abs() < 1e-4));
+    assert_eq!(style.min_width, Some(Length::Px(10.0)));
+    assert_eq!(style.max_width, Some(Length::Auto));
+    assert_eq!(style.max_height, Some(Length::Px(50.0)));
+    assert!(matches!(style.flex_direction, Some(FlexDirection::Column)));
+    assert!(matches!(style.flex_wrap, Some(crate::style::FlexWrap::Wrap)));
+    assert_eq!((style.row_gap, style.column_gap), (Some(Length::Px(4.0)), Some(Length::Px(8.0))));
+    assert_eq!(style.font_size, Some(Length::Px(20.0)));
 }

@@ -1,0 +1,10 @@
+<!--
+The automatic minimum height in a column is the content height at the item's width.
+@matrix #root height: 40px | 150px
+@matrix #root align-items: normal | flex-start
+-->
+<div id="root" style="width: 100px; height: 150px; flex-direction: column">
+  <div style="flex-basis: 100px">Hello world wide</div>
+  <div style="flex-basis: 100px; width: 40px">Hello world</div>
+  <div style="flex-basis: 100px; min-height: 0">Hello world</div>
+</div>

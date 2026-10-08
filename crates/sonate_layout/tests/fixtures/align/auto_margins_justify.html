@@ -1,0 +1,10 @@
+<!--
+justify-content has no effect once auto margins took the free space; without free space auto margins are zero.
+@matrix #root justify-content: flex-end | center | space-between
+@matrix #root width: 400px | 150px
+-->
+<div id="root" style="width: 400px; height: 100px; align-items: flex-start">
+  <div style="width: 60px; height: 40px"></div>
+  <div style="width: 60px; height: 40px; margin-left: auto; margin-top: auto"></div>
+  <div style="width: 60px; height: 40px; flex-shrink: 0"></div>
+</div>

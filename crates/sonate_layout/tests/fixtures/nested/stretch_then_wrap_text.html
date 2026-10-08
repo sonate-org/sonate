@@ -1,0 +1,14 @@
+<!--
+A column item stretched to the container width holds a row whose text wraps at that width.
+@matrix #root width: 120px | 240px
+@matrix #root align-items: normal | flex-start
+-->
+<div id="root" style="width: 240px; height: 300px; flex-direction: column">
+  <div id="card" style="flex-direction: column; padding: 5px; border: 1px solid">
+    <div id="title-row" style="align-items: center; column-gap: 5px">
+      <div style="width: 20px; height: 20px; flex-shrink: 0"></div>
+      <div>The quick brown fox jumps over the lazy dog</div>
+    </div>
+    <div>Footer</div>
+  </div>
+</div>

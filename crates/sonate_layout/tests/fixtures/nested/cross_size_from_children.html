@@ -1,0 +1,15 @@
+<!--
+An item's cross size comes from its children: a column with gaps, padding and a border inside a row.
+@matrix #root align-items: normal | flex-start | center
+-->
+<div id="root" style="width: 300px; height: 200px">
+  <div id="col" style="flex-direction: column; row-gap: 4px; padding: 6px; border: 2px solid">
+    <div style="height: 20px; width: 40px"></div>
+    <div>Hello</div>
+    <div style="height: 10px; margin: 3px"></div>
+  </div>
+  <div id="row" style="padding: 4px; align-items: flex-end">
+    <div style="width: 20px; height: 70px"></div>
+    <div style="width: 20px; height: 30px; margin-bottom: 15px"></div>
+  </div>
+</div>

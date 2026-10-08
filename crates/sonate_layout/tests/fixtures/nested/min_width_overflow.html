@@ -1,0 +1,13 @@
+<!--
+A long word in a flexed child: min-width: auto keeps the child from shrinking; min-width: 0 or
+overflow: hidden lets it shrink.
+@matrix #middle min-width: auto | 0px
+@matrix #middle overflow: visible | hidden
+-->
+<div id="root" style="width: 200px; height: 60px">
+  <div style="width: 50px; flex-shrink: 0"></div>
+  <div id="middle" style="flex: 1">
+    <div style="flex-shrink: 0">Averyveryverylongword</div>
+  </div>
+  <div style="width: 30px"></div>
+</div>

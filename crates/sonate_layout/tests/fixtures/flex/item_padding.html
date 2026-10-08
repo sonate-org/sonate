@@ -1,0 +1,11 @@
+<!--
+Flexing works on content-box sizes: padding and border are never shrunk away, and shrink weights
+use the inner flex base size.
+@matrix .item box-sizing: content-box | border-box
+@matrix #root width: 60px | 150px | 400px
+-->
+<div id="root" style="width: 150px; height: 60px">
+  <div class="item" style="flex: 1 1 80px; padding: 0 10px"></div>
+  <div class="item" style="flex: 1 1 80px; border-left: 15px solid"></div>
+  <div class="item" style="flex: 2 2 40px; padding-right: 5px"></div>
+</div>

@@ -1,0 +1,21 @@
+[package]
+name = "sonate_layout"
+version.workspace = true
+edition.workspace = true
+description = "Spec-compliant CSS flexbox layout engine used by Sonate"
+
+[features]
+# Fixture harness shared by this crate's tests and Sonate's integration suite.
+testing = ["dep:serde_json", "dep:libtest-mimic"]
+
+[dependencies]
+serde_json = { version = "1.0", optional = true }
+libtest-mimic = { version = "0.8.2", optional = true }
+
+[dev-dependencies]
+sonate_layout = { path = ".", features = ["testing"] }
+
+[[test]]
+name = "fixtures"
+path = "tests/fixtures.rs"
+harness = false

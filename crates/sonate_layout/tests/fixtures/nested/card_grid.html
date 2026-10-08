@@ -1,0 +1,27 @@
+<!--
+A wrapping card grid: cards grow from a 100px basis, contain a column with a title, body text
+and a footer pushed down with margin-top: auto; cards in a row share the tallest height.
+@matrix #root width: 220px | 330px | 500px
+-->
+<div id="root" style="width: 330px; height: 600px; flex-wrap: wrap; align-content: flex-start; column-gap: 10px; row-gap: 10px; padding: 10px">
+  <div class="card" style="flex: 1 1 100px; flex-direction: column; padding: 5px; border: 1px solid">
+    <div>Title</div>
+    <div>Short body</div>
+    <div style="margin-top: auto; height: 12px"></div>
+  </div>
+  <div class="card" style="flex: 1 1 100px; flex-direction: column; padding: 5px; border: 1px solid">
+    <div>Second card</div>
+    <div>A much longer body text that needs several lines</div>
+    <div style="margin-top: auto; height: 12px"></div>
+  </div>
+  <div class="card" style="flex: 1 1 100px; flex-direction: column; padding: 5px; border: 1px solid">
+    <div>Third</div>
+    <div>Medium body text here</div>
+    <div style="margin-top: auto; height: 12px"></div>
+  </div>
+  <div class="card" style="flex: 1 1 100px; flex-direction: column; padding: 5px; border: 1px solid">
+    <div>Fourth</div>
+    <div>Body</div>
+    <div style="margin-top: auto; height: 12px"></div>
+  </div>
+</div>

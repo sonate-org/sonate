@@ -4,7 +4,7 @@ mod named_colors;
 mod parser;
 mod values;
 
-pub use parser::parse_css;
+pub use parser::{parse_css, parse_inline_style};
 
 #[cfg(test)]
 mod color_tests;

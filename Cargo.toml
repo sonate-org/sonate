@@ -2,6 +2,7 @@
 members = [
     "crates/sonate",
     "crates/sonate_common",
+    "crates/sonate_layout",
     "crates/sonate_lib",
     "crates/sonate_macros",
     "crates/sonate_worker",

@@ -1,0 +1,12 @@
+<!--
+Ported from crates/sonate/src/layout/flex_layout_flow_tests.rs: an auto-sized nested container
+sized by its children, next to a fixed sibling.
+@matrix #nested flex-direction: row | column
+-->
+<div id="root" style="width: 400px; height: 300px; align-items: flex-start">
+  <div id="nested" style="padding: 10px; column-gap: 10px; row-gap: 10px">
+    <div style="width: 50px; height: 20px; margin: 10px"></div>
+    <div style="width: 60px; height: 20px; margin: 10px"></div>
+  </div>
+  <div style="width: 70px; height: 35px"></div>
+</div>

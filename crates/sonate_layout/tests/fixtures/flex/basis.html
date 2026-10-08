@@ -1,0 +1,9 @@
+<!--
+flex-basis wins over width/height; percentages resolve against the container's inner size.
+@matrix #root flex-direction: row | column
+@matrix #a flex-basis: auto | 0px | 80px | 50% | 25%
+-->
+<div id="root" style="width: 400px; height: 200px">
+  <div id="a" style="width: 60px; height: 60px; padding: 4px"></div>
+  <div id="b" style="width: 50px; height: 50px; flex-grow: 1"></div>
+</div>

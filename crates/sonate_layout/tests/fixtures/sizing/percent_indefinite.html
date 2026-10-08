@@ -1,0 +1,13 @@
+<!--
+Percentage heights against an auto-height container behave as auto.
+@matrix #root align-items: normal | flex-start
+-->
+<div id="root" style="width: 300px; height: 300px; flex-direction: column">
+  <div id="auto-height">
+    <div style="height: 50%; width: 40px">Ab</div>
+    <div style="width: 30px; height: 20px"></div>
+  </div>
+  <div id="fixed-height" style="height: 100px">
+    <div style="height: 50%; width: 50px"></div>
+  </div>
+</div>

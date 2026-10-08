@@ -1,0 +1,19 @@
+<!--
+Form rows: a fixed label column, inputs that take the rest, and a button row aligned to the end.
+@matrix #root width: 200px | 400px
+@matrix .row align-items: center | baseline
+-->
+<div id="root" style="width: 400px; height: 300px; flex-direction: column; padding: 10px; row-gap: 6px">
+  <div class="row" style="column-gap: 8px">
+    <div style="width: 80px; flex-shrink: 0">Name</div>
+    <div style="flex: 1; height: 20px; padding: 2px; border: 1px solid; min-width: 40px">Jane</div>
+  </div>
+  <div class="row" style="column-gap: 8px">
+    <div style="width: 80px; flex-shrink: 0">Email address</div>
+    <div style="flex: 1; height: 20px; padding: 2px; border: 1px solid; min-width: 40px"></div>
+  </div>
+  <div class="row" style="column-gap: 8px; justify-content: flex-end; margin-top: 10px">
+    <div style="padding: 4px 8px; border: 1px solid">Cancel</div>
+    <div style="padding: 4px 8px; border: 1px solid">Save</div>
+  </div>
+</div>

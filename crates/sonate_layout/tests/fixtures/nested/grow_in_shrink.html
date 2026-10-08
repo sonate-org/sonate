@@ -1,0 +1,12 @@
+<!--
+Flexing inside an item that is itself shrunk and clamped by min/max widths.
+@matrix #root width: 200px | 400px | 600px
+-->
+<div id="root" style="width: 400px; height: 100px">
+  <div id="outer" style="flex: 1 1 300px; min-width: 150px; max-width: 280px; padding: 5px">
+    <div style="flex: 1; min-width: 30px"></div>
+    <div style="flex: 2 1 50px; max-width: 100px"></div>
+    <div style="width: 40px">Ab</div>
+  </div>
+  <div style="flex: 0 1 200px"></div>
+</div>

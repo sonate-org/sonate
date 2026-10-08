@@ -1,0 +1,10 @@
+<!--
+Only items with align-self: baseline share a baseline; the others align normally.
+@matrix #root align-items: flex-start | center | stretch
+-->
+<div id="root" style="width: 260px; height: 100px">
+  <div style="font-size: 20px; align-self: baseline">Ab</div>
+  <div style="padding-top: 20px; align-self: baseline">Cd</div>
+  <div style="font-size: 15px">Ef</div>
+  <div style="width: 20px; height: 30px; align-self: baseline; margin-bottom: 5px"></div>
+</div>

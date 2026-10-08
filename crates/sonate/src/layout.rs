@@ -280,7 +280,11 @@ impl LayoutContext {
 
     pub fn layout(&mut self) {
         self.text_measurer.begin_layout_pass();
-        self.layout_node(self.document.root.clone(), 0.0, 0.0);
+        if use_legacy_layout() {
+            self.layout_node(self.document.root.clone(), 0.0, 0.0);
+        } else {
+            flex_adapter::layout_document(self);
+        }
         self.text_measurer.end_layout_pass_and_sweep();
     }
 
@@ -580,6 +584,13 @@ impl LayoutContext {
     }
 }
 
+/// `SONATE_LAYOUT=legacy` selects the previous flex implementation (`flex_layout.rs`) while
+/// the new engine (`sonate_layout`) is being rolled out.
+fn use_legacy_layout() -> bool {
+    static LEGACY: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *LEGACY.get_or_init(|| std::env::var("SONATE_LAYOUT").is_ok_and(|value| value == "legacy"))
+}
+
 /// Snapshot types safe to share across threads
 #[derive(Clone)]
 pub struct RenderNode {
@@ -866,6 +877,10 @@ fn build_render_tree_with_ctx(node: Rc<RefCell<Node>>, ctx: &mut StackingContext
     };
 
     for c in children_nodes {
+        // `display: none` boxes and their subtrees are neither painted nor hit.
+        if c.borrow().layout.style.display == Some(crate::style::Display::None) {
+            continue;
+        }
         let child_render = build_render_tree_with_ctx(c, &mut node_ctx);
         render_children.push(child_render);
     }
@@ -893,38 +908,13 @@ fn byte_index_for_char(text: &str, char_index: usize) -> usize {
         .unwrap_or(text.len())
 }
 
-#[cfg(test)]
-mod asserts;
+mod flex_adapter;
 
 #[cfg(test)]
 mod test_html;
 
 #[cfg(test)]
-mod flex_layout_flow_tests;
-
-#[cfg(test)]
-mod flex_layout_alignment_tests;
-
-#[cfg(test)]
-mod flex_layout_gap_tests;
-
-#[cfg(test)]
-mod flex_layout_grow_shrink_basis_tests;
-
-#[cfg(test)]
-mod margin_padding_tests;
-
-#[cfg(test)]
 mod hit_testing_tests;
-
-#[cfg(test)]
-mod flex_layout_nested_tests;
-
-#[cfg(test)]
-mod flex_layout_margin_tests;
-
-#[cfg(test)]
-mod margin_tests;
 
 #[cfg(test)]
 mod tag_selector_tests;
@@ -934,3 +924,9 @@ mod scroll_state_tests;
 
 #[cfg(test)]
 mod text_input_tests;
+
+#[cfg(test)]
+mod fixture_tests;
+
+#[cfg(test)]
+mod adapter_tests;

@@ -40,8 +40,51 @@ pub trait TextMeasurer: Send + Sync {
     /// during the pass.
     fn end_layout_pass_and_sweep(&self) {}
 
+    /// Size of `text` on one line with its whitespace kept as is (text inputs).
     fn measure_unwrapped(&self, text: &str, font: &FontSpec) -> Size;
+
+    /// Size of `text` with collapsed whitespace, broken into lines no wider than
+    /// `max_width_px` (see [`break_lines`]). `f64::INFINITY` gives the max-content size.
     fn measure_wrapped(&self, text: &str, font: &FontSpec, max_width_px: f64) -> Size;
+
+    /// Width of the widest word: the narrowest the text can wrap to (its min-content width).
+    fn min_content_width(&self, text: &str, font: &FontSpec) -> f64;
+
+    /// Distance from the top of a line to its baseline.
+    fn ascent(&self, font: &FontSpec) -> f64;
+}
+
+/// Breaks `text` into lines at whitespace, greedily, so that no line is wider than
+/// `max_width` unless it holds a single word. Whitespace is collapsed like in HTML.
+/// Returns each line with its width.
+pub fn break_lines(text: &str, max_width: f64, measure: &mut dyn FnMut(&str) -> f64) -> Vec<(String, f64)> {
+    let space = measure(" ");
+    let mut lines: Vec<(String, f64)> = Vec::new();
+    for word in text.split_whitespace() {
+        let word_width = measure(word);
+        match lines.last_mut() {
+            Some((line, width)) if *width + space + word_width <= max_width + 1e-6 => {
+                line.push(' ');
+                line.push_str(word);
+                *width += space + word_width;
+            }
+            _ => lines.push((word.to_owned(), word_width)),
+        }
+    }
+    lines
+}
+
+/// Size of the wrapped text for a measure function and line height.
+fn wrapped_size(text: &str, max_width: f64, line_height: f64, measure: &mut dyn FnMut(&str) -> f64) -> Size {
+    let lines = break_lines(text, max_width, measure);
+    Size {
+        width: lines.iter().map(|(_, width)| *width).fold(0.0, f64::max),
+        height: lines.len() as f64 * line_height,
+    }
+}
+
+fn widest_word(text: &str, measure: &mut dyn FnMut(&str) -> f64) -> f64 {
+    text.split_whitespace().map(measure).fold(0.0, f64::max)
 }
 
 #[derive(Clone, Default)]
@@ -61,12 +104,20 @@ struct CacheEntry {
     last_used_epoch: u64,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+enum Measurement {
+    Unwrapped,
+    /// Wrapped at a width in 1/64 px.
+    Wrapped(u64),
+    MinContent,
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 struct CacheKey {
     text: String,
     family: String,
     size_px: u32,
-    max_width_px_rounded: u32,
+    measurement: Measurement,
 }
 
 impl SkiaTextMeasurer {
@@ -91,40 +142,61 @@ impl SkiaTextMeasurer {
         Font::new(typeface, font.size_px as f32)
     }
 
-    fn measure_unwrapped_uncached(&self, text: &str, font: &FontSpec) -> Size {
-        let font = Self::make_font(font);
-
-        // `measure_str` gives us an advance width; height comes from font metrics.
-        let (advance_width, _bounds) = font.measure_str(text, None);
-
+    /// The height of one line of text.
+    pub(crate) fn line_height(font: &Font) -> f64 {
         let (_scale, metrics) = font.metrics();
-        let height = (metrics.descent - metrics.ascent + metrics.leading) as f64;
+        ((metrics.descent - metrics.ascent + metrics.leading) as f64).max(0.0)
+    }
 
-        Size {
-            width: advance_width as f64,
-            height: height.max(0.0),
+    fn measure_uncached(text: &str, spec: &FontSpec, measurement: Measurement) -> Size {
+        let font = Self::make_font(spec);
+        let mut measure = |text: &str| font.measure_str(text, None).0 as f64;
+        match measurement {
+            Measurement::Unwrapped => Size {
+                width: measure(text),
+                height: Self::line_height(&font),
+            },
+            Measurement::Wrapped(max_width) => {
+                let max_width = if max_width == u64::MAX {
+                    f64::INFINITY
+                } else {
+                    max_width as f64 / 64.0
+                };
+                wrapped_size(text, max_width, Self::line_height(&font), &mut measure)
+            }
+            Measurement::MinContent => Size {
+                width: widest_word(text, &mut measure),
+                height: 0.0,
+            },
         }
     }
 
-    fn measure_wrapped_uncached(&self, text: &str, font: &FontSpec, max_width_px: f64) -> Size {
-        // NOTE: Skia has a proper paragraph layout API, but Sonate doesn’t depend on it yet.
-        // This approximation is good enough to drive basic layout decisions.
-        let max_width_px = max_width_px.max(0.0);
-        if max_width_px == 0.0 {
-            return Size::default();
+    fn measure_cached(&self, text: &str, font: &FontSpec, measurement: Measurement) -> Size {
+        let key = CacheKey {
+            text: text.to_string(),
+            family: font.family.clone(),
+            size_px: font.size_px,
+            measurement,
+        };
+
+        let mut state = self.cache.write();
+        let epoch = state.epoch;
+
+        if let Some(entry) = state.map.get_mut(&key) {
+            entry.last_used_epoch = epoch;
+            return entry.size;
         }
 
-        let unwrapped = self.measure_unwrapped_uncached(text, font);
-        if unwrapped.width <= max_width_px {
-            return unwrapped;
-        }
-
-        // Naive wrapping: estimate number of lines by width ratio.
-        let lines = (unwrapped.width / max_width_px).ceil().max(1.0);
-        Size {
-            width: max_width_px,
-            height: unwrapped.height * lines,
-        }
+        // Cache miss.
+        let size = Self::measure_uncached(text, font, measurement);
+        state.map.insert(
+            key,
+            CacheEntry {
+                size,
+                last_used_epoch: epoch,
+            },
+        );
+        size
     }
 }
 
@@ -141,96 +213,64 @@ impl TextMeasurer for SkiaTextMeasurer {
     }
 
     fn measure_unwrapped(&self, text: &str, font: &FontSpec) -> Size {
-        let key = CacheKey {
-            text: text.to_string(),
-            family: font.family.clone(),
-            size_px: font.size_px,
-            max_width_px_rounded: 0,
-        };
-
-        let mut state = self.cache.write();
-        let epoch = state.epoch;
-
-        if let Some(entry) = state.map.get_mut(&key) {
-            entry.last_used_epoch = epoch;
-            return entry.size;
-        }
-
-        // Cache miss.
-        let size = self.measure_unwrapped_uncached(text, font);
-        state.map.insert(
-            key,
-            CacheEntry {
-                size,
-                last_used_epoch: epoch,
-            },
-        );
-        size
+        self.measure_cached(text, font, Measurement::Unwrapped)
     }
 
     fn measure_wrapped(&self, text: &str, font: &FontSpec, max_width_px: f64) -> Size {
-        let key = CacheKey {
-            text: text.to_string(),
-            family: font.family.clone(),
-            size_px: font.size_px,
-            max_width_px_rounded: max_width_px.round().clamp(0.0, 1_000_000.0) as u32,
+        let max_width = if max_width_px.is_finite() {
+            (max_width_px.max(0.0) * 64.0).round() as u64
+        } else {
+            u64::MAX
         };
+        self.measure_cached(text, font, Measurement::Wrapped(max_width))
+    }
 
-        let mut state = self.cache.write();
-        let epoch = state.epoch;
+    fn min_content_width(&self, text: &str, font: &FontSpec) -> f64 {
+        self.measure_cached(text, font, Measurement::MinContent).width
+    }
 
-        if let Some(entry) = state.map.get_mut(&key) {
-            entry.last_used_epoch = epoch;
-            return entry.size;
-        }
-
-        // Cache miss.
-        let size = self.measure_wrapped_uncached(text, font, max_width_px);
-        state.map.insert(
-            key,
-            CacheEntry {
-                size,
-                last_used_epoch: epoch,
-            },
-        );
-        size
+    fn ascent(&self, font: &FontSpec) -> f64 {
+        let (_scale, metrics) = Self::make_font(font).metrics();
+        -metrics.ascent as f64
     }
 }
 
+/// Deterministic metrics for unit tests, matching the Ahem font that the layout fixtures use in
+/// Chrome: every glyph (including the space) is a 1em square, lines are 1em tall and the
+/// baseline is 0.8em below the top of the line.
 #[cfg(test)]
 #[derive(Clone, Default)]
 #[allow(unused)]
 pub struct TestTextMeasurer;
 
 #[cfg(test)]
+impl TestTextMeasurer {
+    fn em(font: &FontSpec) -> f64 {
+        font.size_px as f64
+    }
+}
+
+#[cfg(test)]
 impl TextMeasurer for TestTextMeasurer {
     fn measure_unwrapped(&self, text: &str, font: &FontSpec) -> Size {
-        // Deterministic sizing for unit tests.
-        let size = font.size_px as f64;
-        let char_w = (size * 0.6).max(1.0);
-        let line_h = (size * 1.2).max(1.0);
-
         Size {
-            width: (text.chars().count() as f64) * char_w,
-            height: line_h,
+            width: text.chars().count() as f64 * Self::em(font),
+            height: Self::em(font),
         }
     }
 
     fn measure_wrapped(&self, text: &str, font: &FontSpec, max_width_px: f64) -> Size {
-        let unwrapped = self.measure_unwrapped(text, font);
-        let max_width_px = max_width_px.max(0.0);
-        if max_width_px == 0.0 {
-            return Size::default();
-        }
-        if unwrapped.width <= max_width_px {
-            return unwrapped;
-        }
+        let em = Self::em(font);
+        wrapped_size(text, max_width_px, em, &mut |text| text.chars().count() as f64 * em)
+    }
 
-        let lines = (unwrapped.width / max_width_px).ceil().max(1.0);
-        Size {
-            width: max_width_px,
-            height: unwrapped.height * lines,
-        }
+    fn min_content_width(&self, text: &str, font: &FontSpec) -> f64 {
+        let em = Self::em(font);
+        widest_word(text, &mut |text| text.chars().count() as f64 * em)
+    }
+
+    fn ascent(&self, font: &FontSpec) -> f64 {
+        0.8 * Self::em(font)
     }
 }
 
@@ -243,5 +283,34 @@ pub fn default_text_measurer() -> Arc<dyn TextMeasurer> {
     #[cfg(not(test))]
     {
         Arc::new(SkiaTextMeasurer::new())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn font() -> FontSpec {
+        FontSpec {
+            family: "Ahem".to_owned(),
+            size_px: 10,
+        }
+    }
+
+    #[test]
+    fn wraps_greedily_at_spaces() {
+        let measurer = TestTextMeasurer;
+        let size = measurer.measure_wrapped("aa bbbb  c", &font(), 70.0);
+        assert_eq!((size.width, size.height), (70.0, 20.0));
+        assert_eq!(measurer.measure_wrapped(" aa bbbb ", &font(), f64::INFINITY).width, 70.0);
+        assert_eq!(measurer.min_content_width("aa bbbb", &font()), 40.0);
+    }
+
+    #[test]
+    fn long_words_get_their_own_line() {
+        let mut measure = |text: &str| text.len() as f64 * 10.0;
+        let lines = break_lines("a bbbbbb c", 30.0, &mut measure);
+        let lines: Vec<&str> = lines.iter().map(|(line, _)| line.as_str()).collect();
+        assert_eq!(lines, ["a", "bbbbbb", "c"]);
     }
 }

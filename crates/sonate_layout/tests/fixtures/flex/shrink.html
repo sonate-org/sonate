@@ -1,0 +1,10 @@
+<!--
+flex-shrink shares negative free space weighted by each item's flex base size.
+@matrix #root flex-direction: row | column
+@matrix #b flex-shrink: 0 | 1 | 3
+-->
+<div id="root" style="width: 150px; height: 150px">
+  <div id="a" style="width: 100px; height: 100px"></div>
+  <div id="b" style="width: 60px; height: 60px; padding: 5px"></div>
+  <div id="c" style="width: 40px; height: 40px; flex-shrink: 2"></div>
+</div>

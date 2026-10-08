@@ -1,0 +1,11 @@
+<!--
+Percentages: sizes and flex-basis resolve against the container's content box, padding and margins
+against its content width (on both axes).
+@matrix #root flex-direction: row | column
+-->
+<div id="root" style="width: 400px; height: 200px; padding: 10px">
+  <div style="width: 25%; height: 50%"></div>
+  <div style="flex-basis: 20%; min-height: 10%"></div>
+  <div style="width: 10%; height: 10%; padding: 5%; margin: 2% 5%"></div>
+  <div style="max-width: 10%; max-height: 10%; flex-grow: 1"></div>
+</div>

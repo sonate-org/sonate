@@ -1,0 +1,14 @@
+<!--
+align-self overrides the container's align-items.
+@matrix #root align-items: normal | center | flex-end
+@matrix #root flex-direction: row | column
+-->
+<div id="root" style="width: 200px; height: 150px">
+  <div style="width: 30px; height: 30px"></div>
+  <div style="width: 30px; height: 30px; align-self: flex-start"></div>
+  <div style="width: 30px; height: 30px; align-self: center"></div>
+  <div style="width: 30px; height: 30px; align-self: flex-end"></div>
+  <div style="align-self: stretch; min-width: 10px; min-height: 10px"></div>
+  <div style="width: 20px; height: 20px; align-self: start"></div>
+  <div style="width: 20px; height: 20px; align-self: end"></div>
+</div>

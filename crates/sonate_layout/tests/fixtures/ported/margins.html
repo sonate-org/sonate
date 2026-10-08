@@ -1,0 +1,27 @@
+<!--
+Ported from crates/sonate/src/layout/flex_layout_margin_tests.html: margins on the middle child.
+@matrix .middle margin: 0px | 0 0 0 20px | 0 0 0 auto | 20px | auto | 0 20px | 20px 0
+-->
+<div id="root" class="flex_container">
+  <div class="child" id="child1">child</div>
+  <div class="child middle" id="child2">child</div>
+  <div class="child" id="child3">child</div>
+</div>
+<style>
+  .flex_container {
+    display: flex;
+    flex-direction: row;
+    width: 400px;
+    height: 200px;
+    background: gray;
+  }
+
+  .child {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    width: 60px;
+    height: 40px;
+    background: green;
+  }
+</style>

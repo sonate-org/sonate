@@ -1,0 +1,3 @@
+# Fixture cases that fail today. Maintained by the fixture runner:
+#   FIXTURES_UPDATE=prune  removes entries that pass now
+#   FIXTURES_UPDATE=accept also adds new failures

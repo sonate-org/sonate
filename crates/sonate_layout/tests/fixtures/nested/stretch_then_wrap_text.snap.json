@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "hash": "73a33492c4fa756f",
+  "chrome": "Chrome/153.0.8010.52/@78e5e45d4bb41035e17ea4da2cc257f496416ac9",
+  "cases": [
+    {
+      "params": "#root width=120px, #root align-items=normal",
+      "overrides": [["#root","width","120px"],["#root","align-items","normal"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"120px","height":"300px","flex-direction":"column"},"rect":[0,0,120,300]},
+        {"d":1,"label":"#card","style":{"padding-top":"5px","padding-right":"5px","padding-bottom":"5px","padding-left":"5px","border-top-width":"1px","border-right-width":"1px","border-bottom-width":"1px","border-left-width":"1px","flex-direction":"column"},"rect":[0,0,120,92]},
+        {"d":2,"label":"#title-row","style":{"align-items":"center","column-gap":"5px"},"rect":[6,6,108,70]},
+        {"d":3,"label":"div","style":{"width":"20px","height":"20px","flex-shrink":0},"rect":[0,25,20,20]},
+        {"d":3,"label":"div","style":{},"text":"The quick brown fox jumps over the lazy dog","font":10,"rect":[25,0,83,70]},
+        {"d":2,"label":"div","style":{},"text":"Footer","font":10,"rect":[6,76,108,10]}
+      ]
+    },
+    {
+      "params": "#root width=120px, #root align-items=flex-start",
+      "overrides": [["#root","width","120px"],["#root","align-items","flex-start"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"120px","height":"300px","flex-direction":"column","align-items":"flex-start"},"rect":[0,0,120,300]},
+        {"d":1,"label":"#card","style":{"padding-top":"5px","padding-right":"5px","padding-bottom":"5px","padding-left":"5px","border-top-width":"1px","border-right-width":"1px","border-bottom-width":"1px","border-left-width":"1px","flex-direction":"column"},"rect":[0,0,120,92]},
+        {"d":2,"label":"#title-row","style":{"align-items":"center","column-gap":"5px"},"rect":[6,6,108,70]},
+        {"d":3,"label":"div","style":{"width":"20px","height":"20px","flex-shrink":0},"rect":[0,25,20,20]},
+        {"d":3,"label":"div","style":{},"text":"The quick brown fox jumps over the lazy dog","font":10,"rect":[25,0,83,70]},
+        {"d":2,"label":"div","style":{},"text":"Footer","font":10,"rect":[6,76,108,10]}
+      ]
+    },
+    {
+      "params": "#root width=240px, #root align-items=normal",
+      "overrides": [["#root","width","240px"],["#root","align-items","normal"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"240px","height":"300px","flex-direction":"column"},"rect":[0,0,240,300]},
+        {"d":1,"label":"#card","style":{"padding-top":"5px","padding-right":"5px","padding-bottom":"5px","padding-left":"5px","border-top-width":"1px","border-right-width":"1px","border-bottom-width":"1px","border-left-width":"1px","flex-direction":"column"},"rect":[0,0,240,52]},
+        {"d":2,"label":"#title-row","style":{"align-items":"center","column-gap":"5px"},"rect":[6,6,228,30]},
+        {"d":3,"label":"div","style":{"width":"20px","height":"20px","flex-shrink":0},"rect":[0,5,20,20]},
+        {"d":3,"label":"div","style":{},"text":"The quick brown fox jumps over the lazy dog","font":10,"rect":[25,0,203,30]},
+        {"d":2,"label":"div","style":{},"text":"Footer","font":10,"rect":[6,36,228,10]}
+      ]
+    },
+    {
+      "params": "#root width=240px, #root align-items=flex-start",
+      "overrides": [["#root","width","240px"],["#root","align-items","flex-start"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"240px","height":"300px","flex-direction":"column","align-items":"flex-start"},"rect":[0,0,240,300]},
+        {"d":1,"label":"#card","style":{"padding-top":"5px","padding-right":"5px","padding-bottom":"5px","padding-left":"5px","border-top-width":"1px","border-right-width":"1px","border-bottom-width":"1px","border-left-width":"1px","flex-direction":"column"},"rect":[0,0,240,52]},
+        {"d":2,"label":"#title-row","style":{"align-items":"center","column-gap":"5px"},"rect":[6,6,228,30]},
+        {"d":3,"label":"div","style":{"width":"20px","height":"20px","flex-shrink":0},"rect":[0,5,20,20]},
+        {"d":3,"label":"div","style":{},"text":"The quick brown fox jumps over the lazy dog","font":10,"rect":[25,0,203,30]},
+        {"d":2,"label":"div","style":{},"text":"Footer","font":10,"rect":[6,36,228,10]}
+      ]
+    }
+  ]
+}

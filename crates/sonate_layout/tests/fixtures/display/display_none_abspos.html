@@ -1,0 +1,10 @@
+<!--
+A hidden container hides absolutely positioned descendants too.
+@matrix #wrapper display: none | flex
+-->
+<div id="root" style="width: 200px; height: 100px">
+  <div id="wrapper" style="width: 100px; height: 50px">
+    <div style="position: absolute; left: 5px; top: 5px; width: 20px; height: 20px"></div>
+  </div>
+  <div style="width: 30px; height: 30px"></div>
+</div>

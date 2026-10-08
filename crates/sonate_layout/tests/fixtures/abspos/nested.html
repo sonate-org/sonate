@@ -1,0 +1,13 @@
+<!--
+Absolutely positioned boxes are laid out as flex containers themselves and don't affect their siblings.
+@matrix #abs flex-direction: row | column
+-->
+<div id="root" style="width: 300px; height: 200px; justify-content: space-between">
+  <div style="width: 40px; height: 40px"></div>
+  <div id="abs" style="position: absolute; left: 20px; top: 20px; padding: 5px; column-gap: 5px; row-gap: 5px">
+    <div style="width: 30px; height: 20px"></div>
+    <div>Text</div>
+    <div style="position: absolute; right: 0px; bottom: 0px; width: 10px; height: 10px"></div>
+  </div>
+  <div style="width: 40px; height: 40px"></div>
+</div>

@@ -1,0 +1,35 @@
+<!--
+An application layout: header, sidebar, scrolling content and footer, with flex: 1 three levels deep.
+@matrix #root width: 400px | 800px
+@matrix #sidebar width: 120px | auto
+-->
+<div id="root" style="width: 800px; height: 500px; flex-direction: column">
+  <div id="header" style="height: 40px; padding: 0 10px; align-items: center; justify-content: space-between">
+    <div>Logo</div>
+    <div id="nav" style="column-gap: 10px">
+      <div>Home</div>
+      <div>Settings</div>
+    </div>
+  </div>
+  <div id="body" style="flex: 1; min-height: 0">
+    <div id="sidebar" style="width: 120px; flex-direction: column; padding: 10px; row-gap: 5px">
+      <div>Inbox</div>
+      <div>Sent items</div>
+      <div>Archive</div>
+    </div>
+    <div id="main" style="flex: 1; flex-direction: column; min-width: 0">
+      <div id="toolbar" style="height: 30px; column-gap: 5px; padding: 5px">
+        <div style="flex: 1"></div>
+        <div style="width: 60px"></div>
+      </div>
+      <div id="content" style="flex: 1; overflow: auto; flex-direction: column; padding: 10px; row-gap: 10px">
+        <div style="height: 100px; flex-shrink: 0"></div>
+        <div style="height: 150px; flex-shrink: 0">Card text</div>
+        <div style="height: 200px; flex-shrink: 0"></div>
+      </div>
+    </div>
+  </div>
+  <div id="footer" style="height: 24px; justify-content: flex-end; align-items: center">
+    <div>Status</div>
+  </div>
+</div>

@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "hash": "20439ea55cf1c645",
+  "chrome": "Chrome/153.0.8010.52/@78e5e45d4bb41035e17ea4da2cc257f496416ac9",
+  "cases": [
+    {
+      "params": "#root width=300px",
+      "overrides": [["#root","width","300px"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"300px","height":"200px","flex-wrap":"wrap","align-items":"baseline","align-content":"flex-start","row-gap":"5px"},"rect":[0,0,300,200]},
+        {"d":1,"label":"div","style":{"padding-bottom":"10px","font-size":"20px"},"text":"Big","font":20,"rect":[0,8,60,30]},
+        {"d":1,"label":"div","style":{"padding-top":"12px"},"text":"small","font":10,"rect":[60,4,50,22]},
+        {"d":1,"label":"div","style":{"border-top-width":"3px","flex-direction":"column"},"rect":[110,9,50,28]},
+        {"d":2,"label":"div","style":{"font-size":"15px"},"text":"Mid","font":15,"rect":[0,3,50,15]},
+        {"d":2,"label":"div","style":{},"text":"under","font":10,"rect":[0,18,50,10]},
+        {"d":1,"label":"div","style":{"width":"30px","height":"15px","margin-bottom":"4px"},"rect":[160,9,30,15]},
+        {"d":1,"label":"div","style":{"font-size":"30px"},"text":"X","font":30,"rect":[190,0,30,30]}
+      ]
+    },
+    {
+      "params": "#root width=140px",
+      "overrides": [["#root","width","140px"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"140px","height":"200px","flex-wrap":"wrap","align-items":"baseline","align-content":"flex-start","row-gap":"5px"},"rect":[0,0,140,200]},
+        {"d":1,"label":"div","style":{"padding-bottom":"10px","font-size":"20px"},"text":"Big","font":20,"rect":[0,4,60,30]},
+        {"d":1,"label":"div","style":{"padding-top":"12px"},"text":"small","font":10,"rect":[60,0,50,22]},
+        {"d":1,"label":"div","style":{"border-top-width":"3px","flex-direction":"column"},"rect":[0,48,50,28]},
+        {"d":2,"label":"div","style":{"font-size":"15px"},"text":"Mid","font":15,"rect":[0,3,50,15]},
+        {"d":2,"label":"div","style":{},"text":"under","font":10,"rect":[0,18,50,10]},
+        {"d":1,"label":"div","style":{"width":"30px","height":"15px","margin-bottom":"4px"},"rect":[50,48,30,15]},
+        {"d":1,"label":"div","style":{"font-size":"30px"},"text":"X","font":30,"rect":[80,39,30,30]}
+      ]
+    }
+  ]
+}

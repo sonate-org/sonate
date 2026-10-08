@@ -1,0 +1,13 @@
+<!--
+A column container stretched by its row parent: its own justify-content and align-items work
+inside the stretched size.
+@matrix #inner justify-content: flex-start | center | flex-end | space-between
+@matrix #inner align-items: normal | center | flex-end
+-->
+<div id="root" style="width: 300px; height: 200px">
+  <div id="inner" style="flex-direction: column; padding: 10px">
+    <div style="width: 60px; height: 40px"></div>
+    <div style="height: 30px">Abc</div>
+  </div>
+  <div style="flex-grow: 1"></div>
+</div>

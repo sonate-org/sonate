@@ -1,0 +1,17 @@
+/* Injected into every fixture by bless.ts. It pins Chrome to Sonate's model: every element is a
+   flex container and a containing block, and text uses the Ahem test font (1em square glyphs). */
+@font-face {
+  font-family: Ahem;
+  src: url("/Ahem.ttf");
+}
+html, body {
+  margin: 0;
+}
+* {
+  scrollbar-width: none;
+}
+div {
+  display: flex;
+  position: relative;
+  font: 10px/1 Ahem;
+}

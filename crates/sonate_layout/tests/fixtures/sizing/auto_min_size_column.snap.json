@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "hash": "81c885a74657261c",
+  "chrome": "Chrome/153.0.8010.52/@78e5e45d4bb41035e17ea4da2cc257f496416ac9",
+  "cases": [
+    {
+      "params": "#root height=40px, #root align-items=normal",
+      "overrides": [["#root","height","40px"],["#root","align-items","normal"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"100px","height":"40px","flex-direction":"column"},"rect":[0,0,100,40]},
+        {"d":1,"label":"div","style":{"flex-basis":"100px"},"text":"Hello world wide","font":10,"rect":[0,0,100,20]},
+        {"d":1,"label":"div","style":{"width":"40px","flex-basis":"100px"},"text":"Hello world","font":10,"rect":[0,20,40,20]},
+        {"d":1,"label":"div","style":{"min-height":"0px","flex-basis":"100px"},"text":"Hello world","font":10,"rect":[0,40,100,0]}
+      ]
+    },
+    {
+      "params": "#root height=40px, #root align-items=flex-start",
+      "overrides": [["#root","height","40px"],["#root","align-items","flex-start"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"100px","height":"40px","flex-direction":"column","align-items":"flex-start"},"rect":[0,0,100,40]},
+        {"d":1,"label":"div","style":{"flex-basis":"100px"},"text":"Hello world wide","font":10,"rect":[0,0,100,20]},
+        {"d":1,"label":"div","style":{"width":"40px","flex-basis":"100px"},"text":"Hello world","font":10,"rect":[0,20,40,20]},
+        {"d":1,"label":"div","style":{"min-height":"0px","flex-basis":"100px"},"text":"Hello world","font":10,"rect":[0,40,100,0]}
+      ]
+    },
+    {
+      "params": "#root height=150px, #root align-items=normal",
+      "overrides": [["#root","height","150px"],["#root","align-items","normal"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"100px","height":"150px","flex-direction":"column"},"rect":[0,0,100,150]},
+        {"d":1,"label":"div","style":{"flex-basis":"100px"},"text":"Hello world wide","font":10,"rect":[0,0,100,50]},
+        {"d":1,"label":"div","style":{"width":"40px","flex-basis":"100px"},"text":"Hello world","font":10,"rect":[0,50,40,50]},
+        {"d":1,"label":"div","style":{"min-height":"0px","flex-basis":"100px"},"text":"Hello world","font":10,"rect":[0,100,100,50]}
+      ]
+    },
+    {
+      "params": "#root height=150px, #root align-items=flex-start",
+      "overrides": [["#root","height","150px"],["#root","align-items","flex-start"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"100px","height":"150px","flex-direction":"column","align-items":"flex-start"},"rect":[0,0,100,150]},
+        {"d":1,"label":"div","style":{"flex-basis":"100px"},"text":"Hello world wide","font":10,"rect":[0,0,100,50]},
+        {"d":1,"label":"div","style":{"width":"40px","flex-basis":"100px"},"text":"Hello world","font":10,"rect":[0,50,40,50]},
+        {"d":1,"label":"div","style":{"min-height":"0px","flex-basis":"100px"},"text":"Hello world","font":10,"rect":[0,100,100,50]}
+      ]
+    }
+  ]
+}

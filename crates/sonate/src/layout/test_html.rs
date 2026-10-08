@@ -23,6 +23,68 @@ pub fn load_html_test_example(
     (reader.ctx, reader.nodes_by_id)
 }
 
+/// Loads a `sonate_layout` fixture (see `crates/sonate_layout/tests/fixtures/README.md`): the
+/// root element and `<style>` blocks, with the case's `@matrix` overrides appended to the
+/// matching elements' inline styles. Returns the element ids in document order.
+pub fn load_layout_fixture(
+    html: &str,
+    overrides: &[sonate_layout::testing::snapshot::Override],
+) -> (LayoutContext, Vec<Id>) {
+    let mut dom = html_parser::Dom::parse(html).expect("couldn't read fixture");
+    for node in &mut dom.children {
+        apply_overrides(node, overrides);
+    }
+
+    let mut reader = Reader::new("");
+    reader.ctx.set_viewport_size(10_000.0, 10_000.0);
+    // The part of tools/bless/base.css that Sonate doesn't do by default; the test text
+    // measurer already uses Ahem metrics.
+    reader.ctx.style_sheet = css_parser::parse_css("div { font-size: 10px; }").unwrap();
+    let mut has_root = false;
+    for node in &dom.children {
+        let html_parser::Node::Element(element) = node else {
+            continue;
+        };
+        if element.name == "style" {
+            reader.find_nodes(node);
+        } else if !has_root {
+            reader.copy_nodes(node, reader.ctx.document.root_id());
+            has_root = true;
+        }
+    }
+
+    reader.ctx.layout();
+    let ids = (1..reader.next_id).map(Id::from_u64).collect();
+    (reader.ctx, ids)
+}
+
+fn apply_overrides(
+    node: &mut html_parser::Node,
+    overrides: &[sonate_layout::testing::snapshot::Override],
+) {
+    let html_parser::Node::Element(element) = node else {
+        return;
+    };
+    for o in overrides {
+        let matches = match o.selector.split_at(1) {
+            ("#", id) => element.id.as_deref() == Some(id),
+            (".", class) => element.classes.iter().any(|c| c == class),
+            _ => false,
+        };
+        if matches {
+            let style = element
+                .attributes
+                .entry("style".to_owned())
+                .or_insert(None)
+                .get_or_insert_with(String::new);
+            style.push_str(&format!("; {}: {}", o.property, o.value));
+        }
+    }
+    for child in &mut element.children {
+        apply_overrides(child, overrides);
+    }
+}
+
 struct Reader {
     ctx: LayoutContext,
     example_id: String,
@@ -59,7 +121,9 @@ impl Reader {
 
                 let stylesheet = css_parser::parse_css(text).expect("expected to load stylesheet");
 
-                self.ctx.style_sheet = stylesheet;
+                for rule in stylesheet.rules {
+                    self.ctx.style_sheet.add_rule(rule);
+                }
             }
         }
     }

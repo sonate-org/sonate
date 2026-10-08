@@ -1,0 +1,8 @@
+<!--
+An item larger than its line: cross-axis auto margins push it to overflow at the end, never the start.
+@matrix #root flex-direction: row | column
+@matrix #big margin: auto | auto 0 | 0 auto
+-->
+<div id="root" style="width: 100px; height: 100px">
+  <div id="big" style="width: 150px; height: 150px; flex-shrink: 0"></div>
+</div>

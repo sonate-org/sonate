@@ -102,35 +102,67 @@ impl StyleDeclarationParser {
         input: &mut Parser<'i, 't>,
         style: &mut Style,
     ) -> Result<(), ParseError<'i, ()>> {
-        // border: <line-width> || <line-style> || <color>
-        let mut saw_width = false;
-        let mut saw_color = false;
-        let mut saw_style = false;
+        let (width, color, border_style) = self.parse_border_parts(input)?;
+        if let Some(width) = width {
+            style.border_width = Directional::set_all(Some(width));
+        }
+        if let Some(color) = color {
+            style.border_color = Directional::set_all(Some(color));
+        }
+        if let Some(border_style) = border_style {
+            style.border_style = Directional::set_all(Some(border_style));
+        }
+        Ok(())
+    }
+
+    /// `border-top`, `border-right`, `border-bottom` or `border-left`.
+    pub(crate) fn parse_border_side_shorthand<'i, 't>(
+        &mut self,
+        input: &mut Parser<'i, 't>,
+        style: &mut Style,
+        side: Side,
+    ) -> Result<(), ParseError<'i, ()>> {
+        let (width, color, border_style) = self.parse_border_parts(input)?;
+        if width.is_some() {
+            *side.of(&mut style.border_width) = width;
+        }
+        if color.is_some() {
+            *side.of(&mut style.border_color) = color;
+        }
+        if border_style.is_some() {
+            *side.of(&mut style.border_style) = border_style;
+        }
+        Ok(())
+    }
+
+    /// `<line-width> || <line-style> || <color>`
+    #[allow(clippy::type_complexity)]
+    fn parse_border_parts<'i, 't>(
+        &mut self,
+        input: &mut Parser<'i, 't>,
+    ) -> Result<(Option<Length>, Option<Rgba>, Option<BorderStyle>), ParseError<'i, ()>> {
+        let mut width = None;
+        let mut color = None;
+        let mut border_style = None;
         while !input.is_exhausted() {
-            if let Some(width) = self.try_parse_line_width(input)? {
-                if saw_width {
+            if let Some(parsed) = self.try_parse_line_width(input)? {
+                if width.replace(parsed).is_some() {
                     return Err(input.new_error_for_next_token());
                 }
-                saw_width = true;
-                style.border_width = Directional::set_all(Some(width));
                 continue;
             }
 
-            if let Ok(color) = input.try_parse(|i| self.parse_color_value(i)) {
-                if saw_color {
+            if let Ok(parsed) = input.try_parse(|i| self.parse_color_value(i)) {
+                if color.replace(parsed).is_some() {
                     return Err(input.new_error_for_next_token());
                 }
-                saw_color = true;
-                style.border_color = Directional::set_all(Some(color));
                 continue;
             }
 
-            if let Some(border_style) = self.try_parse_line_style(input)? {
-                if saw_style {
+            if let Some(parsed) = self.try_parse_line_style(input)? {
+                if border_style.replace(parsed).is_some() {
                     return Err(input.new_error_for_next_token());
                 }
-                saw_style = true;
-                style.border_style = Directional::set_all(Some(border_style));
                 continue;
             }
 
@@ -138,7 +170,7 @@ impl StyleDeclarationParser {
             return Err(input.new_error_for_next_token());
         }
 
-        Ok(())
+        Ok((width, color, border_style))
     }
 
     fn parse_border_radius_value<'i, 't>(
@@ -255,5 +287,25 @@ impl StyleDeclarationParser {
         }
         *side = Some(v);
         Ok(())
+    }
+}
+
+/// One side of a box.
+#[derive(Clone, Copy)]
+pub(crate) enum Side {
+    Top,
+    Right,
+    Bottom,
+    Left,
+}
+
+impl Side {
+    fn of<T>(self, values: &mut Directional<T>) -> &mut T {
+        match self {
+            Side::Top => &mut values.top,
+            Side::Right => &mut values.right,
+            Side::Bottom => &mut values.bottom,
+            Side::Left => &mut values.left,
+        }
     }
 }

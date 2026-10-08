@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "hash": "2c2416adf5cacb8c",
+  "chrome": "Chrome/153.0.8010.52/@78e5e45d4bb41035e17ea4da2cc257f496416ac9",
+  "cases": [
+    {
+      "params": "",
+      "overrides": [],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"400px","height":"200px"},"rect":[0,0,400,200]},
+        {"d":1,"label":"#child1","style":{"flex-direction":"column","flex-wrap":"wrap"},"rect":[0,0,60,200]},
+        {"d":2,"label":"#nested_child_1","style":{"width":"60px","height":"40px"},"text":"nested","font":10,"rect":[0,0,60,40]},
+        {"d":2,"label":"#nested_child_2","style":{"width":"60px","height":"40px","flex-grow":1,"flex-basis":"0%"},"text":"nested","font":10,"rect":[0,40,60,80]},
+        {"d":2,"label":"#nested_child_3","style":{"width":"60px","height":"40px"},"text":"nested","font":10,"rect":[0,120,60,40]},
+        {"d":2,"label":"#nested_child_4","style":{"width":"60px","height":"40px"},"text":"nested","font":10,"rect":[0,160,60,40]},
+        {"d":1,"label":"#child2","style":{"flex-grow":1,"flex-basis":"0%"},"text":"child","font":10,"rect":[60,0,340,200]}
+      ]
+    }
+  ]
+}

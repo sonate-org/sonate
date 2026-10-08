@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "hash": "21bc19dd473e5347",
+  "chrome": "Chrome/153.0.8010.52/@78e5e45d4bb41035e17ea4da2cc257f496416ac9",
+  "cases": [
+    {
+      "params": "#root width=100px",
+      "overrides": [["#root","width","100px"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"100px","height":"300px","flex-direction":"column"},"rect":[0,0,100,300]},
+        {"d":1,"label":".row","style":{"column-gap":"10px"},"rect":[0,0,100,30]},
+        {"d":2,"label":"div","style":{"flex-grow":1,"flex-basis":"0%"},"text":"Hello world again","font":10,"rect":[0,0,50,30]},
+        {"d":2,"label":"div","style":{"flex-grow":1,"flex-basis":"0%"},"text":"Short","font":10,"rect":[60,0,50,30]},
+        {"d":1,"label":".row","style":{"padding-top":"5px","padding-right":"5px","padding-bottom":"5px","padding-left":"5px"},"rect":[0,30,100,60]},
+        {"d":2,"label":"div","style":{"width":"30px","height":"10px","flex-shrink":0},"rect":[5,5,30,10]},
+        {"d":2,"label":"div","style":{},"text":"Some longer text that wraps","font":10,"rect":[35,5,60,50]}
+      ]
+    },
+    {
+      "params": "#root width=160px",
+      "overrides": [["#root","width","160px"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"160px","height":"300px","flex-direction":"column"},"rect":[0,0,160,300]},
+        {"d":1,"label":".row","style":{"column-gap":"10px"},"rect":[0,0,160,30]},
+        {"d":2,"label":"div","style":{"flex-grow":1,"flex-basis":"0%"},"text":"Hello world again","font":10,"rect":[0,0,75,30]},
+        {"d":2,"label":"div","style":{"flex-grow":1,"flex-basis":"0%"},"text":"Short","font":10,"rect":[85,0,75,30]},
+        {"d":1,"label":".row","style":{"padding-top":"5px","padding-right":"5px","padding-bottom":"5px","padding-left":"5px"},"rect":[0,30,160,40]},
+        {"d":2,"label":"div","style":{"width":"30px","height":"10px","flex-shrink":0},"rect":[5,5,30,10]},
+        {"d":2,"label":"div","style":{},"text":"Some longer text that wraps","font":10,"rect":[35,5,120,30]}
+      ]
+    },
+    {
+      "params": "#root width=300px",
+      "overrides": [["#root","width","300px"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"300px","height":"300px","flex-direction":"column"},"rect":[0,0,300,300]},
+        {"d":1,"label":".row","style":{"column-gap":"10px"},"rect":[0,0,300,20]},
+        {"d":2,"label":"div","style":{"flex-grow":1,"flex-basis":"0%"},"text":"Hello world again","font":10,"rect":[0,0,145,20]},
+        {"d":2,"label":"div","style":{"flex-grow":1,"flex-basis":"0%"},"text":"Short","font":10,"rect":[155,0,145,20]},
+        {"d":1,"label":".row","style":{"padding-top":"5px","padding-right":"5px","padding-bottom":"5px","padding-left":"5px"},"rect":[0,20,300,30]},
+        {"d":2,"label":"div","style":{"width":"30px","height":"10px","flex-shrink":0},"rect":[5,5,30,10]},
+        {"d":2,"label":"div","style":{},"text":"Some longer text that wraps","font":10,"rect":[35,5,260,20]}
+      ]
+    }
+  ]
+}

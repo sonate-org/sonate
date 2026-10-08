@@ -18,6 +18,15 @@ Use this to render element bounds on top of the UI.
 - Run your app normally.
 - Red debug rectangles are drawn for each rendered element bounds.
 
+## Layout
+
+Sonate's flex layout comes from the `sonate_layout` crate, which is checked against Chrome.
+
+- To compare with the previous engine, set `SONATE_LAYOUT=legacy`. It will be removed.
+- To reproduce a layout problem, write a small fixture in `crates/sonate_layout/tests/fixtures`
+  (see its README). The test failure shows where the layout first differs from Chrome, and
+  `target/sonate_layout-fixtures-report.html` draws both layouts.
+
 ## Example Commands (Linux/MacOS)
 
 - Dump debug files with F9 enabled:

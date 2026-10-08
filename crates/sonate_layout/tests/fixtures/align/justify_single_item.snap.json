@@ -1,0 +1,79 @@
+{
+  "schema": 1,
+  "hash": "f2b57735aa773dc8",
+  "chrome": "Chrome/153.0.8010.52/@78e5e45d4bb41035e17ea4da2cc257f496416ac9",
+  "cases": [
+    {
+      "params": "#root justify-content=space-between, #root flex-direction=row",
+      "overrides": [["#root","justify-content","space-between"],["#root","flex-direction","row"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"200px","height":"100px","justify-content":"space-between"},"rect":[0,0,200,100]},
+        {"d":1,"label":"div","style":{"width":"40px","height":"30px"},"rect":[0,0,40,30]}
+      ]
+    },
+    {
+      "params": "#root justify-content=space-between, #root flex-direction=column-reverse",
+      "overrides": [["#root","justify-content","space-between"],["#root","flex-direction","column-reverse"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"200px","height":"100px","flex-direction":"column-reverse","justify-content":"space-between"},"rect":[0,0,200,100]},
+        {"d":1,"label":"div","style":{"width":"40px","height":"30px"},"rect":[0,70,40,30]}
+      ]
+    },
+    {
+      "params": "#root justify-content=space-around, #root flex-direction=row",
+      "overrides": [["#root","justify-content","space-around"],["#root","flex-direction","row"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"200px","height":"100px","justify-content":"space-around"},"rect":[0,0,200,100]},
+        {"d":1,"label":"div","style":{"width":"40px","height":"30px"},"rect":[80,0,40,30]}
+      ]
+    },
+    {
+      "params": "#root justify-content=space-around, #root flex-direction=column-reverse",
+      "overrides": [["#root","justify-content","space-around"],["#root","flex-direction","column-reverse"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"200px","height":"100px","flex-direction":"column-reverse","justify-content":"space-around"},"rect":[0,0,200,100]},
+        {"d":1,"label":"div","style":{"width":"40px","height":"30px"},"rect":[0,35,40,30]}
+      ]
+    },
+    {
+      "params": "#root justify-content=space-evenly, #root flex-direction=row",
+      "overrides": [["#root","justify-content","space-evenly"],["#root","flex-direction","row"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"200px","height":"100px","justify-content":"space-evenly"},"rect":[0,0,200,100]},
+        {"d":1,"label":"div","style":{"width":"40px","height":"30px"},"rect":[80,0,40,30]}
+      ]
+    },
+    {
+      "params": "#root justify-content=space-evenly, #root flex-direction=column-reverse",
+      "overrides": [["#root","justify-content","space-evenly"],["#root","flex-direction","column-reverse"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"200px","height":"100px","flex-direction":"column-reverse","justify-content":"space-evenly"},"rect":[0,0,200,100]},
+        {"d":1,"label":"div","style":{"width":"40px","height":"30px"},"rect":[0,35,40,30]}
+      ]
+    },
+    {
+      "params": "#root justify-content=center, #root flex-direction=row",
+      "overrides": [["#root","justify-content","center"],["#root","flex-direction","row"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"200px","height":"100px","justify-content":"center"},"rect":[0,0,200,100]},
+        {"d":1,"label":"div","style":{"width":"40px","height":"30px"},"rect":[80,0,40,30]}
+      ]
+    },
+    {
+      "params": "#root justify-content=center, #root flex-direction=column-reverse",
+      "overrides": [["#root","justify-content","center"],["#root","flex-direction","column-reverse"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"200px","height":"100px","flex-direction":"column-reverse","justify-content":"center"},"rect":[0,0,200,100]},
+        {"d":1,"label":"div","style":{"width":"40px","height":"30px"},"rect":[0,35,40,30]}
+      ]
+    }
+  ]
+}

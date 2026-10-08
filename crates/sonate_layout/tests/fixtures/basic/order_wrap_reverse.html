@@ -1,0 +1,11 @@
+<!--
+order together with reversed directions and wrap-reverse.
+@matrix #root flex-direction: row-reverse | column-reverse
+@matrix #root flex-wrap: wrap | wrap-reverse
+-->
+<div id="root" style="width: 150px; height: 150px; align-content: flex-start">
+  <div style="width: 60px; height: 60px; order: 3"></div>
+  <div style="width: 60px; height: 40px; order: 1"></div>
+  <div style="width: 60px; height: 50px; order: 2"></div>
+  <div style="width: 60px; height: 30px; order: -1"></div>
+</div>

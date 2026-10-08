@@ -1,0 +1,13 @@
+<!--
+A column item holding a row of wrapping text keeps its content height as minimum height (§4.5),
+unless min-height: 0.
+@matrix #root height: 60px | 200px
+@matrix #item min-height: auto | 0px
+-->
+<div id="root" style="width: 100px; height: 200px; flex-direction: column">
+  <div style="height: 50px; flex-shrink: 0"></div>
+  <div id="item" style="flex: 1 1 0px; padding: 3px">
+    <div>Text that wraps over lines</div>
+  </div>
+  <div style="flex: 1 1 20px"></div>
+</div>

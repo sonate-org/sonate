@@ -37,10 +37,17 @@ impl FlexLayoutEngine {
 
         let direction = container_style.flex_direction.unwrap_or(FlexDirection::Row);
         let wrap = container_style.flex_wrap.unwrap_or(FlexWrap::NoWrap);
-        let justify_content = container_style
+        let justify_content = match container_style
             .justify_content
-            .unwrap_or(JustifyContent::FlexStart);
-        let align_items = container_style.align_items.unwrap_or(AlignItems::Stretch);
+            .unwrap_or(JustifyContent::FlexStart)
+        {
+            JustifyContent::Normal | JustifyContent::Start | JustifyContent::Stretch => {
+                JustifyContent::FlexStart
+            }
+            JustifyContent::End => JustifyContent::FlexEnd,
+            other => other,
+        };
+        let align_items = legacy_align(container_style.align_items.unwrap_or(AlignItems::Stretch));
 
         let (container_x, container_y, container_main, container_cross) = {
             let b = container.borrow().layout.bounds;
@@ -274,6 +281,9 @@ impl FlexLayoutEngine {
                     .unwrap_or(&AlignSelf::Auto)
                 {
                     AlignSelf::Auto => align_items.clone(),
+                    AlignSelf::Normal => AlignItems::Stretch,
+                    AlignSelf::Start => AlignItems::FlexStart,
+                    AlignSelf::End => AlignItems::FlexEnd,
                     AlignSelf::FlexStart => AlignItems::FlexStart,
                     AlignSelf::FlexEnd => AlignItems::FlexEnd,
                     AlignSelf::Center => AlignItems::Center,
@@ -380,6 +390,9 @@ impl FlexLayoutEngine {
                 let outer_cross = item.final_cross + cross_before_px + cross_after_px;
                 let align = match item.style.align_self.as_ref().unwrap_or(&AlignSelf::Auto) {
                     AlignSelf::Auto => align_items.clone(),
+                    AlignSelf::Normal => AlignItems::Stretch,
+                    AlignSelf::Start => AlignItems::FlexStart,
+                    AlignSelf::End => AlignItems::FlexEnd,
                     AlignSelf::FlexStart => AlignItems::FlexStart,
                     AlignSelf::FlexEnd => AlignItems::FlexEnd,
                     AlignSelf::Center => AlignItems::Center,
@@ -392,10 +405,14 @@ impl FlexLayoutEngine {
                     line_cross_offset + cross_before_px
                 } else {
                     match align {
-                        AlignItems::FlexStart | AlignItems::Baseline | AlignItems::Stretch => {
+                        AlignItems::FlexStart
+                        | AlignItems::Baseline
+                        | AlignItems::Stretch
+                        | AlignItems::Normal
+                        | AlignItems::Start => {
                             line_cross_offset + cross_before_px
                         }
-                        AlignItems::FlexEnd => {
+                        AlignItems::FlexEnd | AlignItems::End => {
                             line_cross_offset + (line.cross_size - outer_cross) + cross_before_px
                         }
                         AlignItems::Center => {
@@ -478,6 +495,16 @@ impl FlexLayoutEngine {
                 }
             }
         }
+    }
+}
+
+/// Maps the keywords the legacy engine doesn't know to their flex equivalents.
+fn legacy_align(align: AlignItems) -> AlignItems {
+    match align {
+        AlignItems::Normal => AlignItems::Stretch,
+        AlignItems::Start => AlignItems::FlexStart,
+        AlignItems::End => AlignItems::FlexEnd,
+        other => other,
     }
 }
 
@@ -832,8 +859,8 @@ fn align_content_offsets(
     let leftover = (available_cross - total_cross).max(0.0);
 
     match align_content {
-        AlignContent::FlexStart => (0.0, base_gap),
-        AlignContent::FlexEnd => (leftover, base_gap),
+        AlignContent::FlexStart | AlignContent::Start => (0.0, base_gap),
+        AlignContent::FlexEnd | AlignContent::End => (leftover, base_gap),
         AlignContent::Center => (leftover / 2.0, base_gap),
         AlignContent::SpaceBetween => {
             if line_count <= 1 {
@@ -851,7 +878,7 @@ fn align_content_offsets(
             let extra = leftover / (line_count as f64 + 1.0);
             (extra, base_gap + extra)
         }
-        AlignContent::Stretch => {
+        AlignContent::Stretch | AlignContent::Normal => {
             let extra = leftover / line_count as f64;
             for line in lines.iter_mut() {
                 line.cross_size += extra;
@@ -884,7 +911,11 @@ fn justify_offsets(
     };
 
     match justify {
-        JustifyContent::FlexStart => (0.0, base_gap),
+        JustifyContent::FlexStart
+        | JustifyContent::Normal
+        | JustifyContent::Start
+        | JustifyContent::Stretch => (0.0, base_gap),
+        JustifyContent::End => (leftover, base_gap),
         JustifyContent::FlexEnd => (leftover, base_gap),
         JustifyContent::Center => (leftover / 2.0, base_gap),
         JustifyContent::SpaceBetween => {

@@ -1,7 +1,8 @@
 use crate::style::{
     AlignContent, AlignItems, AlignSelf, BoxSizing, Directional, Display, FlexDirection, FlexWrap,
-    JustifyContent, Overflow, Rule, Selector, Style, StyleSheet, Widget, ZIndex,
+    JustifyContent, Length, Overflow, Position, Rule, Selector, Style, StyleSheet, Widget, ZIndex,
 };
+use super::borders::Side;
 use cssparser::{
     AtRuleParser, CowRcStr, DeclarationParser, ParseError, Parser, ParserInput, ParserState,
     QualifiedRuleParser, RuleBodyItemParser, RuleBodyParser, StyleSheetParser,
@@ -29,6 +30,23 @@ pub fn parse_css(css: &str) -> Result<StyleSheet, String> {
     }
 
     Ok(stylesheet)
+}
+
+/// Parse the declarations of an inline `style` attribute, in source order.
+pub fn parse_inline_style(css: &str) -> Vec<Style> {
+    let mut input = ParserInput::new(css);
+    let mut parser = Parser::new(&mut input);
+    let mut declaration_parser = StyleDeclarationParser::new();
+
+    RuleBodyParser::new(&mut parser, &mut declaration_parser)
+        .filter_map(|item| match item {
+            Ok(declaration) => Some(declaration),
+            Err(err) => {
+                eprintln!("Inline style parsing error: {:?}", err);
+                None
+            }
+        })
+        .collect()
 }
 
 /// CSS Parser implementation
@@ -128,7 +146,8 @@ impl<'i> DeclarationParser<'i> for StyleDeclarationParser {
             "display" => {
                 let ident = input.expect_ident()?;
                 match ident.as_ref() {
-                    "flex" => style.display = Display::Flex,
+                    "flex" => style.display = Some(Display::Flex),
+                    "none" => style.display = Some(Display::None),
                     _ => return Err(input.new_error_for_next_token()),
                 }
             }
@@ -193,6 +212,18 @@ impl<'i> DeclarationParser<'i> for StyleDeclarationParser {
             }
             "border" => {
                 self.parse_border_shorthand(input, &mut style)?;
+            }
+            "border-top" => {
+                self.parse_border_side_shorthand(input, &mut style, Side::Top)?;
+            }
+            "border-right" => {
+                self.parse_border_side_shorthand(input, &mut style, Side::Right)?;
+            }
+            "border-bottom" => {
+                self.parse_border_side_shorthand(input, &mut style, Side::Bottom)?;
+            }
+            "border-left" => {
+                self.parse_border_side_shorthand(input, &mut style, Side::Left)?;
             }
             "border-radius" => {
                 self.parse_border_radius_shorthand(input, &mut style)?;
@@ -305,8 +336,118 @@ impl<'i> DeclarationParser<'i> for StyleDeclarationParser {
                 style.padding.left = Some(self.parse_length_value(input)?);
             }
             "flex" => {
-                let value = input.expect_number()?;
-                style.flex_grow = Some(value as f64);
+                // `none | auto | [ <grow> <shrink>? || <basis> ]`
+                if input.try_parse(|input| input.expect_ident_matching("none")).is_ok() {
+                    style.flex_grow = Some(0.0);
+                    style.flex_shrink = Some(0.0);
+                    style.flex_basis = Some(Length::Auto);
+                } else if input.try_parse(|input| input.expect_ident_matching("auto")).is_ok() {
+                    style.flex_grow = Some(1.0);
+                    style.flex_shrink = Some(1.0);
+                    style.flex_basis = Some(Length::Auto);
+                } else {
+                    let mut grow = None;
+                    let mut shrink = None;
+                    let mut basis = None;
+                    loop {
+                        if grow.is_none() {
+                            if let Ok(value) = input.try_parse(|input| input.expect_number()) {
+                                grow = Some(value as f64);
+                                shrink = input
+                                    .try_parse(|input| input.expect_number())
+                                    .ok()
+                                    .map(f64::from);
+                                continue;
+                            }
+                        }
+                        if basis.is_none() {
+                            if let Ok(value) = input.try_parse(|input| self.parse_length_value(input)) {
+                                basis = Some(value);
+                                continue;
+                            }
+                        }
+                        break;
+                    }
+                    if grow.is_none() && basis.is_none() {
+                        return Err(input.new_error_for_next_token());
+                    }
+                    style.flex_grow = Some(grow.unwrap_or(1.0));
+                    style.flex_shrink = Some(shrink.unwrap_or(1.0));
+                    // A flex shorthand with only factors means a flex basis of 0%.
+                    style.flex_basis = Some(basis.unwrap_or(Length::Percent(0.0)));
+                }
+            }
+            "flex-flow" => {
+                let mut parsed_any = false;
+                while let Ok(ident) = input.try_parse(|input| input.expect_ident_cloned()) {
+                    match ident.as_ref() {
+                        "row" => style.flex_direction = Some(FlexDirection::Row),
+                        "row-reverse" => style.flex_direction = Some(FlexDirection::RowReverse),
+                        "column" => style.flex_direction = Some(FlexDirection::Column),
+                        "column-reverse" => style.flex_direction = Some(FlexDirection::ColumnReverse),
+                        "nowrap" => style.flex_wrap = Some(FlexWrap::NoWrap),
+                        "wrap" => style.flex_wrap = Some(FlexWrap::Wrap),
+                        "wrap-reverse" => style.flex_wrap = Some(FlexWrap::WrapReverse),
+                        _ => return Err(input.new_error_for_next_token()),
+                    }
+                    parsed_any = true;
+                }
+                if !parsed_any {
+                    return Err(input.new_error_for_next_token());
+                }
+            }
+            "position" => {
+                let ident = input.expect_ident()?;
+                style.position = Some(match ident.as_ref() {
+                    "static" | "relative" => Position::Relative,
+                    "absolute" => Position::Absolute,
+                    _ => return Err(input.new_error_for_next_token()),
+                });
+            }
+            "inset" => {
+                let first = self.parse_length_value(input)?;
+                let second = input
+                    .try_parse(|input| self.parse_length_value(input))
+                    .unwrap_or(first);
+                let third = input
+                    .try_parse(|input| self.parse_length_value(input))
+                    .unwrap_or(first);
+                let fourth = input
+                    .try_parse(|input| self.parse_length_value(input))
+                    .unwrap_or(second);
+                style.inset = Directional {
+                    top: Some(first),
+                    right: Some(second),
+                    bottom: Some(third),
+                    left: Some(fourth),
+                };
+            }
+            "top" => {
+                style.inset.top = Some(self.parse_length_value(input)?);
+            }
+            "right" => {
+                style.inset.right = Some(self.parse_length_value(input)?);
+            }
+            "bottom" => {
+                style.inset.bottom = Some(self.parse_length_value(input)?);
+            }
+            "left" => {
+                style.inset.left = Some(self.parse_length_value(input)?);
+            }
+            "min-width" => {
+                style.min_width = Some(self.parse_length_value(input)?);
+            }
+            "min-height" => {
+                style.min_height = Some(self.parse_length_value(input)?);
+            }
+            "max-width" => {
+                style.max_width = Some(self.parse_max_size(input)?);
+            }
+            "max-height" => {
+                style.max_height = Some(self.parse_max_size(input)?);
+            }
+            "font-size" => {
+                style.font_size = Some(self.parse_length_value(input)?);
             }
             "flex-direction" => {
                 let ident = input.expect_ident()?;
@@ -330,6 +471,10 @@ impl<'i> DeclarationParser<'i> for StyleDeclarationParser {
             "justify-content" => {
                 let ident = input.expect_ident()?;
                 style.justify_content = Some(match ident.as_ref() {
+                    "normal" => JustifyContent::Normal,
+                    "start" => JustifyContent::Start,
+                    "end" => JustifyContent::End,
+                    "stretch" => JustifyContent::Stretch,
                     "flex-start" => JustifyContent::FlexStart,
                     "flex-end" => JustifyContent::FlexEnd,
                     "center" => JustifyContent::Center,
@@ -343,6 +488,9 @@ impl<'i> DeclarationParser<'i> for StyleDeclarationParser {
                 let ident = input.expect_ident()?;
                 style.align_items = Some(match ident.as_ref() {
                     "stretch" => AlignItems::Stretch,
+                    "normal" => AlignItems::Normal,
+                    "start" => AlignItems::Start,
+                    "end" => AlignItems::End,
                     "flex-start" => AlignItems::FlexStart,
                     "flex-end" => AlignItems::FlexEnd,
                     "center" => AlignItems::Center,
@@ -354,6 +502,9 @@ impl<'i> DeclarationParser<'i> for StyleDeclarationParser {
                 let ident = input.expect_ident()?;
                 style.align_content = Some(match ident.as_ref() {
                     "stretch" => AlignContent::Stretch,
+                    "normal" => AlignContent::Normal,
+                    "start" => AlignContent::Start,
+                    "end" => AlignContent::End,
                     "flex-start" => AlignContent::FlexStart,
                     "flex-end" => AlignContent::FlexEnd,
                     "center" => AlignContent::Center,
@@ -367,6 +518,9 @@ impl<'i> DeclarationParser<'i> for StyleDeclarationParser {
                 let ident = input.expect_ident()?;
                 style.align_self = Some(match ident.as_ref() {
                     "auto" => AlignSelf::Auto,
+                    "normal" => AlignSelf::Normal,
+                    "start" => AlignSelf::Start,
+                    "end" => AlignSelf::End,
                     "flex-start" => AlignSelf::FlexStart,
                     "flex-end" => AlignSelf::FlexEnd,
                     "center" => AlignSelf::Center,
@@ -399,9 +553,12 @@ impl<'i> DeclarationParser<'i> for StyleDeclarationParser {
                 }
             }
             "gap" => {
-                let gap = self.parse_length_value(input)?;
-                style.row_gap = Some(gap);
-                style.column_gap = Some(gap);
+                let row_gap = self.parse_length_value(input)?;
+                let column_gap = input
+                    .try_parse(|input| self.parse_length_value(input))
+                    .unwrap_or(row_gap);
+                style.row_gap = Some(row_gap);
+                style.column_gap = Some(column_gap);
             }
             "row-gap" => {
                 style.row_gap = Some(self.parse_length_value(input)?);
@@ -416,6 +573,19 @@ impl<'i> DeclarationParser<'i> for StyleDeclarationParser {
         }
 
         Ok(style)
+    }
+}
+
+impl StyleDeclarationParser {
+    /// `none` or a length; `none` is stored as `Length::Auto`.
+    fn parse_max_size<'i, 't>(
+        &mut self,
+        input: &mut Parser<'i, 't>,
+    ) -> Result<Length, ParseError<'i, ()>> {
+        if input.try_parse(|input| input.expect_ident_matching("none")).is_ok() {
+            return Ok(Length::Auto);
+        }
+        self.parse_length_value(input)
     }
 }
 

@@ -1,0 +1,15 @@
+<!--
+A container's baseline comes from its first item, or from its baseline-aligned items, and is used
+when the container is baseline-aligned itself.
+@matrix #inner align-items: flex-start | baseline
+@matrix #inner flex-direction: row | column
+-->
+<div id="root" style="width: 300px; height: 120px; align-items: baseline">
+  <div style="font-size: 20px">Ab</div>
+  <div id="inner" style="padding: 5px; border-top: 4px solid">
+    <div style="width: 20px; height: 40px"></div>
+    <div style="padding-top: 10px">Cd</div>
+    <div style="font-size: 30px">Ef</div>
+  </div>
+  <div style="width: 20px; height: 20px"></div>
+</div>

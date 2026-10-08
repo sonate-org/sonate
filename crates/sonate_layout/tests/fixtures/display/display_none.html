@@ -1,0 +1,12 @@
+<!--
+display: none removes a box and its subtree from layout (including gaps around it).
+@matrix #hidden display: none | flex
+@matrix #root flex-direction: row | column
+-->
+<div id="root" style="width: 200px; height: 100px; column-gap: 10px; row-gap: 10px">
+  <div style="width: 30px; height: 30px"></div>
+  <div id="hidden" style="width: 40px; height: 40px; flex-grow: 1">
+    <div style="width: 10px; height: 10px"></div>
+  </div>
+  <div style="width: 50px; height: 20px"></div>
+</div>

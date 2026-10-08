@@ -1,0 +1,13 @@
+<!--
+align-items: baseline lines up first baselines; items without text synthesize one from the bottom
+of their border box.
+@matrix #root width: 260px | 130px
+@matrix #root align-items: baseline | flex-start
+-->
+<div id="root" style="width: 260px; height: 150px; flex-wrap: wrap; align-content: flex-start">
+  <div style="font-size: 20px">Ab</div>
+  <div style="padding-top: 15px">Cd</div>
+  <div style="font-size: 30px; margin-top: 5px">E</div>
+  <div style="width: 30px; height: 25px"></div>
+  <div style="flex-direction: column"><div>Nested</div><div>Two</div></div>
+</div>

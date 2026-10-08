@@ -1,0 +1,12 @@
+<!--
+min-width: auto stops items from shrinking below their content (§4.5), except scroll containers
+and items with an explicit min-width; a smaller specified width lowers the minimum.
+@matrix #root width: 100px | 200px
+@matrix .item min-width: auto | 0px | 20px
+-->
+<div id="root" style="width: 200px; height: 100px">
+  <div class="item" style="flex-basis: 120px">Hello world</div>
+  <div class="item" style="flex-basis: 120px; width: 30px">Abc defg</div>
+  <div class="item" style="flex-basis: 120px; overflow: hidden">Hello world</div>
+  <div class="item" style="flex-basis: 120px; max-width: 30px">Hello world</div>
+</div>

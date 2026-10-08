@@ -1,0 +1,22 @@
+<!--
+A sidebar with a min and max width next to content with a nested toolbar that wraps.
+@matrix #root width: 250px | 500px | 900px
+-->
+<div id="root" style="width: 500px; height: 300px">
+  <div id="sidebar" style="flex: 0 1 30%; min-width: 100px; max-width: 200px; flex-direction: column; padding: 6px">
+    <div>Dashboard</div>
+    <div>Reports and analytics</div>
+  </div>
+  <div id="content" style="flex: 1; flex-direction: column; min-width: 0">
+    <div id="toolbar" style="flex-wrap: wrap; column-gap: 4px; row-gap: 4px; padding: 4px">
+      <div style="padding: 2px 6px">New</div>
+      <div style="padding: 2px 6px">Open file</div>
+      <div style="padding: 2px 6px">Save as</div>
+      <div style="padding: 2px 6px">Export</div>
+      <div style="padding: 2px 6px">Settings</div>
+    </div>
+    <div style="flex: 1; overflow: auto; padding: 6px">
+      <div style="width: 600px; height: 20px; flex-shrink: 0"></div>
+    </div>
+  </div>
+</div>

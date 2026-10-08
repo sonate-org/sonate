@@ -1,0 +1,13 @@
+<!--
+Percentages inside a flexed item and inside a percentage-sized child of it.
+@matrix #grow flex-direction: row | column
+-->
+<div id="root" style="width: 300px; height: 300px; flex-direction: column">
+  <div style="height: 50px"></div>
+  <div id="grow" style="flex: 1">
+    <div id="half" style="width: 50%; flex-direction: column">
+      <div style="height: 50%"></div>
+      <div style="flex: 1"></div>
+    </div>
+  </div>
+</div>

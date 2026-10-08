@@ -22,4 +22,11 @@ pub fn apply_matching_rules(
             }
         }
     }
+
+    // Inline styles win over stylesheet rules.
+    if let Some(inline) = attributes.get("style") {
+        for declaration in crate::css_parser::parse_inline_style(inline) {
+            style.merge(&declaration);
+        }
+    }
 }

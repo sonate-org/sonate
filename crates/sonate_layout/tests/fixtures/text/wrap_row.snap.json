@@ -1,0 +1,87 @@
+{
+  "schema": 1,
+  "hash": "5bbcacb19bfa9747",
+  "chrome": "Chrome/153.0.8010.52/@78e5e45d4bb41035e17ea4da2cc257f496416ac9",
+  "cases": [
+    {
+      "params": "#root width=60px, #root align-items=normal",
+      "overrides": [["#root","width","60px"],["#root","align-items","normal"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"60px","height":"100px"},"rect":[0,0,60,100]},
+        {"d":1,"label":"div","style":{},"text":"Hello world","font":10,"rect":[0,0,50,100]},
+        {"d":1,"label":"div","style":{},"text":"Lorem ipsum dolor","font":10,"rect":[50,0,50,100]}
+      ]
+    },
+    {
+      "params": "#root width=60px, #root align-items=flex-start",
+      "overrides": [["#root","width","60px"],["#root","align-items","flex-start"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"60px","height":"100px","align-items":"flex-start"},"rect":[0,0,60,100]},
+        {"d":1,"label":"div","style":{},"text":"Hello world","font":10,"rect":[0,0,50,20]},
+        {"d":1,"label":"div","style":{},"text":"Lorem ipsum dolor","font":10,"rect":[50,0,50,30]}
+      ]
+    },
+    {
+      "params": "#root width=100px, #root align-items=normal",
+      "overrides": [["#root","width","100px"],["#root","align-items","normal"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"100px","height":"100px"},"rect":[0,0,100,100]},
+        {"d":1,"label":"div","style":{},"text":"Hello world","font":10,"rect":[0,0,50,100]},
+        {"d":1,"label":"div","style":{},"text":"Lorem ipsum dolor","font":10,"rect":[50,0,50,100]}
+      ]
+    },
+    {
+      "params": "#root width=100px, #root align-items=flex-start",
+      "overrides": [["#root","width","100px"],["#root","align-items","flex-start"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"100px","height":"100px","align-items":"flex-start"},"rect":[0,0,100,100]},
+        {"d":1,"label":"div","style":{},"text":"Hello world","font":10,"rect":[0,0,50,20]},
+        {"d":1,"label":"div","style":{},"text":"Lorem ipsum dolor","font":10,"rect":[50,0,50,30]}
+      ]
+    },
+    {
+      "params": "#root width=150px, #root align-items=normal",
+      "overrides": [["#root","width","150px"],["#root","align-items","normal"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"150px","height":"100px"},"rect":[0,0,150,100]},
+        {"d":1,"label":"div","style":{},"text":"Hello world","font":10,"rect":[0,0,58.921875,100]},
+        {"d":1,"label":"div","style":{},"text":"Lorem ipsum dolor","font":10,"rect":[58.921875,0,91.078125,100]}
+      ]
+    },
+    {
+      "params": "#root width=150px, #root align-items=flex-start",
+      "overrides": [["#root","width","150px"],["#root","align-items","flex-start"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"150px","height":"100px","align-items":"flex-start"},"rect":[0,0,150,100]},
+        {"d":1,"label":"div","style":{},"text":"Hello world","font":10,"rect":[0,0,58.921875,20]},
+        {"d":1,"label":"div","style":{},"text":"Lorem ipsum dolor","font":10,"rect":[58.921875,0,91.078125,30]}
+      ]
+    },
+    {
+      "params": "#root width=300px, #root align-items=normal",
+      "overrides": [["#root","width","300px"],["#root","align-items","normal"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"300px","height":"100px"},"rect":[0,0,300,100]},
+        {"d":1,"label":"div","style":{},"text":"Hello world","font":10,"rect":[0,0,110,100]},
+        {"d":1,"label":"div","style":{},"text":"Lorem ipsum dolor","font":10,"rect":[110,0,170,100]}
+      ]
+    },
+    {
+      "params": "#root width=300px, #root align-items=flex-start",
+      "overrides": [["#root","width","300px"],["#root","align-items","flex-start"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"300px","height":"100px","align-items":"flex-start"},"rect":[0,0,300,100]},
+        {"d":1,"label":"div","style":{},"text":"Hello world","font":10,"rect":[0,0,110,10]},
+        {"d":1,"label":"div","style":{},"text":"Lorem ipsum dolor","font":10,"rect":[110,0,170,10]}
+      ]
+    }
+  ]
+}

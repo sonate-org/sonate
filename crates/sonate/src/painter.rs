@@ -2,7 +2,7 @@ use crate::{
     layout::{Rect as LayoutRect, RenderOp, RenderSnapshot},
     scrollbar::{collect_scrollbar_thumbs, ScrollbarAxis, THUMB_CORNER_RADIUS},
     style::{BorderStyle, Length, Rgba},
-    text::{FontSpec, SkiaTextMeasurer},
+    text::{break_lines, FontSpec, SkiaTextMeasurer},
 };
 use skia_safe::{Canvas, ClipOp, Color, Color4f, Paint, Path, RRect, Rect};
 
@@ -217,9 +217,19 @@ impl<'a> Painter<'a> {
         let font = SkiaTextMeasurer::make_font(&font_spec);
         let (_scale, metrics) = font.metrics();
 
+        // Text starts at the content box.
         let padding = style.padding.resolved();
-        let x = (node.bounds.x + padding.left.to_px()) as f32;
-        let baseline_y = (node.bounds.y + padding.top.to_px() + (-metrics.ascent as f64)) as f32;
+        let border = style.border_width.resolved();
+        let content_x = node.bounds.x + padding.left.to_px() + border.left.to_px();
+        let content_y = node.bounds.y + padding.top.to_px() + border.top.to_px();
+        let content_width = node.bounds.width
+            - padding.left.to_px()
+            - padding.right.to_px()
+            - border.left.to_px()
+            - border.right.to_px();
+        let x = content_x as f32;
+        let baseline_y = (content_y + (-metrics.ascent as f64)) as f32;
+        let is_text_input = style.widget.is_some_and(|widget| widget.is_text_input());
 
         if let Some(text) = &node.text {
             let text_color = style.color.unwrap_or(Rgba {
@@ -232,10 +242,23 @@ impl<'a> Painter<'a> {
             let mut paint = Paint::new(text_color.to_color4f(), None);
             paint.set_anti_alias(true);
 
-            self.canvas.draw_str(text, (x, baseline_y), &font, &paint);
+            if is_text_input {
+                self.canvas.draw_str(text, (x, baseline_y), &font, &paint);
+            } else {
+                // Wrap like the layout measured it (see `TextMeasurer::measure_wrapped`).
+                let line_height = SkiaTextMeasurer::line_height(&font);
+                let mut measure = |text: &str| font.measure_str(text, None).0 as f64;
+                // Like the layout, never wrap narrower than the longest word.
+                let longest_word = text.split_whitespace().map(&mut measure).fold(0.0, f64::max);
+                let lines = break_lines(text, content_width.max(longest_word), &mut measure);
+                for (index, (line, _)) in lines.iter().enumerate() {
+                    let y = baseline_y + (index as f64 * line_height) as f32;
+                    self.canvas.draw_str(line, (x, y), &font, &paint);
+                }
+            }
         }
 
-        if style.widget.is_some_and(|widget| widget.is_text_input()) {
+        if is_text_input {
             if let Some(state) = &node.text_input_state {
                 if state.focused {
                     let text = node.text.as_deref().unwrap_or("");

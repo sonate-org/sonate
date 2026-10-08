@@ -224,12 +224,14 @@ fn scroll_offset_shifts_children() {
         nb.layout.style = Arc::new(style);
     }
 
-    // Make children tall enough to overflow the 100px container.
+    // Make children tall enough to overflow the 100px container. Without `flex-shrink: 0`
+    // they would shrink to fit, as in CSS.
     for &id in &[child_a, child_b] {
         let node = ctx.document.get_node(id).unwrap();
         let mut nb = node.borrow_mut();
         let mut style = Style::default();
         style.height = Some(Length::Px(80.0));
+        style.flex_shrink = Some(0.0);
         nb.layout.style = Arc::new(style);
     }
 

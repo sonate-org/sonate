@@ -1,0 +1,55 @@
+{
+  "schema": 1,
+  "hash": "ec6dbbfdd167b76c",
+  "chrome": "Chrome/153.0.8010.52/@78e5e45d4bb41035e17ea4da2cc257f496416ac9",
+  "cases": [
+    {
+      "params": ".box box-sizing=content-box, #root flex-direction=row",
+      "overrides": [[".box","box-sizing","content-box"],["#root","flex-direction","row"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"300px","height":"200px","padding-top":"10px","padding-right":"20px","padding-bottom":"10px","padding-left":"20px","border-top-width":"5px","border-right-width":"5px","border-bottom-width":"5px","border-left-width":"5px"},"rect":[0,0,350,230]},
+        {"d":1,"label":".box","style":{"width":"100px","height":"50px","padding-top":"5px","padding-right":"5px","padding-bottom":"5px","padding-left":"5px","border-top-width":"2px","border-right-width":"2px","border-bottom-width":"2px","border-left-width":"2px"},"rect":[25,15,114,64]},
+        {"d":1,"label":".box","style":{"width":"60px","height":"40px","padding-top":"10px","padding-bottom":"10px"},"rect":[139,15,60,60]},
+        {"d":1,"label":".box","style":{"width":"10px","height":"10px","padding-top":"8px","padding-right":"8px","padding-bottom":"8px","padding-left":"8px"},"rect":[199,15,26,26]},
+        {"d":1,"label":".box","style":{"padding-top":"8px","padding-right":"8px","padding-bottom":"8px","padding-left":"8px","border-top-width":"1px","border-right-width":"1px","border-bottom-width":"1px","border-left-width":"1px"},"text":"Ab","font":10,"rect":[225,15,38,200]}
+      ]
+    },
+    {
+      "params": ".box box-sizing=content-box, #root flex-direction=column",
+      "overrides": [[".box","box-sizing","content-box"],["#root","flex-direction","column"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"300px","height":"200px","padding-top":"10px","padding-right":"20px","padding-bottom":"10px","padding-left":"20px","border-top-width":"5px","border-right-width":"5px","border-bottom-width":"5px","border-left-width":"5px","flex-direction":"column"},"rect":[0,0,350,230]},
+        {"d":1,"label":".box","style":{"width":"100px","height":"50px","padding-top":"5px","padding-right":"5px","padding-bottom":"5px","padding-left":"5px","border-top-width":"2px","border-right-width":"2px","border-bottom-width":"2px","border-left-width":"2px"},"rect":[25,15,114,64]},
+        {"d":1,"label":".box","style":{"width":"60px","height":"40px","padding-top":"10px","padding-bottom":"10px"},"rect":[25,79,60,60]},
+        {"d":1,"label":".box","style":{"width":"10px","height":"10px","padding-top":"8px","padding-right":"8px","padding-bottom":"8px","padding-left":"8px"},"rect":[25,139,26,26]},
+        {"d":1,"label":".box","style":{"padding-top":"8px","padding-right":"8px","padding-bottom":"8px","padding-left":"8px","border-top-width":"1px","border-right-width":"1px","border-bottom-width":"1px","border-left-width":"1px"},"text":"Ab","font":10,"rect":[25,165,300,28]}
+      ]
+    },
+    {
+      "params": ".box box-sizing=border-box, #root flex-direction=row",
+      "overrides": [[".box","box-sizing","border-box"],["#root","flex-direction","row"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"box-sizing":"border-box","width":"300px","height":"200px","padding-top":"10px","padding-right":"20px","padding-bottom":"10px","padding-left":"20px","border-top-width":"5px","border-right-width":"5px","border-bottom-width":"5px","border-left-width":"5px"},"rect":[0,0,300,200]},
+        {"d":1,"label":".box","style":{"box-sizing":"border-box","width":"100px","height":"50px","padding-top":"5px","padding-right":"5px","padding-bottom":"5px","padding-left":"5px","border-top-width":"2px","border-right-width":"2px","border-bottom-width":"2px","border-left-width":"2px"},"rect":[25,15,100,50]},
+        {"d":1,"label":".box","style":{"box-sizing":"border-box","width":"60px","height":"40px","padding-top":"10px","padding-bottom":"10px"},"rect":[125,15,60,40]},
+        {"d":1,"label":".box","style":{"box-sizing":"border-box","width":"10px","height":"10px","padding-top":"8px","padding-right":"8px","padding-bottom":"8px","padding-left":"8px"},"rect":[185,15,16,16]},
+        {"d":1,"label":".box","style":{"box-sizing":"border-box","padding-top":"8px","padding-right":"8px","padding-bottom":"8px","padding-left":"8px","border-top-width":"1px","border-right-width":"1px","border-bottom-width":"1px","border-left-width":"1px"},"text":"Ab","font":10,"rect":[201,15,38,170]}
+      ]
+    },
+    {
+      "params": ".box box-sizing=border-box, #root flex-direction=column",
+      "overrides": [[".box","box-sizing","border-box"],["#root","flex-direction","column"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"box-sizing":"border-box","width":"300px","height":"200px","padding-top":"10px","padding-right":"20px","padding-bottom":"10px","padding-left":"20px","border-top-width":"5px","border-right-width":"5px","border-bottom-width":"5px","border-left-width":"5px","flex-direction":"column"},"rect":[0,0,300,200]},
+        {"d":1,"label":".box","style":{"box-sizing":"border-box","width":"100px","height":"50px","padding-top":"5px","padding-right":"5px","padding-bottom":"5px","padding-left":"5px","border-top-width":"2px","border-right-width":"2px","border-bottom-width":"2px","border-left-width":"2px"},"rect":[25,15,100,50]},
+        {"d":1,"label":".box","style":{"box-sizing":"border-box","width":"60px","height":"40px","padding-top":"10px","padding-bottom":"10px"},"rect":[25,65,60,40]},
+        {"d":1,"label":".box","style":{"box-sizing":"border-box","width":"10px","height":"10px","padding-top":"8px","padding-right":"8px","padding-bottom":"8px","padding-left":"8px"},"rect":[25,105,16,16]},
+        {"d":1,"label":".box","style":{"box-sizing":"border-box","padding-top":"8px","padding-right":"8px","padding-bottom":"8px","padding-left":"8px","border-top-width":"1px","border-right-width":"1px","border-bottom-width":"1px","border-left-width":"1px"},"text":"Ab","font":10,"rect":[25,121,250,28]}
+      ]
+    }
+  ]
+}

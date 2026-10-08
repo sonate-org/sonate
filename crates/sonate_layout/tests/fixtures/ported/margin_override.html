@@ -1,0 +1,30 @@
+<!--
+Ported from crates/sonate/src/layout/margin_tests.html: a later `margin` shorthand overrides an
+earlier `margin-left` and vice versa (cascade order within one rule).
+-->
+<div id="root" class="container">
+  <div class="margin-override-1" id="child1">first</div>
+  <div class="margin-override-2" id="child2">second</div>
+</div>
+<style>
+  .container {
+    display: flex;
+    width: 400px;
+    height: 200px;
+    align-items: flex-start;
+  }
+
+  .margin-override-1 {
+    width: 60px;
+    height: 40px;
+    margin: 20px;
+    margin-left: 50px;
+  }
+
+  .margin-override-2 {
+    width: 60px;
+    height: 40px;
+    margin-left: 50px;
+    margin: 20px;
+  }
+</style>
