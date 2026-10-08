@@ -65,7 +65,7 @@ fn new_item(tree: &LayoutTree, id: NodeId, container: &Container) -> FlexItem {
     }
 
     let main = container.main;
-    let definite_flex_basis = match style.flex_basis {
+    let definite_flex_basis = match &style.flex_basis {
         Dimension::Auto => sizes.size.get(main),
         basis => resolve::to_border_box(
             style,

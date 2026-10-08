@@ -180,7 +180,7 @@ impl StyleDeclarationParser {
         let x = self.parse_length_value(input)?;
         let y = input
             .try_parse(|input| self.parse_length_value(input))
-            .unwrap_or(x);
+            .unwrap_or_else(|_| x.clone());
         Ok(Radius { x, y })
     }
 
@@ -192,13 +192,13 @@ impl StyleDeclarationParser {
         let first = self.parse_length_value(input)?;
         let second = input
             .try_parse(|input| self.parse_length_value(input))
-            .unwrap_or(first);
+            .unwrap_or_else(|_| first.clone());
         let third = input
             .try_parse(|input| self.parse_length_value(input))
-            .unwrap_or(first);
+            .unwrap_or_else(|_| first.clone());
         let fourth = input
             .try_parse(|input| self.parse_length_value(input))
-            .unwrap_or(second);
+            .unwrap_or_else(|_| second.clone());
 
         Ok((first, second, third, fourth))
     }
@@ -217,7 +217,7 @@ impl StyleDeclarationParser {
         let (tl_y, tr_y, br_y, bl_y) = if input.try_parse(|i| i.expect_delim('/')).is_ok() {
             self.parse_border_radius_1_to_4(input)?
         } else {
-            (tl_x, tr_x, br_x, bl_x)
+            (tl_x.clone(), tr_x.clone(), br_x.clone(), bl_x.clone())
         };
 
         if !input.is_exhausted() {

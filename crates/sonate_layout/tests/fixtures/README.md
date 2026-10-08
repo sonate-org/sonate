@@ -46,8 +46,8 @@ One line saying what this checks.
   `Hello world` at the default 10px is exactly 110×10. Lines break at spaces.
 - **Borders** need a style to have a width: `border: 2px solid`.
 - Only the properties `sonate_layout` understands may change; bless rejects anything else
-  (`calc()`, `writing-mode`, `aspect-ratio`, …) rather than recording a layout the engine
-  can't reproduce.
+  (`writing-mode`, `aspect-ratio`, …) rather than recording a layout the engine can't
+  reproduce. The root font size is 10px (`rem`) and the page is 1200×900 (`vw`, `vh`).
 
 Keep fixtures small and focused: a few boxes, one idea, and a matrix for the variations. Prefer
 sizes that divide evenly so rounding never matters.

@@ -4,6 +4,7 @@
 //! fixture in a `.snap.json` next to it. See `tests/fixtures/README.md`.
 
 pub mod ahem;
+pub mod calc_parser;
 pub mod engine;
 pub mod harness;
 pub mod snapshot;

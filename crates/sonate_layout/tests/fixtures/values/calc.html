@@ -1,0 +1,13 @@
+<!--
+calc(), min(), max() and clamp() mixing percentages and lengths; percentages resolve at layout.
+@matrix #root width: 300px | 600px
+-->
+<div id="root" style="width: 600px; height: 400px; flex-wrap: wrap; align-content: flex-start; column-gap: calc(1% + 2px)">
+  <div style="width: calc(50% - 20px); height: calc(10px * 2)"></div>
+  <div style="width: min(100%, 250px); height: 10px"></div>
+  <div style="width: max(10%, 50px); height: calc(5% + 5px)"></div>
+  <div style="width: clamp(80px, 30%, 150px); height: 10px; margin-left: calc(2% + 1px)"></div>
+  <div style="width: calc((100% - 30px) / 3); height: 10px; padding: calc(1% + 1em) 0"></div>
+  <div style="flex: 1 1 calc(20% + 10px); height: 10px"></div>
+  <div style="width: calc(1em + 2rem + 10px); height: calc(min(50px, 10%) + 1px)"></div>
+</div>

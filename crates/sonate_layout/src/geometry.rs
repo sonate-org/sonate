@@ -90,16 +90,18 @@ pub struct Edges<T> {
     pub left: T,
 }
 
-impl<T: Copy> Edges<T> {
-    pub const fn all(value: T) -> Self {
+impl<T: Clone> Edges<T> {
+    pub fn all(value: T) -> Self {
         Self {
-            top: value,
-            right: value,
-            bottom: value,
+            top: value.clone(),
+            right: value.clone(),
+            bottom: value.clone(),
             left: value,
         }
     }
+}
 
+impl<T> Edges<T> {
     pub fn map<U>(self, mut f: impl FnMut(T) -> U) -> Edges<U> {
         Edges {
             top: f(self.top),
@@ -109,6 +111,17 @@ impl<T: Copy> Edges<T> {
         }
     }
 
+    pub fn as_ref(&self) -> Edges<&T> {
+        Edges {
+            top: &self.top,
+            right: &self.right,
+            bottom: &self.bottom,
+            left: &self.left,
+        }
+    }
+}
+
+impl<T: Copy> Edges<T> {
     /// The edge at the start (left/top) of `axis`.
     pub fn start(self, axis: Axis) -> T {
         match axis {
@@ -127,7 +140,12 @@ impl<T: Copy> Edges<T> {
 }
 
 impl Edges<f64> {
-    pub const ZERO: Self = Self::all(0.0);
+    pub const ZERO: Self = Self {
+        top: 0.0,
+        right: 0.0,
+        bottom: 0.0,
+        left: 0.0,
+    };
 
     /// Sum of both edges along `axis`.
     pub fn sum(self, axis: Axis) -> f64 {

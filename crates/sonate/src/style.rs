@@ -1,5 +1,6 @@
 use crate::css_parser::SelectorList;
 use sonate_macros::MergeProperties;
+use std::sync::Arc;
 
 #[derive(Clone, Copy, Default, Debug, PartialEq)]
 pub struct Rgba {
@@ -9,23 +10,114 @@ pub struct Rgba {
     pub a: u8,
 }
 
-#[derive(Clone, Copy, Default, Debug, PartialEq)]
+#[derive(Clone, Default, Debug, PartialEq)]
 #[allow(unused)]
 pub enum Length {
     #[default]
     Auto,
     Px(f64),
     Em(f64),
+    Rem(f64),
+    Vw(f64),
+    Vh(f64),
+    Vmin(f64),
+    Vmax(f64),
     Percent(f64),
+    /// `calc()`, `min()`, `max()` or `clamp()`. After the cascade only px and % remain in it.
+    Calc(Arc<CalcNode>),
 }
 
 impl Length {
+    /// The value in px. Relative units are resolved by the cascade, so after it this is exact
+    /// for everything but percentages, which count as 0.
     pub fn to_px(&self) -> f64 {
         match self {
             Length::Px(value) => *value,
-            Length::Auto => 0.0,
-            Length::Em(_) => 0.0,      // TODO: Implement em conversion
-            Length::Percent(_) => 0.0, // TODO: Implement percentage conversion
+            Length::Calc(calc) => calc.evaluate(&|length| match length {
+                Length::Px(px) => Some(*px),
+                _ => Some(0.0),
+            })
+            .unwrap_or(0.0),
+            _ => 0.0,
+        }
+    }
+}
+
+/// A math expression over lengths.
+#[derive(Clone, Debug, PartialEq)]
+pub enum CalcNode {
+    /// A length that isn't itself `Calc`.
+    Value(Length),
+    Sum(Vec<CalcNode>),
+    /// Multiplication by a number (also used for subtraction and division).
+    Scale(Box<CalcNode>, f64),
+    Min(Vec<CalcNode>),
+    Max(Vec<CalcNode>),
+    /// `clamp(min, value, max)`
+    Clamp(Box<CalcNode>, Box<CalcNode>, Box<CalcNode>),
+}
+
+impl CalcNode {
+    /// Evaluates the expression with `leaf` resolving each length; `None` if a leaf can't be
+    /// resolved.
+    pub fn evaluate(&self, leaf: &dyn Fn(&Length) -> Option<f64>) -> Option<f64> {
+        Some(match self {
+            CalcNode::Value(length) => leaf(length)?,
+            CalcNode::Sum(terms) => {
+                let mut sum = 0.0;
+                for term in terms {
+                    sum += term.evaluate(leaf)?;
+                }
+                sum
+            }
+            CalcNode::Scale(value, factor) => value.evaluate(leaf)? * factor,
+            CalcNode::Min(values) => values
+                .iter()
+                .map(|value| value.evaluate(leaf))
+                .collect::<Option<Vec<_>>>()?
+                .into_iter()
+                .fold(f64::INFINITY, f64::min),
+            CalcNode::Max(values) => values
+                .iter()
+                .map(|value| value.evaluate(leaf))
+                .collect::<Option<Vec<_>>>()?
+                .into_iter()
+                .fold(f64::NEG_INFINITY, f64::max),
+            CalcNode::Clamp(min, value, max) => value
+                .evaluate(leaf)?
+                .min(max.evaluate(leaf)?)
+                .max(min.evaluate(leaf)?),
+        })
+    }
+
+    /// Replaces every leaf.
+    pub fn map(&self, leaf: &dyn Fn(&Length) -> Length) -> CalcNode {
+        let all = |values: &[CalcNode]| values.iter().map(|value| value.map(leaf)).collect();
+        match self {
+            CalcNode::Value(length) => CalcNode::Value(leaf(length)),
+            CalcNode::Sum(terms) => CalcNode::Sum(all(terms)),
+            CalcNode::Scale(value, factor) => CalcNode::Scale(Box::new(value.map(leaf)), *factor),
+            CalcNode::Min(values) => CalcNode::Min(all(values)),
+            CalcNode::Max(values) => CalcNode::Max(all(values)),
+            CalcNode::Clamp(min, value, max) => CalcNode::Clamp(
+                Box::new(min.map(leaf)),
+                Box::new(value.map(leaf)),
+                Box::new(max.map(leaf)),
+            ),
+        }
+    }
+
+    /// Whether any leaf is a percentage.
+    pub fn has_percentage(&self) -> bool {
+        match self {
+            CalcNode::Value(length) => matches!(length, Length::Percent(_)),
+            CalcNode::Scale(value, _) => value.has_percentage(),
+            CalcNode::Sum(values) | CalcNode::Min(values) | CalcNode::Max(values) => {
+                values.iter().any(CalcNode::has_percentage)
+            }
+            CalcNode::Clamp(min, value, max) => {
+                min.has_percentage() || value.has_percentage() || max.has_percentage()
+            }
         }
     }
 }
@@ -106,7 +198,7 @@ impl Directional<Option<Length>> {
     }
 }
 
-#[derive(Clone, Copy, Default, Debug, PartialEq)]
+#[derive(Clone, Default, Debug, PartialEq)]
 pub struct Radius {
     pub x: Length,
     pub y: Length,
@@ -319,6 +411,9 @@ pub struct Style {
     /// `Length::Auto` stands for `none`.
     pub max_height: Option<Length>,
 
+    /// Custom properties (`--name`), inherited, with references already substituted.
+    pub custom_properties: Option<Arc<std::collections::BTreeMap<String, String>>>,
+
     // Text / font properties
     pub font_family: Option<String>,
     pub font_size: Option<Length>,
@@ -401,6 +496,10 @@ pub struct Declaration {
     pub important: bool,
     /// Set instead of `style` for `property: inherit | initial | unset`.
     pub keyword: Option<(String, CssWideKeyword)>,
+    /// A custom property, `--name: value`, as token text.
+    pub custom: Option<(String, String)>,
+    /// A declaration using `var()`, as `(property, text)`; it is parsed after substitution.
+    pub unparsed: Option<(String, String)>,
 }
 
 impl std::ops::Deref for Declaration {

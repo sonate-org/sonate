@@ -1,0 +1,28 @@
+<!--
+Custom properties: inheritance, fallbacks, references, cycles, shorthands, !important and values
+that are invalid at computed-value time (they act as unset).
+@check color background-color font-size --main --gap --cycle-a
+-->
+<div id="root" style="width: 600px; height: 200px; --gap: 10px; --main: rgb(255, 0, 0)">
+  <div class="a">a</div>
+  <div class="b" style="--main: rgb(0, 0, 255)">b</div>
+  <div class="c">c</div>
+  <div class="d">d</div>
+  <div class="e">e</div>
+  <div class="f">f</div>
+  <div class="g">g</div>
+  <div class="h"><div class="i">i</div></div>
+</div>
+<style>
+  #root { column-gap: var(--gap); color: rgb(0, 128, 0); }
+  .a { color: var(--main); width: calc(var(--gap) * 3); }
+  .b { color: var(--main); }
+  .c { color: var(--missing, rgb(1, 2, 3)); background-color: var(--missing); }
+  .d { --cycle-a: var(--cycle-b); --cycle-b: var(--cycle-a); color: var(--cycle-a, rgb(4, 5, 6)); }
+  .e { margin: var(--gap) var(--gap, 99px) 0; }
+  .f { --size: 2em; font-size: var(--size); --derived: calc(var(--gap) + 5px); width: var(--derived); }
+  .g { width: var(--gap) !important; }
+  .g { width: 50px; color: var(--main) var(--main); }
+  .h { --main: inherit; --gap: initial; }
+  .i { color: var(--main); width: var(--gap, 33px); }
+</style>

@@ -235,6 +235,10 @@ async function installInPage(checks: string[], allowedTags: string[]): Promise<v
   const round = (value: number) => Math.round(value * 1e6) / 1e6;
 
   const format = (property: string, value: CSSStyleValue | undefined): string | number => {
+    // calc(), min(), max() and clamp() with percentages stay expressions in computed values.
+    if (value instanceof CSSMathValue && !PX_ONLY.has(property) && !NUMBERS.has(property)) {
+      return String(value);
+    }
     if (value instanceof CSSUnitValue) {
       if (NUMBERS.has(property)) {
         if (value.unit !== "number") fail(`${property}: unexpected unit ${value.unit}`);
@@ -246,7 +250,7 @@ async function installInPage(checks: string[], allowedTags: string[]): Promise<v
     }
     const keyword = String(value);
     if (!(KEYWORDS[property] ?? []).includes(keyword)) {
-      fail(`${property}: unsupported value \`${keyword}\` (calc() and most keywords are not supported)`);
+      fail(`${property}: unsupported value \`${keyword}\``);
     }
     return keyword;
   };

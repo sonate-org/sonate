@@ -7,14 +7,14 @@
 
 use super::{LayoutContext, Node, Rect, ScrollState};
 use crate::style::{
-    AlignContent, AlignItems, AlignSelf, BorderStyle, BoxSizing, Display, FlexDirection, FlexWrap,
-    JustifyContent, Length, Overflow, Position, Style,
+    AlignContent, AlignItems, AlignSelf, BorderStyle, BoxSizing, CalcNode, Display, FlexDirection,
+    FlexWrap, JustifyContent, Length, Overflow, Position, Style,
 };
 use crate::text::{FontSpec, TextMeasurer};
 use crate::Id;
 use sonate_layout as engine;
 use sonate_layout::{AvailableSpace, MeasureInput, MeasureOutput, NodeId};
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, rc::Rc, sync::Arc};
 
 /// What a measured leaf contains.
 enum Content {
@@ -191,31 +191,35 @@ fn write_back(
 /// initial values; `em` lengths resolve against the node's font size.
 fn convert_style(style: &Style, font: &FontSpec) -> engine::Style {
     let em = font.size_px as f64;
-    let dimension = |length: Option<Length>| match length {
+    // After the cascade, lengths are px, percentages or math with both (other units are
+    // handled for styles set without the cascade).
+    let to_px = |length: &Length| match length {
+        Length::Px(px) => Some(*px),
+        Length::Em(value) => Some(value * em),
+        _ => None,
+    };
+    let to_calc = |node: &CalcNode| Arc::new(convert_calc(node, &to_px));
+    let dimension = |length: &Option<Length>| match length {
         None | Some(Length::Auto) => engine::Dimension::Auto,
-        Some(Length::Px(px)) => engine::Dimension::Px(px),
-        Some(Length::Em(value)) => engine::Dimension::Px(value * em),
-        Some(Length::Percent(percent)) => engine::Dimension::Percent(percent),
+        Some(Length::Percent(percent)) => engine::Dimension::Percent(*percent),
+        Some(Length::Calc(node)) => engine::Dimension::Calc(to_calc(node)),
+        Some(other) => to_px(other).map_or(engine::Dimension::Auto, engine::Dimension::Px),
     };
     // Margins default to 0 instead of `auto`.
-    let margin = |length: Option<Length>| match length {
+    let margin = |length: &Option<Length>| match length {
         None => engine::Dimension::Px(0.0),
         other => dimension(other),
     };
-    let length_percentage = |length: Option<Length>| match length {
-        Some(Length::Px(px)) => engine::LengthPercentage::Px(px),
-        Some(Length::Em(value)) => engine::LengthPercentage::Px(value * em),
-        Some(Length::Percent(percent)) => engine::LengthPercentage::Percent(percent),
-        None | Some(Length::Auto) => engine::LengthPercentage::Px(0.0),
+    let length_percentage = |length: &Option<Length>| match length {
+        Some(Length::Percent(percent)) => engine::LengthPercentage::Percent(*percent),
+        Some(Length::Calc(node)) => engine::LengthPercentage::Calc(to_calc(node)),
+        Some(other) => engine::LengthPercentage::Px(to_px(other).unwrap_or(0.0)),
+        None => engine::LengthPercentage::Px(0.0),
     };
     // Like the painter, a border is drawn unless its style is explicitly `none` or `hidden`.
-    let border = |width: Option<Length>, style: Option<BorderStyle>| match style {
+    let border = |width: &Option<Length>, style: Option<BorderStyle>| match style {
         Some(BorderStyle::None | BorderStyle::Hidden) => 0.0,
-        _ => match width {
-            Some(Length::Px(px)) => px.max(0.0),
-            Some(Length::Em(value)) => (value * em).max(0.0),
-            _ => 0.0,
-        },
+        _ => width.as_ref().map_or(0.0, |width| width.to_px().max(0.0)),
     };
     let overflow = match style.overflow.unwrap_or_default() {
         Overflow::Visible => engine::Overflow::Visible,
@@ -244,36 +248,36 @@ fn convert_style(style: &Style, font: &FontSpec) -> engine::Style {
             _ => engine::Position::Relative,
         },
         inset: engine::Edges {
-            top: dimension(style.inset.top),
-            right: dimension(style.inset.right),
-            bottom: dimension(style.inset.bottom),
-            left: dimension(style.inset.left),
+            top: dimension(&style.inset.top),
+            right: dimension(&style.inset.right),
+            bottom: dimension(&style.inset.bottom),
+            left: dimension(&style.inset.left),
         },
         box_sizing: match style.box_sizing.unwrap_or_default() {
             BoxSizing::ContentBox => engine::BoxSizing::ContentBox,
             BoxSizing::BorderBox => engine::BoxSizing::BorderBox,
         },
         overflow: engine::Point::new(overflow, overflow),
-        size: engine::Size::new(dimension(style.width), dimension(style.height)),
-        min_size: engine::Size::new(dimension(style.min_width), dimension(style.min_height)),
-        max_size: engine::Size::new(dimension(style.max_width), dimension(style.max_height)),
+        size: engine::Size::new(dimension(&style.width), dimension(&style.height)),
+        min_size: engine::Size::new(dimension(&style.min_width), dimension(&style.min_height)),
+        max_size: engine::Size::new(dimension(&style.max_width), dimension(&style.max_height)),
         margin: engine::Edges {
-            top: margin(style.margin.top),
-            right: margin(style.margin.right),
-            bottom: margin(style.margin.bottom),
-            left: margin(style.margin.left),
+            top: margin(&style.margin.top),
+            right: margin(&style.margin.right),
+            bottom: margin(&style.margin.bottom),
+            left: margin(&style.margin.left),
         },
         padding: engine::Edges {
-            top: length_percentage(style.padding.top),
-            right: length_percentage(style.padding.right),
-            bottom: length_percentage(style.padding.bottom),
-            left: length_percentage(style.padding.left),
+            top: length_percentage(&style.padding.top),
+            right: length_percentage(&style.padding.right),
+            bottom: length_percentage(&style.padding.bottom),
+            left: length_percentage(&style.padding.left),
         },
         border: engine::Edges {
-            top: border(style.border_width.top, style.border_style.top),
-            right: border(style.border_width.right, style.border_style.right),
-            bottom: border(style.border_width.bottom, style.border_style.bottom),
-            left: border(style.border_width.left, style.border_style.left),
+            top: border(&style.border_width.top, style.border_style.top),
+            right: border(&style.border_width.right, style.border_style.right),
+            bottom: border(&style.border_width.bottom, style.border_style.bottom),
+            left: border(&style.border_width.left, style.border_style.left),
         },
         flex_direction: match style.flex_direction.unwrap_or_default() {
             FlexDirection::Row => engine::FlexDirection::Row,
@@ -312,8 +316,8 @@ fn convert_style(style: &Style, font: &FontSpec) -> engine::Style {
             Some(AlignContent::SpaceEvenly) => engine::AlignContent::SpaceEvenly,
         },
         gap: engine::Size::new(
-            length_percentage(style.column_gap),
-            length_percentage(style.row_gap),
+            length_percentage(&style.column_gap),
+            length_percentage(&style.row_gap),
         ),
         align_self: match style.align_self {
             None | Some(AlignSelf::Auto) => None,
@@ -328,7 +332,25 @@ fn convert_style(style: &Style, font: &FontSpec) -> engine::Style {
         },
         flex_grow: style.flex_grow.unwrap_or(0.0),
         flex_shrink: style.flex_shrink.unwrap_or(1.0),
-        flex_basis: dimension(style.flex_basis),
+        flex_basis: dimension(&style.flex_basis),
         order: style.order.unwrap_or(0),
+    }
+}
+
+/// Converts a computed math expression (px and % leaves) for the engine.
+fn convert_calc(node: &CalcNode, to_px: &dyn Fn(&Length) -> Option<f64>) -> engine::Calc {
+    let all = |values: &[CalcNode]| values.iter().map(|value| convert_calc(value, to_px)).collect();
+    match node {
+        CalcNode::Value(Length::Percent(percent)) => engine::Calc::Percent(*percent),
+        CalcNode::Value(length) => engine::Calc::Px(to_px(length).unwrap_or(0.0)),
+        CalcNode::Sum(terms) => engine::Calc::Sum(all(terms)),
+        CalcNode::Scale(value, factor) => engine::Calc::Scale(Box::new(convert_calc(value, to_px)), *factor),
+        CalcNode::Min(values) => engine::Calc::Min(all(values)),
+        CalcNode::Max(values) => engine::Calc::Max(all(values)),
+        CalcNode::Clamp(min, value, max) => engine::Calc::Clamp(
+            Box::new(convert_calc(min, to_px)),
+            Box::new(convert_calc(value, to_px)),
+            Box::new(convert_calc(max, to_px)),
+        ),
     }
 }

@@ -20,7 +20,7 @@ fn test_parse_border_shorthand_width_and_color() {
     let mut found_style = false;
 
     for declaration in &rule.declarations {
-        if let Some(width) = declaration.border_width.top {
+        if let Some(width) = declaration.border_width.top.clone() {
             // 2px
             found_width = matches!(
                 width,
@@ -271,10 +271,10 @@ fn test_parse_border_side_longhands() {
         if let Some(s) = declaration.border_style.right {
             saw_right_style = s == BorderStyle::Dotted;
         }
-        if let Some(w) = declaration.border_width.bottom {
+        if let Some(w) = declaration.border_width.bottom.clone() {
             saw_bottom_width = matches!(w, Length::Px(v) if (v - 5.0).abs() < f64::EPSILON);
         }
-        if let Some(w) = declaration.border_width.left {
+        if let Some(w) = declaration.border_width.left.clone() {
             saw_left_width = matches!(w, Length::Px(v) if (v - 2.0).abs() < f64::EPSILON);
         }
 

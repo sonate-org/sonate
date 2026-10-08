@@ -82,9 +82,10 @@ impl FlexLayoutEngine {
         let available_cross =
             determine_available_space(container_cross, container_style, &direction, Axis::Cross);
 
-        let row_gap_px = container_style.row_gap.unwrap_or(Length::Px(0.0)).to_px();
+        let row_gap_px = container_style.row_gap.clone().unwrap_or(Length::Px(0.0)).to_px();
         let column_gap_px = container_style
             .column_gap
+            .clone()
             .unwrap_or(Length::Px(0.0))
             .to_px();
         let (main_gap_px, cross_gap_px) = match direction {
@@ -658,10 +659,10 @@ fn is_definite_container_content_box_size(
 
 fn specified_axis_length(style: &Style, direction: &FlexDirection, axis: Axis) -> Option<Length> {
     match (direction, axis) {
-        (FlexDirection::Row | FlexDirection::RowReverse, Axis::Main) => style.width,
-        (FlexDirection::Row | FlexDirection::RowReverse, Axis::Cross) => style.height,
-        (FlexDirection::Column | FlexDirection::ColumnReverse, Axis::Main) => style.height,
-        (FlexDirection::Column | FlexDirection::ColumnReverse, Axis::Cross) => style.width,
+        (FlexDirection::Row | FlexDirection::RowReverse, Axis::Main) => style.width.clone(),
+        (FlexDirection::Row | FlexDirection::RowReverse, Axis::Cross) => style.height.clone(),
+        (FlexDirection::Column | FlexDirection::ColumnReverse, Axis::Main) => style.height.clone(),
+        (FlexDirection::Column | FlexDirection::ColumnReverse, Axis::Cross) => style.width.clone(),
     }
 }
 
@@ -746,9 +747,10 @@ fn intrinsic_border_box_size_from_children(
 
     let direction = container_style.flex_direction.unwrap_or(FlexDirection::Row);
     let is_row_main = matches!(direction, FlexDirection::Row | FlexDirection::RowReverse);
-    let row_gap_px = container_style.row_gap.unwrap_or(Length::Px(0.0)).to_px();
+    let row_gap_px = container_style.row_gap.clone().unwrap_or(Length::Px(0.0)).to_px();
     let column_gap_px = container_style
         .column_gap
+        .clone()
         .unwrap_or(Length::Px(0.0))
         .to_px();
     let main_gap_px = if is_row_main {
@@ -814,6 +816,7 @@ fn margins_for_direction(
     m: &Directional<Length>,
     direction: &FlexDirection,
 ) -> (Length, Length, Length, Length) {
+    let m = m.clone();
     match direction {
         FlexDirection::Row => (m.left, m.right, m.top, m.bottom),
         FlexDirection::RowReverse => (m.right, m.left, m.top, m.bottom),

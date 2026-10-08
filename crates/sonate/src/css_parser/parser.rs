@@ -1,5 +1,6 @@
 use super::borders::Side;
 use super::selectors::{parse_selector_list, SelectorList};
+use super::variables::{contains_var, raw_value};
 use crate::style::{
     AlignContent, AlignItems, AlignSelf, BoxSizing, CssWideKeyword, Declaration, Directional,
     Display, FlexDirection, FlexWrap, JustifyContent, Length, Overflow, Position, Rule, Style,
@@ -36,6 +37,15 @@ pub fn parse_css(css: &str) -> Result<StyleSheet, String> {
 
 /// Parse the declarations of an inline `style` attribute, in source order.
 pub fn parse_inline_style(css: &str) -> Vec<Declaration> {
+    parse_declaration_list(css, true)
+}
+
+/// Like [`parse_inline_style`], without reporting errors.
+pub fn parse_declarations(css: &str) -> Vec<Declaration> {
+    parse_declaration_list(css, false)
+}
+
+fn parse_declaration_list(css: &str, report_errors: bool) -> Vec<Declaration> {
     let mut input = ParserInput::new(css);
     let mut parser = Parser::new(&mut input);
     let mut declaration_parser = StyleDeclarationParser::new();
@@ -44,7 +54,9 @@ pub fn parse_inline_style(css: &str) -> Vec<Declaration> {
         .filter_map(|item| match item {
             Ok(declaration) => Some(declaration),
             Err(err) => {
-                eprintln!("Inline style parsing error: {:?}", err);
+                if report_errors {
+                    eprintln!("Inline style parsing error: {:?}", err);
+                }
                 None
             }
         })
@@ -128,8 +140,16 @@ impl<'i> DeclarationParser<'i> for StyleDeclarationParser {
         input: &mut Parser<'i, 't>,
         _declaration_start: &ParserState,
     ) -> Result<Self::Declaration, ParseError<'i, Self::Error>> {
+        let is_custom = name.starts_with("--");
         // Parse the value up to `!important`, so value parsers can require the whole input.
-        let (style, keyword) = input.parse_until_before(Delimiter::Bang, |input| {
+        let mut declaration = input.parse_until_before(Delimiter::Bang, |input| {
+            let mut declaration = Declaration {
+                style: Style::default(),
+                important: false,
+                keyword: None,
+                custom: None,
+                unparsed: None,
+            };
             let keyword = input.try_parse(|input| {
                 let ident = input.expect_ident_cloned()?;
                 input.expect_exhausted()?;
@@ -141,18 +161,28 @@ impl<'i> DeclarationParser<'i> for StyleDeclarationParser {
                     _ => Err(input.new_custom_error::<(), ()>(())),
                 }
             });
-            match keyword {
-                Ok(_) if !crate::cascade::is_known_property(&name) => Err(input.new_custom_error(())),
-                Ok(keyword) => Ok((Style::default(), Some((name.to_string(), keyword)))),
-                Err(_) => Ok((self.parse_property(name.clone(), input)?, None)),
+            if !is_custom && !crate::cascade::is_known_property(&name) {
+                return Err(input.new_custom_error(()));
             }
+
+            if let Ok(keyword) = keyword {
+                declaration.keyword = Some((name.to_string(), keyword));
+            } else if is_custom {
+                declaration.custom = Some((name.to_string(), raw_value(input)));
+            } else {
+                let start = input.state();
+                let uses_var = contains_var(input);
+                input.reset(&start);
+                if uses_var {
+                    declaration.unparsed = Some((name.to_string(), raw_value(input)));
+                } else {
+                    declaration.style = self.parse_property(name.clone(), input)?;
+                }
+            }
+            Ok(declaration)
         })?;
-        let important = input.try_parse(cssparser::parse_important).is_ok();
-        Ok(Declaration {
-            style,
-            important,
-            keyword,
-        })
+        declaration.important = input.try_parse(cssparser::parse_important).is_ok();
+        Ok(declaration)
     }
 }
 
@@ -449,13 +479,13 @@ impl StyleDeclarationParser {
                 let first = self.parse_length_value(input)?;
                 let second = input
                     .try_parse(|input| self.parse_length_value(input))
-                    .unwrap_or(first);
+                    .unwrap_or_else(|_| first.clone());
                 let third = input
                     .try_parse(|input| self.parse_length_value(input))
-                    .unwrap_or(first);
+                    .unwrap_or_else(|_| first.clone());
                 let fourth = input
                     .try_parse(|input| self.parse_length_value(input))
-                    .unwrap_or(second);
+                    .unwrap_or_else(|_| second.clone());
                 style.inset = Directional {
                     top: Some(first),
                     right: Some(second),
@@ -597,7 +627,7 @@ impl StyleDeclarationParser {
                 let row_gap = self.parse_length_value(input)?;
                 let column_gap = input
                     .try_parse(|input| self.parse_length_value(input))
-                    .unwrap_or(row_gap);
+                    .unwrap_or_else(|_| row_gap.clone());
                 style.row_gap = Some(row_gap);
                 style.column_gap = Some(column_gap);
             }

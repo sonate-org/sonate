@@ -4,43 +4,64 @@
 //! every box is a flex container (`display: flex`) and every box is a containing block for
 //! absolutely positioned children (`position: relative`).
 
+use crate::calc::Calc;
 use crate::geometry::{Edges, Point, Size};
+use std::sync::Arc;
 
 /// A length that may be `auto` or a percentage.
 ///
 /// Used for `width`/`height`, `min-*` (`Auto` = `auto`), `max-*` (`Auto` = `none`),
 /// `flex-basis`, margins and insets.
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub enum Dimension {
     #[default]
     Auto,
     Px(f64),
     /// A percentage, where `Percent(50.0)` is `50%`.
     Percent(f64),
+    /// `calc()`, `min()`, `max()` or `clamp()` with percentages.
+    Calc(Arc<Calc>),
 }
 
 impl Dimension {
-    /// Resolves against a percentage basis. Returns `None` for `auto` and for percentages
-    /// against an indefinite basis.
-    pub fn resolve(self, basis: Option<f64>) -> Option<f64> {
+    /// Resolves against a percentage basis. Returns `None` for `auto` and when a percentage
+    /// meets an indefinite basis (the value then behaves as `auto`).
+    pub fn resolve(&self, basis: Option<f64>) -> Option<f64> {
         match self {
             Dimension::Auto => None,
-            Dimension::Px(px) => Some(px),
+            Dimension::Px(px) => Some(*px),
             Dimension::Percent(percent) => basis.map(|basis| basis * percent / 100.0),
+            Dimension::Calc(calc) => calc.resolve(basis),
         }
     }
 
-    pub fn is_auto(self) -> bool {
+    /// Resolves against a percentage basis, where percentages of an indefinite basis count as
+    /// zero (margins, insets). Returns `None` for `auto`.
+    pub fn resolve_with_zero_basis(&self, basis: Option<f64>) -> Option<f64> {
+        self.resolve(Some(basis.unwrap_or(0.0)))
+    }
+
+    pub fn is_auto(&self) -> bool {
         matches!(self, Dimension::Auto)
+    }
+
+    pub fn is_percentage(&self) -> bool {
+        match self {
+            Dimension::Percent(_) => true,
+            Dimension::Calc(calc) => calc.has_percentage(),
+            _ => false,
+        }
     }
 }
 
 /// A length that may be a percentage but not `auto` (padding, gaps).
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum LengthPercentage {
     Px(f64),
     /// A percentage, where `Percent(50.0)` is `50%`.
     Percent(f64),
+    /// `calc()`, `min()`, `max()` or `clamp()` with percentages.
+    Calc(Arc<Calc>),
 }
 
 impl Default for LengthPercentage {
@@ -51,10 +72,20 @@ impl Default for LengthPercentage {
 
 impl LengthPercentage {
     /// Resolves against a percentage basis; percentages of an indefinite basis are zero.
-    pub fn resolve_or_zero(self, basis: Option<f64>) -> f64 {
+    pub fn resolve_or_zero(&self, basis: Option<f64>) -> f64 {
+        let basis = basis.unwrap_or(0.0);
         match self {
-            LengthPercentage::Px(px) => px,
-            LengthPercentage::Percent(percent) => basis.map_or(0.0, |basis| basis * percent / 100.0),
+            LengthPercentage::Px(px) => *px,
+            LengthPercentage::Percent(percent) => basis * percent / 100.0,
+            LengthPercentage::Calc(calc) => calc.resolve(Some(basis)).unwrap_or(0.0),
+        }
+    }
+
+    pub fn is_percentage(&self) -> bool {
+        match self {
+            LengthPercentage::Percent(_) => true,
+            LengthPercentage::Calc(calc) => calc.has_percentage(),
+            LengthPercentage::Px(_) => false,
         }
     }
 }
@@ -238,39 +269,35 @@ impl Style {
     /// Whether any property that resolves against the containing block is a percentage.
     pub(crate) fn uses_percentages(&self) -> bool {
         let dimensions = [
-            self.size.width,
-            self.size.height,
-            self.min_size.width,
-            self.min_size.height,
-            self.max_size.width,
-            self.max_size.height,
-            self.margin.top,
-            self.margin.right,
-            self.margin.bottom,
-            self.margin.left,
-            self.inset.top,
-            self.inset.right,
-            self.inset.bottom,
-            self.inset.left,
+            &self.size.width,
+            &self.size.height,
+            &self.min_size.width,
+            &self.min_size.height,
+            &self.max_size.width,
+            &self.max_size.height,
+            &self.margin.top,
+            &self.margin.right,
+            &self.margin.bottom,
+            &self.margin.left,
+            &self.inset.top,
+            &self.inset.right,
+            &self.inset.bottom,
+            &self.inset.left,
         ];
-        let padding = [self.padding.top, self.padding.right, self.padding.bottom, self.padding.left];
-        dimensions
-            .iter()
-            .any(|dimension| matches!(dimension, Dimension::Percent(_)))
-            || padding
-                .iter()
-                .any(|padding| matches!(padding, LengthPercentage::Percent(_)))
+        let padding = [&self.padding.top, &self.padding.right, &self.padding.bottom, &self.padding.left];
+        dimensions.iter().any(|dimension| dimension.is_percentage())
+            || padding.iter().any(|padding| padding.is_percentage())
     }
 
     /// Whether `width`, `height` or any `min-*`/`max-*` is set.
     pub(crate) fn has_sizing_properties(&self) -> bool {
         [
-            self.size.width,
-            self.size.height,
-            self.min_size.width,
-            self.min_size.height,
-            self.max_size.width,
-            self.max_size.height,
+            &self.size.width,
+            &self.size.height,
+            &self.min_size.width,
+            &self.min_size.height,
+            &self.max_size.width,
+            &self.max_size.height,
         ]
         .iter()
         .any(|dimension| !dimension.is_auto())

@@ -76,6 +76,7 @@ at the end, so reverse directions and `wrap-reverse` share the same code.
 | `flex-grow`, `flex-shrink`, `flex-basis` (px, %, `auto`), freezing at min/max (§9.7) | ✅ |
 | `width`/`height`, `min-*`/`max-*` (px, %), `box-sizing`, automatic minimum size (§4.5) | ✅ |
 | Margins (incl. `auto`), padding, borders, `row-gap`/`column-gap` (px, %) | ✅ |
+| `calc()`, `min()`, `max()`, `clamp()` with percentages, resolved at layout time | ✅ |
 | `justify-content`, `align-items`, `align-self`, `align-content`, incl. `start`/`end` and overflow fallbacks | ✅ |
 | Baseline alignment (first baselines, synthesized baselines) | ✅ |
 | Definite sizes (§9.8), percentages against indefinite sizes | ✅ |

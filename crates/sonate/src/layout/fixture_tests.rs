@@ -128,6 +128,11 @@ fn computed_value(style: &Style, property: &str) -> Option<String> {
             Some(Length::Px(px)) => format!("{}px", css_number(px)),
             _ => format!("{}px", crate::cascade::DEFAULT_FONT_SIZE_PX),
         },
+        name if name.starts_with("--") => style
+            .custom_properties
+            .as_ref()
+            .and_then(|custom| custom.get(name).cloned())
+            .unwrap_or_default(),
         "display" => match style.display {
             Some(Display::None) => "none".to_owned(),
             _ => "flex".to_owned(),

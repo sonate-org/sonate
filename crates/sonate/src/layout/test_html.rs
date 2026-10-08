@@ -36,7 +36,8 @@ pub fn load_layout_fixture(
     }
 
     let mut reader = Reader::new("");
-    reader.ctx.set_viewport_size(10_000.0, 10_000.0);
+    // The page size bless uses, for `vw` and `vh`.
+    reader.ctx.set_viewport_size(1200.0, 900.0);
     // The part of tools/bless/base.css that Sonate doesn't do by default: a 10px font,
     // inherited from the root like Chrome inherits it from the body. The test text measurer
     // already uses Ahem metrics.

@@ -5,6 +5,7 @@
 //! measure function for leaves such as text. Results are read with [`LayoutTree::layout`].
 
 mod cache;
+mod calc;
 mod compute;
 mod flex;
 mod geometry;
@@ -16,6 +17,7 @@ mod tree;
 #[cfg(feature = "testing")]
 pub mod testing;
 
+pub use calc::Calc;
 pub use compute::{compute_layout, MeasureFn, MeasureInput, MeasureOutput};
 pub use geometry::{AvailableSpace, Axis, Edges, Point, Size};
 pub use style::{

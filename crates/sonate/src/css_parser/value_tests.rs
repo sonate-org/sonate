@@ -364,3 +364,35 @@ fn test_parse_padding_sides() {
         .iter()
         .any(|d| matches!(d.padding.left, Some(Length::Auto))));
 }
+
+fn parse_width(value: &str) -> Option<Length> {
+    let declarations = crate::css_parser::parse_declarations(&format!("width: {value}"));
+    declarations.first().and_then(|declaration| declaration.width.clone())
+}
+
+#[test]
+fn test_units() {
+    assert_eq!(parse_width("2rem"), Some(Length::Rem(2.0)));
+    assert_eq!(parse_width("10vw"), Some(Length::Vw(10.0)));
+    assert_eq!(parse_width("5VMIN"), Some(Length::Vmin(5.0)));
+    assert_eq!(parse_width("1in"), Some(Length::Px(96.0)));
+    assert_eq!(parse_width("12pt"), Some(Length::Px(16.0)));
+    assert_eq!(parse_width("3furlongs"), None);
+}
+
+#[test]
+fn test_math_functions() {
+    let px = |value: &str| parse_width(value).map(|length| length.to_px());
+    assert_eq!(px("calc(10px * 3)"), Some(30.0));
+    assert_eq!(px("calc((20px + 10px) / 2)"), Some(15.0));
+    assert_eq!(px("min(10px, 5px, 7px)"), Some(5.0));
+    assert_eq!(px("clamp(10px, 50px, 20px)"), Some(20.0));
+    assert_eq!(parse_width("calc(10px)"), Some(Length::Px(10.0)));
+    assert!(matches!(parse_width("calc(50% - 1em)"), Some(Length::Calc(_))));
+
+    // `+` and `-` need whitespace, lengths can't be multiplied together, and division is by
+    // numbers only.
+    for invalid in ["calc(10px+5px)", "calc(10px -5px)", "calc(10px * 2px)", "calc(10px / 2px)", "calc(2)", "clamp(1px, 2px)"] {
+        assert_eq!(parse_width(invalid), None, "{invalid}");
+    }
+}

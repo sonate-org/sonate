@@ -32,8 +32,8 @@ These tables lists the specifications enumerated in **Section 2 (Classification 
 | Selectors Level 3 | [SELECTORS-3](https://www.w3.org/TR/selectors-3/) | Supported except pseudo-elements, namespaces, `:lang()`, `:target`, `:link`/`:visited` and the UI element states (`:checked`, `:disabled`, …). `:focus` applies to text inputs and elements with `tabindex` |
 | CSS Namespaces Module Level 3 | [CSS3-NAMESPACE](https://www.w3.org/TR/css-namespaces/) | |
 | CSS Cascading and Inheritance Level 4 | [CSS-CASCADE-4](https://www.w3.org/TR/css-cascade-4/) | Partial support. Author origin only: specificity, order, `!important`, inheritance, `inherit`/`initial`/`unset` (`revert` acts as `unset`). No `@import` or `all` |
-| CSS Values and Units Module Level 3 | [CSS-VALUES-3](https://www.w3.org/TR/css-values-3/) | |
-| CSS Custom Properties for Cascading Variables Module Level 1 | [CSS-VARIABLES-1](https://www.w3.org/TR/css-variables-1/) | |
+| CSS Values and Units Module Level 3 | [CSS-VALUES-3](https://www.w3.org/TR/css-values-3/) | Lengths in `px`, `em`, `rem`, `vw`, `vh`, `vmin`, `vmax`, `in`, `cm`, `mm`, `Q`, `pt`, `pc` and `%`; `calc()` plus `min()`, `max()` and `clamp()` from Level 4. No `ex`/`ch`, angles in `calc()` or `attr()` |
+| CSS Custom Properties for Cascading Variables Module Level 1 | [CSS-VARIABLES-1](https://www.w3.org/TR/css-variables-1/) | Supported: inherited custom properties, `var()` with fallbacks, reference cycles and invalid-at-computed-value-time |
 | CSS Box Model Module Level 3 | [CSS-BOX-3](https://www.w3.org/TR/css-box-3/) | |
 | CSS Color Module Level 4 | [CSS-COLOR-4](https://www.w3.org/TR/css-color-4/) | Partial support. Missing `opacity`, `color: inherit`, `lab`, `lch`, `oklab`, `oklch`, `color`, `currentcolor`. Only sRGB color space supported. |
 | CSS Backgrounds and Borders Module Level 3 | [CSS-BACKGROUNDS-3](https://www.w3.org/TR/css-backgrounds-3/) | Partial support. Only background colors and solid borders are supported. Different `border-width` properties for each side is not supported. |

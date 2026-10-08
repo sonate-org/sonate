@@ -7,6 +7,7 @@ use crate::style::{BoxSizing, Dimension, Style};
 pub(crate) fn padding(style: &Style, containing_width: Option<f64>) -> Edges<f64> {
     style
         .padding
+        .as_ref()
         .map(|value| value.resolve_or_zero(containing_width).max(0.0))
 }
 
@@ -18,13 +19,7 @@ pub(crate) fn padding_border(style: &Style, containing_width: Option<f64>) -> Ed
 /// Margins in px, with `None` for `auto`. Percentages resolve against the containing block's
 /// width on both axes.
 pub(crate) fn margin(style: &Style, containing_width: Option<f64>) -> Edges<Option<f64>> {
-    style.margin.map(|value| {
-        if value.is_auto() {
-            None
-        } else {
-            Some(value.resolve(containing_width).unwrap_or(0.0))
-        }
-    })
+    style.margin.as_ref().map(|value| value.resolve_with_zero_basis(containing_width))
 }
 
 /// Margins in px with `auto` treated as zero.
@@ -47,7 +42,7 @@ impl BoxSizes {
     /// Resolves the sizing properties. `parent_size` is the containing block's content size
     /// used for percentages and `padding_border` the box's padding plus border sums.
     pub fn resolve(style: &Style, parent_size: Size<Option<f64>>, padding_border: Size<f64>) -> Self {
-        let resolve = |dimensions: Size<Dimension>| {
+        let resolve = |dimensions: &Size<Dimension>| {
             Size::new(
                 to_border_box(
                     style,
@@ -63,9 +58,9 @@ impl BoxSizes {
         };
 
         Self {
-            size: resolve(style.size),
-            min: resolve(style.min_size),
-            max: resolve(style.max_size),
+            size: resolve(&style.size),
+            min: resolve(&style.min_size),
+            max: resolve(&style.max_size),
         }
     }
 

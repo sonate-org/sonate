@@ -286,7 +286,12 @@ impl LayoutContext {
 
     pub fn layout(&mut self) {
         self.text_measurer.begin_layout_pass();
-        crate::cascade::compute_styles(&self.document, &self.style_sheet, &self.element_states());
+        crate::cascade::compute_styles(
+            &self.document,
+            &self.style_sheet,
+            &self.element_states(),
+            (self.viewport_size.width, self.viewport_size.height),
+        );
         if use_legacy_layout() {
             self.layout_node(self.document.root.clone(), 0.0, 0.0);
         } else {
@@ -583,18 +588,18 @@ impl LayoutContext {
                     let font = FontSpec::from_style(&style);
 
                     // Width: if not specified, use unwrapped intrinsic width.
-                    if matches!(style.width, Some(Length::Auto)) {
+                    if matches!(&style.width, Some(Length::Auto)) {
                         let text_size = self.text_measurer.measure_unwrapped(text, &font);
                         fallback_width_border_box = text_size.width + padding_w + border_w;
                     }
 
                     // Height: if not specified, try to wrap to a specified width (if any), else unwrapped.
-                    if matches!(style.height, Some(Length::Auto)) {
-                        let text_size = match style.width {
-                            Some(Length::Px(specified_width_px)) if specified_width_px > 0.0 => {
+                    if matches!(&style.height, Some(Length::Auto)) {
+                        let text_size = match &style.width {
+                            Some(Length::Px(specified_width_px)) if *specified_width_px > 0.0 => {
                                 // Wrap within the content box width.
                                 let content_max_width = match resolved_box_sizing {
-                                    BoxSizing::ContentBox => specified_width_px,
+                                    BoxSizing::ContentBox => *specified_width_px,
                                     BoxSizing::BorderBox => {
                                         (specified_width_px - padding_w - border_w).max(0.0)
                                     }
@@ -612,9 +617,10 @@ impl LayoutContext {
 
             let mut node_borrow = node.borrow_mut();
             node_borrow.layout.bounds.width =
-                resolve_border_box(style.width, fallback_width_border_box, padding_w, border_w);
+                resolve_border_box(
+                style.width.clone(), fallback_width_border_box, padding_w, border_w);
             node_borrow.layout.bounds.height = resolve_border_box(
-                style.height,
+                style.height.clone(),
                 fallback_height_border_box,
                 padding_h,
                 border_h,
@@ -635,9 +641,11 @@ impl LayoutContext {
             };
 
             let container_width =
-                resolve_border_box(style.width, fallback_width, padding_w, border_w);
+                resolve_border_box(
+                style.width.clone(), fallback_width, padding_w, border_w);
             let container_height =
-                resolve_border_box(style.height, fallback_height, padding_h, border_h);
+                resolve_border_box(
+                style.height.clone(), fallback_height, padding_h, border_h);
 
             // Set container dimensions
             {

@@ -1,0 +1,14 @@
+<!--
+Percentages inside calc() against an indefinite height make the size behave as auto; in
+padding and margins they count as zero during intrinsic sizing.
+@matrix #root align-items: flex-start | normal
+-->
+<div id="root" style="width: 300px; height: 300px; flex-direction: column">
+  <div id="auto" style="flex-direction: row">
+    <div style="height: calc(50% + 10px); width: 40px">Ab</div>
+    <div style="height: 20px; width: 30px"></div>
+  </div>
+  <div id="fixed" style="height: 100px">
+    <div style="height: calc(50% + 10px); width: calc(20% + 5px); padding-left: calc(10% + 2px)"></div>
+  </div>
+</div>

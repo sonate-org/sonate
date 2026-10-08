@@ -8,7 +8,9 @@ use crate::{
     FlexDirection, FlexWrap, JustifyContent, LayoutTree, LengthPercentage, NodeId, Overflow,
     Position, Size, Style,
 };
+use super::calc_parser::parse_calc;
 use std::collections::BTreeMap;
+use std::sync::Arc;
 
 /// Lays out the case and returns each node's rect relative to its parent, in snapshot order.
 /// The engine has no computed values to compare (it gets Chrome's), so `@check`s are skipped.
@@ -233,9 +235,16 @@ fn px(value: &str) -> Result<f64, String> {
         .and_then(number)
 }
 
+fn is_math(value: &str) -> bool {
+    ["calc(", "min(", "max(", "clamp("]
+        .iter()
+        .any(|prefix| value.starts_with(prefix))
+}
+
 fn dimension(value: &str) -> Result<Dimension, String> {
     match value {
         "auto" | "none" => Ok(Dimension::Auto),
+        _ if is_math(value) => Ok(Dimension::Calc(Arc::new(parse_calc(value)?))),
         _ => match value.strip_suffix('%') {
             Some(percent) => number(percent).map(Dimension::Percent),
             None => px(value).map(Dimension::Px),
@@ -246,6 +255,7 @@ fn dimension(value: &str) -> Result<Dimension, String> {
 fn length_percentage(value: &str) -> Result<LengthPercentage, String> {
     match value {
         "normal" => Ok(LengthPercentage::Px(0.0)),
+        _ if is_math(value) => Ok(LengthPercentage::Calc(Arc::new(parse_calc(value)?))),
         _ => match value.strip_suffix('%') {
             Some(percent) => number(percent).map(LengthPercentage::Percent),
             None => px(value).map(LengthPercentage::Px),
