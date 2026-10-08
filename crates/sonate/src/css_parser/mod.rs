@@ -2,9 +2,14 @@ mod borders;
 mod colors;
 mod named_colors;
 mod parser;
+mod selectors;
 mod values;
 
 pub use parser::{parse_css, parse_inline_style};
+pub use selectors::{
+    AttributeOperator, AttributeSelector, Combinator, ComplexSelector, CompoundSelector,
+    PseudoClass, SelectorList, SimpleSelector, Specificity,
+};
 
 #[cfg(test)]
 mod color_tests;
@@ -17,3 +22,6 @@ mod css_parser_tests;
 
 #[cfg(test)]
 mod border_tests;
+
+#[cfg(test)]
+mod selector_tests;

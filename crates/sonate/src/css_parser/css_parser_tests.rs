@@ -1,5 +1,5 @@
 use crate::css_parser::parse_css;
-use crate::style::{Display, FlexDirection, Length, Selector, Style, Widget};
+use crate::style::{Display, FlexDirection, Length, Style, Widget};
 
 #[test]
 fn test_parse_simple_css_document() {
@@ -41,10 +41,7 @@ fn test_parse_simple_css_document() {
 
     // Test first rule (.container)
     let container_rule = &stylesheet.rules[0];
-    assert_eq!(
-        container_rule.selector,
-        Selector::Class("container".to_string())
-    );
+    assert_eq!(container_rule.selectors.to_string(), ".container");
     assert!(!container_rule.declarations.is_empty());
 
     // Check that we have multiple declarations for the container
@@ -70,12 +67,12 @@ fn test_parse_simple_css_document() {
 
     // Test second rule (.box)
     let box_rule = &stylesheet.rules[1];
-    assert_eq!(box_rule.selector, Selector::Class("box".to_string()));
+    assert_eq!(box_rule.selectors.to_string(), ".box");
     assert!(!box_rule.declarations.is_empty());
 
     // Test third rule (button)
     let button_rule = &stylesheet.rules[2];
-    assert_eq!(button_rule.selector, Selector::Tag("button".to_string()));
+    assert_eq!(button_rule.selectors.to_string(), "button");
     assert!(!button_rule.declarations.is_empty());
 }
 
@@ -96,7 +93,7 @@ fn test_parse_flex_properties() {
     assert_eq!(stylesheet.rules.len(), 1);
 
     let rule = &stylesheet.rules[0];
-    assert_eq!(rule.selector, Selector::Class("flex-container".to_string()));
+    assert_eq!(rule.selectors.to_string(), ".flex-container");
 
     // Verify we can parse all the flex properties
     assert!(!rule.declarations.is_empty());
@@ -151,18 +148,9 @@ fn test_complex_selectors() {
     let stylesheet = parse_css(css).expect("Failed to parse CSS");
     assert_eq!(stylesheet.rules.len(), 3);
 
-    assert_eq!(
-        stylesheet.rules[0].selector,
-        Selector::Class("main-container".to_string())
-    );
-    assert_eq!(
-        stylesheet.rules[1].selector,
-        Selector::Tag("div".to_string())
-    );
-    assert_eq!(
-        stylesheet.rules[2].selector,
-        Selector::Class("sidebar".to_string())
-    );
+    assert_eq!(stylesheet.rules[0].selectors.to_string(), ".main-container");
+    assert_eq!(stylesheet.rules[1].selectors.to_string(), "div");
+    assert_eq!(stylesheet.rules[2].selectors.to_string(), ".sidebar");
 }
 
 #[test]
@@ -184,10 +172,7 @@ fn test_single_rule_css() {
     let css = ".single { display: flex; }";
     let stylesheet = parse_css(css).expect("Failed to parse single rule CSS");
     assert_eq!(stylesheet.rules.len(), 1);
-    assert_eq!(
-        stylesheet.rules[0].selector,
-        Selector::Class("single".to_string())
-    );
+    assert_eq!(stylesheet.rules[0].selectors.to_string(), ".single");
 }
 
 #[test]
@@ -246,10 +231,22 @@ fn test_parse_flex_shorthand() {
         (style.flex_grow, style.flex_shrink, style.flex_basis)
     };
 
-    assert_eq!(parse("1"), (Some(1.0), Some(1.0), Some(Length::Percent(0.0))));
-    assert_eq!(parse("2 3"), (Some(2.0), Some(3.0), Some(Length::Percent(0.0))));
-    assert_eq!(parse("1 1 50px"), (Some(1.0), Some(1.0), Some(Length::Px(50.0))));
-    assert_eq!(parse("100px"), (Some(1.0), Some(1.0), Some(Length::Px(100.0))));
+    assert_eq!(
+        parse("1"),
+        (Some(1.0), Some(1.0), Some(Length::Percent(0.0)))
+    );
+    assert_eq!(
+        parse("2 3"),
+        (Some(2.0), Some(3.0), Some(Length::Percent(0.0)))
+    );
+    assert_eq!(
+        parse("1 1 50px"),
+        (Some(1.0), Some(1.0), Some(Length::Px(50.0)))
+    );
+    assert_eq!(
+        parse("100px"),
+        (Some(1.0), Some(1.0), Some(Length::Px(100.0)))
+    );
     assert_eq!(parse("auto"), (Some(1.0), Some(1.0), Some(Length::Auto)));
     assert_eq!(parse("none"), (Some(0.0), Some(0.0), Some(Length::Auto)));
 }
@@ -272,7 +269,13 @@ fn test_parse_layout_properties() {
     assert_eq!(style.max_width, Some(Length::Auto));
     assert_eq!(style.max_height, Some(Length::Px(50.0)));
     assert!(matches!(style.flex_direction, Some(FlexDirection::Column)));
-    assert!(matches!(style.flex_wrap, Some(crate::style::FlexWrap::Wrap)));
-    assert_eq!((style.row_gap, style.column_gap), (Some(Length::Px(4.0)), Some(Length::Px(8.0))));
+    assert!(matches!(
+        style.flex_wrap,
+        Some(crate::style::FlexWrap::Wrap)
+    ));
+    assert_eq!(
+        (style.row_gap, style.column_gap),
+        (Some(Length::Px(4.0)), Some(Length::Px(8.0)))
+    );
     assert_eq!(style.font_size, Some(Length::Px(20.0)));
 }

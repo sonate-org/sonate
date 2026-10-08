@@ -1,7 +1,8 @@
 //! Runs a snapshot case through this crate's engine.
 
 use super::ahem::measure_text;
-use super::snapshot::{Rect4, SnapshotCase};
+use super::harness::CaseOutput;
+use super::snapshot::SnapshotCase;
 use crate::{
     compute_layout, AlignContent, AlignItems, AvailableSpace, BoxSizing, Dimension, Display,
     FlexDirection, FlexWrap, JustifyContent, LayoutTree, LengthPercentage, NodeId, Overflow,
@@ -10,7 +11,8 @@ use crate::{
 use std::collections::BTreeMap;
 
 /// Lays out the case and returns each node's rect relative to its parent, in snapshot order.
-pub fn layout_case(case: &SnapshotCase) -> Result<Vec<Rect4>, String> {
+/// The engine has no computed values to compare (it gets Chrome's), so `@check`s are skipped.
+pub fn layout_case(case: &SnapshotCase) -> Result<CaseOutput, String> {
     let children = case.children();
     let mut tree = LayoutTree::new();
     let mut ids = vec![None; case.nodes.len()];
@@ -32,13 +34,14 @@ pub fn layout_case(case: &SnapshotCase) -> Result<Vec<Rect4>, String> {
         &mut measure,
     );
 
-    Ok(ids
+    let rects = ids
         .iter()
         .map(|&id| {
             let layout = tree.layout(id);
             [layout.location.x, layout.location.y, layout.size.width, layout.size.height]
         })
-        .collect())
+        .collect();
+    Ok(CaseOutput { rects, values: None })
 }
 
 fn push_subtree(

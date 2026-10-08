@@ -436,6 +436,8 @@ function mountHost(vnode: VNode, parentNodeId: bigint): HostInstance {
   const textBytes = text === null ? null : encoder.encode(text + "\0");
   const textPtr = textBytes === null ? null : Deno.UnsafePointer.of(textBytes);
   sonate.sonate_create_node(engine, nodeId, textPtr);
+  // The element name, for type selectors such as `button { ... }`.
+  sonate.sonate_set_attribute(engine, nodeId, encode("tag"), encode(vnode.type as string));
 
   applyProps(engine, nodeId, null, vnode.props);
   sonate.sonate_set_parent(engine, parentNodeId, nodeId);

@@ -9,9 +9,14 @@ fn whitespace_only_text_does_not_become_a_flex_item() {
     ctx.style_sheet = crate::css_parser::parse_css(".row { column-gap: 10px; }").unwrap();
     let root = ctx.document.root_id();
     let row = ctx.document.create_node(Id::from_u64(1), None);
-    let space = ctx.document.create_node(Id::from_u64(2), Some("   ".to_owned()));
-    let text = ctx.document.create_node(Id::from_u64(3), Some("Ab".to_owned()));
-    ctx.document.set_attribute(row, "class".to_owned(), "row".to_owned());
+    let space = ctx
+        .document
+        .create_node(Id::from_u64(2), Some("   ".to_owned()));
+    let text = ctx
+        .document
+        .create_node(Id::from_u64(3), Some("Ab".to_owned()));
+    ctx.document
+        .set_attribute(row, "class".to_owned(), "row".to_owned());
     ctx.document.set_parent(root, row).unwrap();
     ctx.document.set_parent(row, space).unwrap();
     ctx.document.set_parent(row, text).unwrap();
@@ -50,11 +55,21 @@ fn nested_scroll_offsets_add_up_and_are_clamped() {
 </div>
 "#;
     let (mut ctx, ids) = load_html_test_example(HTML, "example");
-    ctx.scroll_state.insert(ids["example"], ScrollState::new(0.0, 30.0));
-    ctx.scroll_state.insert(ids["inner"], ScrollState::new(0.0, 500.0));
+    ctx.scroll_state
+        .insert(ids["example"], ScrollState::new(0.0, 30.0));
+    ctx.scroll_state
+        .insert(ids["inner"], ScrollState::new(0.0, 500.0));
     ctx.layout();
 
-    let y = |name: &str| ctx.document.get_node(ids[name]).unwrap().borrow().layout.bounds.y;
+    let y = |name: &str| {
+        ctx.document
+            .get_node(ids[name])
+            .unwrap()
+            .borrow()
+            .layout
+            .bounds
+            .y
+    };
     assert_eq!(y("inner"), -30.0);
     // The inner offset is clamped to its overflow (300 - 200).
     assert_eq!(ctx.scroll_state[&ids["inner"]].scroll_y.get(), 100.0);

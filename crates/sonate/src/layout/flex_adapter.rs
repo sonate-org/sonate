@@ -1,19 +1,20 @@
 //! Lays out the document with the `sonate_layout` engine.
 //!
-//! Each pass resolves styles, mirrors the document into a `sonate_layout::LayoutTree`, computes
+//! Each pass mirrors the document (with styles computed by the cascade) into a
+//! `sonate_layout::LayoutTree`, computes
 //! the layout with text measured by the context's `TextMeasurer`, and writes absolute
 //! border-box bounds back to the nodes, shifted by the scroll offsets of scroll containers.
 
 use super::{LayoutContext, Node, Rect, ScrollState};
 use crate::style::{
     AlignContent, AlignItems, AlignSelf, BorderStyle, BoxSizing, Display, FlexDirection, FlexWrap,
-    JustifyContent, Length, Overflow, Position, Style, StyleSheet,
+    JustifyContent, Length, Overflow, Position, Style,
 };
 use crate::text::{FontSpec, TextMeasurer};
 use crate::Id;
 use sonate_layout as engine;
 use sonate_layout::{AvailableSpace, MeasureInput, MeasureOutput, NodeId};
-use std::{cell::RefCell, collections::HashMap, rc::Rc, sync::Arc};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 /// What a measured leaf contains.
 enum Content {
@@ -32,7 +33,6 @@ struct Entry {
 
 pub(super) fn layout_document(ctx: &LayoutContext) {
     let root = ctx.document.root_node();
-    cascade(&root, &ctx.style_sheet);
 
     let mut tree = engine::LayoutTree::new();
     let mut entries = Vec::new();
@@ -50,25 +50,12 @@ pub(super) fn layout_document(ctx: &LayoutContext) {
     write_back(&tree, &entries, root_id, (0.0, 0.0), &ctx.scroll_state);
 }
 
-/// Resolves every node's style: its current style plus matching rules and inline styles.
-fn cascade(node: &Rc<RefCell<Node>>, style_sheet: &StyleSheet) {
-    let children = {
-        let mut node = node.borrow_mut();
-        let mut style = node.layout.style.as_ref().clone();
-        crate::style_matching::apply_matching_rules(&mut style, &node.attributes, style_sheet);
-        if style.widget.is_some_and(|widget| widget.is_text_input()) {
-            LayoutContext::prepare_text_input_node(&mut node);
-        }
-        node.layout.style = Arc::new(style);
-        node.children.clone()
-    };
-    for child in &children {
-        cascade(child, style_sheet);
-    }
-}
-
 /// Adds `node` and its subtree to the layout tree (children first) and returns its id.
-fn build(node: &Rc<RefCell<Node>>, tree: &mut engine::LayoutTree, entries: &mut Vec<Entry>) -> NodeId {
+fn build(
+    node: &Rc<RefCell<Node>>,
+    tree: &mut engine::LayoutTree,
+    entries: &mut Vec<Entry>,
+) -> NodeId {
     let children = node.borrow().children.clone();
     let child_ids: Vec<NodeId> = children
         .iter()
@@ -159,7 +146,10 @@ fn write_back(
         node.layout.bounds = Rect::new(x, y, layout.size.width, layout.size.height);
 
         let style = node.layout.style.clone();
-        if matches!(style.overflow, Some(Overflow::Scroll) | Some(Overflow::Auto)) {
+        if matches!(
+            style.overflow,
+            Some(Overflow::Scroll) | Some(Overflow::Auto)
+        ) {
             if let Some(state) = scroll_state.get(&node.id) {
                 let border = style.border_width.resolved();
                 let max_scroll = |content: f64, size: f64, border_end: f64| {
@@ -169,8 +159,16 @@ fn write_back(
                         0.0
                     }
                 };
-                let max_x = max_scroll(layout.content_size.width, layout.size.width, border.right.to_px());
-                let max_y = max_scroll(layout.content_size.height, layout.size.height, border.bottom.to_px());
+                let max_x = max_scroll(
+                    layout.content_size.width,
+                    layout.size.width,
+                    border.right.to_px(),
+                );
+                let max_y = max_scroll(
+                    layout.content_size.height,
+                    layout.size.height,
+                    border.bottom.to_px(),
+                );
                 state.scroll_x.set(state.scroll_x.get().clamp(0.0, max_x));
                 state.scroll_y.set(state.scroll_y.get().clamp(0.0, max_y));
                 scroll = (state.scroll_x.get(), state.scroll_y.get());
@@ -179,7 +177,13 @@ fn write_back(
     }
 
     for &child in tree.children(id) {
-        write_back(tree, entries, child, (x - scroll.0, y - scroll.1), scroll_state);
+        write_back(
+            tree,
+            entries,
+            child,
+            (x - scroll.0, y - scroll.1),
+            scroll_state,
+        );
     }
 }
 

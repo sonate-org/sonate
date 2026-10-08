@@ -1,0 +1,27 @@
+<!--
+Attribute selectors: presence, =, ~=, |=, ^=, $=, *= and the i flag.
+@check color background-color border-top-color font-size
+-->
+<div id="root" style="width: 400px; height: 100px">
+  <div data-kind="primary">a</div>
+  <div data-kind="primary-big">b</div>
+  <div data-tags="one two three">c</div>
+  <div title="Hello World">d</div>
+  <div lang="en-US">e</div>
+  <div data-empty="">f</div>
+  <div lang="english">g</div>
+</div>
+<style>
+  [data-kind] { color: rgb(255, 0, 0); }
+  [data-kind="primary"] { background-color: rgb(0, 255, 0); }
+  [data-kind^="prim"] { border-top-color: rgb(0, 0, 255); }
+  [data-tags~="two"] { color: rgb(1, 1, 1); }
+  [data-tags~="tw"] { background-color: rgb(9, 9, 9); }
+  [title*="World"] { color: rgb(2, 2, 2); }
+  [title$="world" i] { background-color: rgb(3, 3, 3); }
+  [title$="world"] { border-top-color: rgb(9, 9, 9); }
+  [lang|="en"] { color: rgb(4, 4, 4); }
+  [data-kind$="big"] { font-size: 20px; }
+  [data-empty] { width: 30px; }
+  [data-empty^=""] { width: 40px; }
+</style>

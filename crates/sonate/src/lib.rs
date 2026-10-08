@@ -1,4 +1,5 @@
 mod backend;
+mod cascade;
 mod commands;
 mod css_parser;
 mod flex_layout;
@@ -108,6 +109,10 @@ impl Engine {
         let key_sender = self.sender.clone();
         let resize_sender = self.sender.clone();
         let debug_dump_sender = self.sender.clone();
+        let hover_sender = self.sender.clone();
+        let active_sender = self.sender.clone();
+        let release_sender = self.sender.clone();
+        let hovered_path: Arc<Mutex<Vec<Id>>> = Arc::new(Mutex::new(Vec::new()));
         let drag_state: Arc<Mutex<Option<ActiveScrollbarDrag>>> = Arc::new(Mutex::new(None));
         let drag_state_down = drag_state.clone();
         let drag_state_move = drag_state.clone();
@@ -149,16 +154,6 @@ impl Engine {
                         );
                     }
 
-                    let focused_text_input = elements.iter().find_map(|id| {
-                        snapshot.root.find_node_by_id(*id).and_then(|node| {
-                            node.style
-                                .widget
-                                .is_some_and(|widget| widget.is_text_input())
-                                .then_some(*id)
-                        })
-                    });
-                    let _ =
-                        focus_sender.send(Command::InputSetFocusedTextInput(focused_text_input));
 
                     if let Some(ref on_click) = params.on_click {
                         on_click(x, y, elements);
@@ -167,6 +162,10 @@ impl Engine {
             }),
             on_mouse_down: Box::new(move |x, y| {
                 if let Some(snapshot) = this4.get_current_snapshot() {
+                    // Like browsers, pressing the mouse focuses and activates.
+                    let path = snapshot.root.find_element_at_position(x, y);
+                    let _ = focus_sender.send(Command::FocusPath(path.clone()));
+                    let _ = active_sender.send(Command::SetActive(path));
                     let active = begin_scrollbar_drag(&snapshot, x, y);
                     let consumed = active.is_some();
                     *drag_state_down.lock().unwrap() = active;
@@ -177,6 +176,15 @@ impl Engine {
                 false
             }),
             on_mouse_move: Box::new(move |x, y| {
+                if let Some(snapshot) = this5.get_current_snapshot() {
+                    let path = snapshot.root.find_element_at_position(x, y);
+                    let mut hovered = hovered_path.lock().unwrap();
+                    if *hovered != path {
+                        *hovered = path.clone();
+                        let _ = hover_sender.send(Command::SetHovered(path));
+                    }
+                }
+
                 let active = *drag_state_move.lock().unwrap();
                 let Some(active) = active else {
                     return;
@@ -205,6 +213,7 @@ impl Engine {
             }),
             on_mouse_up: Box::new(move |_x, _y| {
                 *drag_state_up.lock().unwrap() = None;
+                let _ = release_sender.send(Command::SetActive(Vec::new()));
             }),
             on_resize: Box::new(move |width, height| {
                 let _ = resize_sender.send(Command::SetViewportSize(width, height));

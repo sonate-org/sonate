@@ -17,7 +17,12 @@ pub(crate) enum Command {
     SetParent(Id, Id),
     SetAttribute(Id, String, String),
     SetText(Id, Option<String>),
-    InputSetFocusedTextInput(Option<Id>),
+    /// The hit-test path of a click (target first); focuses its first focusable element.
+    FocusPath(Vec<Id>),
+    /// The hit-test path under the pointer, for `:hover`.
+    SetHovered(Vec<Id>),
+    /// The hit-test path of the pressed element, empty on release, for `:active`.
+    SetActive(Vec<Id>),
     InputInsertText(String),
     InputDeleteBackward,
     InputMoveCaretLeft,
@@ -146,6 +151,15 @@ fn dump_debug_state(
     }
 }
 
+/// Runs layout after `delay` at the latest.
+fn schedule(deadline: &mut Option<Instant>, delay: Duration) {
+    let new_deadline = Instant::now() + delay;
+    *deadline = Some(match *deadline {
+        Some(existing) => existing.min(new_deadline),
+        None => new_deadline,
+    });
+}
+
 pub(crate) fn handle_commands(
     rx: Receiver<Command>,
     snapshot: Arc<RwLock<Option<RenderSnapshot>>>,
@@ -215,8 +229,18 @@ pub(crate) fn handle_commands(
                         deadline = Some(Instant::now() + Duration::from_millis(100));
                     }
                 }
-                Command::InputSetFocusedTextInput(id) => {
-                    if ctx.set_focused_text_input(id) {
+                Command::SetHovered(path) => {
+                    if ctx.set_hovered(&path) && ctx.style_sheet.has_state_selectors() {
+                        schedule(&mut deadline, Duration::from_millis(16));
+                    }
+                }
+                Command::SetActive(path) => {
+                    if ctx.set_active(&path) && ctx.style_sheet.has_state_selectors() {
+                        schedule(&mut deadline, Duration::from_millis(16));
+                    }
+                }
+                Command::FocusPath(path) => {
+                    if ctx.focus_path(&path) {
                         let new_deadline = Instant::now() + Duration::from_millis(16);
                         deadline = Some(match deadline {
                             Some(existing) => existing.min(new_deadline),

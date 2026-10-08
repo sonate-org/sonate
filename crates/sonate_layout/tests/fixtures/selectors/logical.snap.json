@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "hash": "4d07c3abf17f290f",
+  "chrome": "Chrome/153.0.8010.52/@78e5e45d4bb41035e17ea4da2cc257f496416ac9",
+  "cases": [
+    {
+      "params": "",
+      "overrides": [],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"300px","height":"100px"},"rect":[0,0,300,100],"checks":{"color":"rgb(255, 0, 0)","background-color":"rgba(0, 0, 0, 0)","border-top-color":"rgb(1, 1, 1)"}},
+        {"d":1,"label":"#first","style":{},"text":"a","font":10,"rect":[0,0,10,100],"checks":{"color":"rgb(2, 2, 2)","background-color":"rgb(3, 3, 3)","border-top-color":"rgb(2, 2, 2)"}},
+        {"d":1,"label":".b","style":{},"text":"b","font":10,"rect":[10,0,10,100],"checks":{"color":"rgb(255, 0, 0)","background-color":"rgb(0, 255, 0)","border-top-color":"rgb(1, 1, 1)"}},
+        {"d":1,"label":".a","style":{},"text":"ab","font":10,"rect":[20,0,20,100],"checks":{"color":"rgb(5, 5, 5)","background-color":"rgb(4, 4, 4)","border-top-color":"rgb(5, 5, 5)"}},
+        {"d":1,"label":".c","style":{},"text":"c","font":10,"rect":[40,0,10,100],"checks":{"color":"rgb(255, 0, 0)","background-color":"rgba(0, 0, 0, 0)","border-top-color":"rgb(1, 1, 1)"}}
+      ]
+    }
+  ]
+}

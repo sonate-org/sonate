@@ -6,10 +6,10 @@ These tables lists the specifications enumerated in **Section 2 (Classification 
 
 | Specification | Status |
 |---|---|
-| [Selectors](https://www.w3.org/TR/CSS2/selector.html) | |
-| [Assigning Property Values, Cascading, and Inheritance](https://www.w3.org/TR/CSS2/cascade.html) | |
+| [Selectors](https://www.w3.org/TR/CSS2/selector.html) | Supported except pseudo-elements, `:lang()` and `:link`/`:visited` |
+| [Assigning Property Values, Cascading, and Inheritance](https://www.w3.org/TR/CSS2/cascade.html) | Supported for author styles: specificity, `!important`, the `style` attribute, inheritance and `inherit`. No `@import` or media types |
 | [Media Types](https://www.w3.org/TR/CSS2/media.html) | |
-| [Box Model](https://www.w3.org/TR/CSS2/box.html) | |
+| [Box Model](https://www.w3.org/TR/CSS2/box.html) | Margins, padding and borders are supported |
 | [Visual Formatting Model](https://www.w3.org/TR/CSS2/visuren.html) | Partial support. Every box is a flex container; `position: absolute` and `display: none` are supported |
 | [Visual Formatting Model Details](https://www.w3.org/TR/CSS2/visudet.html) | |
 | [Visual Effects (Overflow and Clipping)](https://www.w3.org/TR/CSS2/visufx.html) | |
@@ -26,12 +26,12 @@ These tables lists the specifications enumerated in **Section 2 (Classification 
 | Specification | Shortname | Status |
 |---|---|---|
 | CSS Syntax Module Level 3 | [CSS-SYNTAX-3](https://www.w3.org/TR/css-syntax-3/) | |
-| CSS Style Attributes | [CSS-STYLE-ATTR](https://www.w3.org/TR/css-style-attr/) | |
+| CSS Style Attributes | [CSS-STYLE-ATTR](https://www.w3.org/TR/css-style-attr/) | Supported |
 | Media Queries Level 3 | [CSS3-MEDIAQUERIES](https://www.w3.org/TR/css3-mediaqueries/) | |
 | CSS Conditional Rules Module Level 3 | [CSS-CONDITIONAL-3](https://www.w3.org/TR/css-conditional-3/) | |
-| Selectors Level 3 | [SELECTORS-3](https://www.w3.org/TR/selectors-3/) | |
+| Selectors Level 3 | [SELECTORS-3](https://www.w3.org/TR/selectors-3/) | Supported except pseudo-elements, namespaces, `:lang()`, `:target`, `:link`/`:visited` and the UI element states (`:checked`, `:disabled`, …). `:focus` applies to text inputs and elements with `tabindex` |
 | CSS Namespaces Module Level 3 | [CSS3-NAMESPACE](https://www.w3.org/TR/css-namespaces/) | |
-| CSS Cascading and Inheritance Level 4 | [CSS-CASCADE-4](https://www.w3.org/TR/css-cascade-4/) | |
+| CSS Cascading and Inheritance Level 4 | [CSS-CASCADE-4](https://www.w3.org/TR/css-cascade-4/) | Partial support. Author origin only: specificity, order, `!important`, inheritance, `inherit`/`initial`/`unset` (`revert` acts as `unset`). No `@import` or `all` |
 | CSS Values and Units Module Level 3 | [CSS-VALUES-3](https://www.w3.org/TR/css-values-3/) | |
 | CSS Custom Properties for Cascading Variables Module Level 1 | [CSS-VARIABLES-1](https://www.w3.org/TR/css-variables-1/) | |
 | CSS Box Model Module Level 3 | [CSS-BOX-3](https://www.w3.org/TR/css-box-3/) | |
@@ -83,6 +83,6 @@ These tables lists the specifications enumerated in **Section 2 (Classification 
 | CSS Scroll Anchoring Module Level 1 | [CSS-SCROLL-ANCHORING-1](https://www.w3.org/TR/css-scroll-anchoring-1/) | |
 | CSS Object Model (CSSOM) | [CSSOM-1](https://www.w3.org/TR/cssom-1/) | |
 | CSS Color Module Level 5 | [CSS-COLOR-5](https://www.w3.org/TR/css-color-5/) | |
-| Selectors Level 4 | [SELECTORS-4](https://www.w3.org/TR/selectors-4/) | |
+| Selectors Level 4 | [SELECTORS-4](https://www.w3.org/TR/selectors-4/) | Partial support. `:is()`, `:where()`, `:not()` with lists, `:nth-child(An+B of S)`, `:focus-within` and attribute case flags |
 | CSS Containment Module Level 2 | [CSS-CONTAIN-2](https://www.w3.org/TR/css-contain-2/) | |
 | CSSOM View Module | [CSSOM-VIEW-1](https://www.w3.org/TR/cssom-view-1/) | |

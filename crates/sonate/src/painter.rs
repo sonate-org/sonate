@@ -249,7 +249,10 @@ impl<'a> Painter<'a> {
                 let line_height = SkiaTextMeasurer::line_height(&font);
                 let mut measure = |text: &str| font.measure_str(text, None).0 as f64;
                 // Like the layout, never wrap narrower than the longest word.
-                let longest_word = text.split_whitespace().map(&mut measure).fold(0.0, f64::max);
+                let longest_word = text
+                    .split_whitespace()
+                    .map(&mut measure)
+                    .fold(0.0, f64::max);
                 let lines = break_lines(text, content_width.max(longest_word), &mut measure);
                 for (index, (line, _)) in lines.iter().enumerate() {
                     let y = baseline_y + (index as f64 * line_height) as f32;

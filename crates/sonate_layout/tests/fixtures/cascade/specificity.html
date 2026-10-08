@@ -1,0 +1,21 @@
+<!--
+Specificity, source order, !important and the style attribute.
+@check color background-color border-top-color border-left-color
+-->
+<div id="root" style="width: 300px; height: 100px">
+  <div id="x" class="c" style="border-top-color: rgb(9, 9, 9)">a</div>
+  <div class="c" style="background-color: rgb(8, 8, 8) !important">b</div>
+  <div class="c d">c</div>
+</div>
+<style>
+  #x { color: rgb(255, 0, 0); }
+  .c { color: rgb(0, 255, 0); }
+  div { color: rgb(0, 0, 255); }
+  .c.d { color: rgb(1, 1, 1); }
+  .d.c { color: rgb(2, 2, 2); }
+  .c { background-color: rgb(3, 3, 3) !important; }
+  #x { background-color: rgb(4, 4, 4); }
+  .c { border-top-color: rgb(5, 5, 5) !important; }
+  div { border-left-color: rgb(6, 6, 6) !important; }
+  #x { border-left-color: rgb(7, 7, 7); }
+</style>

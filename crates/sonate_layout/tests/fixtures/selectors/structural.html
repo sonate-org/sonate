@@ -1,0 +1,27 @@
+<!--
+Structural pseudo-classes: first/last/only child, of-type variants, :nth-*() and :empty.
+@check color background-color border-top-color border-right-color border-bottom-color border-left-color font-size
+-->
+<div id="root" style="width: 400px; height: 100px">
+  <div class="row">
+    <span>a</span><div>b</div><span>c</span><div>d</div><span>e</span><div class="x">f</div><div class="x">g</div>
+  </div>
+  <div class="row"><span>only</span></div>
+  <div class="row"><div></div><div>x</div></div>
+</div>
+<style>
+  .row > :first-child { color: rgb(255, 0, 0); }
+  .row > :last-child { background-color: rgb(0, 255, 0); }
+  .row > :only-child { font-size: 15px; }
+  .row > :nth-child(2n+1) { border-top-color: rgb(1, 1, 1); }
+  .row > :nth-child(even) { border-top-color: rgb(2, 2, 2); }
+  .row > :nth-last-child(2) { border-right-color: rgb(3, 3, 3); }
+  .row > span:first-of-type { border-bottom-color: rgb(4, 4, 4); }
+  .row > div:last-of-type { border-left-color: rgb(5, 5, 5); }
+  .row > span:only-of-type { color: rgb(6, 6, 6); }
+  .row > div:nth-of-type(2) { background-color: rgb(7, 7, 7); }
+  .row > div:nth-last-of-type(3) { color: rgb(8, 8, 8); }
+  .row > :nth-child(-n+2) { font-size: 12px; }
+  .row > :nth-child(2 of .x) { border-left-color: rgb(9, 9, 9); }
+  :empty { width: 20px; height: 5px; }
+</style>

@@ -82,9 +82,8 @@ fn copy_nodes(
                 if key == "id" || key == "class" {
                     continue;
                 }
-                if let Some(value) = value_opt {
-                    engine.set_attribute(id, key.to_owned(), value.to_owned());
-                }
+                // Attributes without a value (`<div hidden>`) are present with an empty value.
+                engine.set_attribute(id, key.to_owned(), value_opt.clone().unwrap_or_default());
             }
 
             // Recurse into element children.

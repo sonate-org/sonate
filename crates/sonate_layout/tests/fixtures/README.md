@@ -23,13 +23,23 @@ One line saying what this checks.
 </div>
 ```
 
-- **One root `<div>`** with an explicit `width` and `height` in px and no margins. Only `<div>`
-  elements are allowed. Styles can be inline or in a `<style>` block.
-- **Every div is a flex container** (`display: flex`), as in Sonate. `base.css` in `tools/bless`
-  sets this, along with `position: relative` and the font.
+- **One root element** with an explicit `width` and `height` in px and no margins. Allowed
+  elements: `div`, `span`, `section`, `article`, `header`, `footer`, `nav`, `main`, `aside` and
+  `label` (they have no browser default styles that matter). Styles can be inline or in
+  `<style>` blocks.
+- **Every element is a flex container** (`display: flex`), as in Sonate. `base.css` in
+  `tools/bless` sets this, along with `position: relative`; the font is set on `body` and
+  inherited.
 - **`@matrix <selector> <property>: a | b | c`** repeats the fixture for every value. Several
   lines combine into all combinations (at most 64). The selector is `#id` or `.class`, and the
   value is applied as an inline style, so shorthands like `margin: 0 auto` work.
+- **`@state <selector> hover | active | focus | none`** is an axis like `@matrix` that puts the
+  element into an interaction state: bless moves or presses the real mouse over the element's
+  center, or focuses it (which needs a `tabindex`). Pressing also focuses, like in browsers.
+- **`@check color background-color …`** records these computed values (as `getComputedStyle`
+  reports them) for every element. Sonate's suite compares them, so CSS that doesn't affect
+  layout (selectors, the cascade, colors) can be tested too. The layout engine's own suite
+  ignores them.
 - **`@tolerance 0.25`** loosens the comparison for this fixture (the default is 1/16 px).
 - **Text** may only be an element's only child and may only contain letters and spaces. It uses
   the [Ahem](../../tools/bless/AHEM_LICENSE.txt) font: every glyph is a 1em square, so

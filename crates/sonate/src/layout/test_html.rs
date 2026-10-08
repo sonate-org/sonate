@@ -37,9 +37,14 @@ pub fn load_layout_fixture(
 
     let mut reader = Reader::new("");
     reader.ctx.set_viewport_size(10_000.0, 10_000.0);
-    // The part of tools/bless/base.css that Sonate doesn't do by default; the test text
-    // measurer already uses Ahem metrics.
-    reader.ctx.style_sheet = css_parser::parse_css("div { font-size: 10px; }").unwrap();
+    // The part of tools/bless/base.css that Sonate doesn't do by default: a 10px font,
+    // inherited from the root like Chrome inherits it from the body. The test text measurer
+    // already uses Ahem metrics.
+    let root = reader.ctx.document.root_id();
+    reader
+        .ctx
+        .document
+        .set_attribute(root, "style".to_owned(), "font-size: 10px".to_owned());
     let mut has_root = false;
     for node in &dom.children {
         let html_parser::Node::Element(element) = node else {
@@ -153,6 +158,9 @@ impl Reader {
             // get id
             if let Some(id_attr) = &element.id {
                 self.nodes_by_id.insert(id_attr.to_owned(), node);
+                self.ctx
+                    .document
+                    .set_attribute(node, "id".to_owned(), id_attr.to_owned());
             }
 
             // copy attributes
@@ -163,12 +171,10 @@ impl Reader {
                     .set_attribute(node, "class".to_owned(), class_str);
             }
 
+            // Attributes without a value (`<div hidden>`) are present with an empty value.
             for (key, value_opt) in &element.attributes {
-                if let Some(value) = value_opt {
-                    self.ctx
-                        .document
-                        .set_attribute(node, key.to_owned(), value.to_owned());
-                }
+                let value = value_opt.clone().unwrap_or_default();
+                self.ctx.document.set_attribute(node, key.to_owned(), value);
             }
 
             // store in map if it has an id

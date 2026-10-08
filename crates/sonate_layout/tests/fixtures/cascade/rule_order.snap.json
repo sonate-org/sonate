@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "hash": "72e429061e43d90f",
+  "chrome": "Chrome/153.0.8010.52/@78e5e45d4bb41035e17ea4da2cc257f496416ac9",
+  "cases": [
+    {
+      "params": "",
+      "overrides": [],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"300px","height":"100px"},"rect":[0,0,300,100],"checks":{"color":"rgb(0, 0, 0)","background-color":"rgba(0, 0, 0, 0)"}},
+        {"d":1,"label":".a","style":{},"text":"a","font":10,"rect":[0,0,10,100],"checks":{"color":"rgb(255, 0, 0)","background-color":"rgba(0, 0, 0, 0)"}},
+        {"d":1,"label":".b","style":{},"text":"b","font":10,"rect":[10,0,10,100],"checks":{"color":"rgb(0, 0, 255)","background-color":"rgba(0, 0, 0, 0)"}}
+      ]
+    }
+  ]
+}

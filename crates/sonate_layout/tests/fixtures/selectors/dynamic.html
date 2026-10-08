@@ -1,0 +1,21 @@
+<!--
+:hover, :active, :focus and :focus-within, put into effect by the real mouse and focus.
+@state #target hover | active | focus | none
+@check color background-color border-top-color
+-->
+<div id="root" style="width: 200px; height: 100px">
+  <div id="outer" style="padding: 10px">
+    <div id="target" tabindex="0" style="width: 50px; height: 50px">T</div>
+  </div>
+  <div id="sibling">S</div>
+</div>
+<style>
+  #target:hover { color: rgb(255, 0, 0); width: 80px; }
+  #outer:hover { background-color: rgb(0, 255, 0); }
+  #target:active { background-color: rgb(0, 0, 255); }
+  #target:focus { border-top-color: rgb(1, 2, 3); }
+  #outer:focus-within { color: rgb(4, 5, 6); }
+  #root:hover > #sibling { color: rgb(7, 8, 9); }
+  #sibling:hover { background-color: rgb(9, 9, 9); }
+  :focus { height: 60px; }
+</style>

@@ -1,5 +1,5 @@
 use crate::css_parser::parse_css;
-use crate::style::{BoxSizing, Length, Overflow, Radius, Selector, ZIndex};
+use crate::style::{BoxSizing, Length, Overflow, Radius, ZIndex};
 
 #[test]
 fn test_parse_lengths() {
@@ -37,14 +37,14 @@ fn test_parse_box_sizing() {
     assert_eq!(stylesheet.rules.len(), 2);
 
     let a = &stylesheet.rules[0];
-    assert_eq!(a.selector, Selector::Class("a".to_string()));
+    assert_eq!(a.selectors.to_string(), ".a");
     assert!(a
         .declarations
         .iter()
         .any(|d| d.box_sizing == Some(BoxSizing::BorderBox)));
 
     let b = &stylesheet.rules[1];
-    assert_eq!(b.selector, Selector::Class("b".to_string()));
+    assert_eq!(b.selectors.to_string(), ".b");
     assert!(b
         .declarations
         .iter()
@@ -62,14 +62,14 @@ fn test_parse_overflow() {
     assert_eq!(stylesheet.rules.len(), 2);
 
     let a = &stylesheet.rules[0];
-    assert_eq!(a.selector, Selector::Class("a".to_string()));
+    assert_eq!(a.selectors.to_string(), ".a");
     assert!(a
         .declarations
         .iter()
         .any(|d| d.overflow == Some(Overflow::Hidden)));
 
     let b = &stylesheet.rules[1];
-    assert_eq!(b.selector, Selector::Class("b".to_string()));
+    assert_eq!(b.selectors.to_string(), ".b");
     assert!(b
         .declarations
         .iter()
@@ -87,14 +87,14 @@ fn test_parse_z_index() {
     assert_eq!(stylesheet.rules.len(), 2);
 
     let a = &stylesheet.rules[0];
-    assert_eq!(a.selector, Selector::Class("a".to_string()));
+    assert_eq!(a.selectors.to_string(), ".a");
     assert!(a
         .declarations
         .iter()
         .any(|d| d.z_index == Some(ZIndex::Index(10))));
 
     let b = &stylesheet.rules[1];
-    assert_eq!(b.selector, Selector::Class("b".to_string()));
+    assert_eq!(b.selectors.to_string(), ".b");
     assert!(b
         .declarations
         .iter()
@@ -149,7 +149,7 @@ fn test_border_radius_corner_properties() {
     assert_eq!(stylesheet.rules.len(), 1);
 
     let rule = &stylesheet.rules[0];
-    assert_eq!(rule.selector, Selector::Class("corners".to_string()));
+    assert_eq!(rule.selectors.to_string(), ".corners");
 
     assert!(rule
         .declarations
@@ -205,7 +205,7 @@ fn test_border_radius_corner_two_values() {
     assert_eq!(stylesheet.rules.len(), 1);
 
     let rule = &stylesheet.rules[0];
-    assert_eq!(rule.selector, Selector::Class("corner".to_string()));
+    assert_eq!(rule.selectors.to_string(), ".corner");
 
     assert!(rule
         .declarations
@@ -294,7 +294,7 @@ fn test_parse_margin_sides() {
     assert_eq!(stylesheet.rules.len(), 2);
 
     let m_rule = &stylesheet.rules[0];
-    assert_eq!(m_rule.selector, Selector::Class("m".to_string()));
+    assert_eq!(m_rule.selectors.to_string(), ".m");
     assert!(m_rule
         .declarations
         .iter()
@@ -313,7 +313,7 @@ fn test_parse_margin_sides() {
         .any(|d| matches!(d.margin.bottom, Some(Length::Px(15.0)))));
 
     let auto_rule = &stylesheet.rules[1];
-    assert_eq!(auto_rule.selector, Selector::Class("auto_left".to_string()));
+    assert_eq!(auto_rule.selectors.to_string(), ".auto_left");
     assert!(auto_rule
         .declarations
         .iter()
@@ -339,7 +339,7 @@ fn test_parse_padding_sides() {
     assert_eq!(stylesheet.rules.len(), 2);
 
     let p_rule = &stylesheet.rules[0];
-    assert_eq!(p_rule.selector, Selector::Class("p".to_string()));
+    assert_eq!(p_rule.selectors.to_string(), ".p");
     assert!(p_rule
         .declarations
         .iter()
@@ -358,7 +358,7 @@ fn test_parse_padding_sides() {
         .any(|d| matches!(d.padding.bottom, Some(Length::Px(15.0)))));
 
     let auto_rule = &stylesheet.rules[1];
-    assert_eq!(auto_rule.selector, Selector::Class("auto_left".to_string()));
+    assert_eq!(auto_rule.selectors.to_string(), ".auto_left");
     assert!(auto_rule
         .declarations
         .iter()

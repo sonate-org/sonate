@@ -27,6 +27,8 @@ pub struct SnapshotCase {
     pub params: String,
     /// The matrix values as inline-style overrides, applied in order.
     pub overrides: Vec<Override>,
+    /// Interaction states from `@state`: `(selector, "hover" | "active" | "focus")`.
+    pub states: Vec<(String, String)>,
     /// Elements in pre-order; the first one is the fixture root.
     pub nodes: Vec<SnapshotNode>,
 }
@@ -52,6 +54,8 @@ pub struct SnapshotNode {
     pub font_size: f64,
     /// Chrome's border-box rect relative to the parent's border box (zero for `display: none`).
     pub rect: Rect4,
+    /// Computed values of the fixture's `@check` properties, as `getComputedStyle` reports them.
+    pub checks: BTreeMap<String, String>,
 }
 
 impl SnapshotCase {
@@ -123,6 +127,14 @@ fn parse_case(case: &Value) -> Result<SnapshotCase, String> {
         })
         .collect::<Result<Vec<_>, String>>()?;
 
+    let states = case["states"]
+        .as_array()
+        .map(Vec::as_slice)
+        .unwrap_or_default()
+        .iter()
+        .map(|entry| Ok((string(&entry[0])?, string(&entry[1])?)))
+        .collect::<Result<Vec<_>, String>>()?;
+
     let nodes = case["nodes"]
         .as_array()
         .ok_or("case without nodes")?
@@ -136,6 +148,7 @@ fn parse_case(case: &Value) -> Result<SnapshotCase, String> {
     Ok(SnapshotCase {
         params: string(&case["params"]).unwrap_or_default(),
         overrides,
+        states,
         nodes,
     })
 }
@@ -168,7 +181,19 @@ fn parse_node(node: &Value) -> Result<SnapshotNode, String> {
         *target = value.as_f64().ok_or("rect values must be numbers")?;
     }
 
+    let checks = node["checks"]
+        .as_object()
+        .map(|checks| {
+            checks
+                .iter()
+                .map(|(key, value)| Ok((key.clone(), string(value)?)))
+                .collect::<Result<BTreeMap<_, _>, String>>()
+        })
+        .transpose()?
+        .unwrap_or_default();
+
     Ok(SnapshotNode {
+        checks,
         depth: node["d"].as_u64().ok_or("node without depth")? as usize,
         label: string(&node["label"]).unwrap_or_else(|_| "div".to_owned()),
         style,

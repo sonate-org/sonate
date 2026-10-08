@@ -1,10 +1,12 @@
-use crate::style::{
-    AlignContent, AlignItems, AlignSelf, BoxSizing, Directional, Display, FlexDirection, FlexWrap,
-    JustifyContent, Length, Overflow, Position, Rule, Selector, Style, StyleSheet, Widget, ZIndex,
-};
 use super::borders::Side;
+use super::selectors::{parse_selector_list, SelectorList};
+use crate::style::{
+    AlignContent, AlignItems, AlignSelf, BoxSizing, CssWideKeyword, Declaration, Directional,
+    Display, FlexDirection, FlexWrap, JustifyContent, Length, Overflow, Position, Rule, Style,
+    StyleSheet, Widget, ZIndex,
+};
 use cssparser::{
-    AtRuleParser, CowRcStr, DeclarationParser, ParseError, Parser, ParserInput, ParserState,
+    AtRuleParser, CowRcStr, DeclarationParser, Delimiter, ParseError, Parser, ParserInput, ParserState,
     QualifiedRuleParser, RuleBodyItemParser, RuleBodyParser, StyleSheetParser,
 };
 
@@ -33,7 +35,7 @@ pub fn parse_css(css: &str) -> Result<StyleSheet, String> {
 }
 
 /// Parse the declarations of an inline `style` attribute, in source order.
-pub fn parse_inline_style(css: &str) -> Vec<Style> {
+pub fn parse_inline_style(css: &str) -> Vec<Declaration> {
     let mut input = ParserInput::new(css);
     let mut parser = Parser::new(&mut input);
     let mut declaration_parser = StyleDeclarationParser::new();
@@ -61,7 +63,7 @@ impl CssParser {
 }
 
 impl<'i> QualifiedRuleParser<'i> for CssParser {
-    type Prelude = Selector;
+    type Prelude = SelectorList;
     type QualifiedRule = Rule;
     type Error = ();
 
@@ -69,14 +71,8 @@ impl<'i> QualifiedRuleParser<'i> for CssParser {
         &mut self,
         input: &mut Parser<'i, 't>,
     ) -> Result<Self::Prelude, ParseError<'i, Self::Error>> {
-        // Parse selector - for now we'll support simple class and tag selectors
-        if input.try_parse(|input| input.expect_delim('.')).is_ok() {
-            let class_name = input.expect_ident()?;
-            Ok(Selector::Class(class_name.to_string()))
-        } else {
-            let name = input.expect_ident()?;
-            Ok(Selector::Tag(name.as_ref().to_ascii_lowercase()))
-        }
+        // An invalid selector drops the whole rule.
+        parse_selector_list(input)
     }
 
     fn parse_block<'t>(
@@ -99,7 +95,7 @@ impl<'i> QualifiedRuleParser<'i> for CssParser {
         }
 
         Ok(Rule {
-            selector: prelude,
+            selectors: prelude,
             declarations,
         })
     }
@@ -123,7 +119,7 @@ impl StyleDeclarationParser {
 }
 
 impl<'i> DeclarationParser<'i> for StyleDeclarationParser {
-    type Declaration = Style;
+    type Declaration = Declaration;
     type Error = ();
 
     fn parse_value<'t>(
@@ -132,6 +128,41 @@ impl<'i> DeclarationParser<'i> for StyleDeclarationParser {
         input: &mut Parser<'i, 't>,
         _declaration_start: &ParserState,
     ) -> Result<Self::Declaration, ParseError<'i, Self::Error>> {
+        // Parse the value up to `!important`, so value parsers can require the whole input.
+        let (style, keyword) = input.parse_until_before(Delimiter::Bang, |input| {
+            let keyword = input.try_parse(|input| {
+                let ident = input.expect_ident_cloned()?;
+                input.expect_exhausted()?;
+                match ident.to_ascii_lowercase().as_str() {
+                    "inherit" => Ok(CssWideKeyword::Inherit),
+                    "initial" => Ok(CssWideKeyword::Initial),
+                    // `revert` has no user-agent styles to go back to.
+                    "unset" | "revert" => Ok(CssWideKeyword::Unset),
+                    _ => Err(input.new_custom_error::<(), ()>(())),
+                }
+            });
+            match keyword {
+                Ok(_) if !crate::cascade::is_known_property(&name) => Err(input.new_custom_error(())),
+                Ok(keyword) => Ok((Style::default(), Some((name.to_string(), keyword)))),
+                Err(_) => Ok((self.parse_property(name.clone(), input)?, None)),
+            }
+        })?;
+        let important = input.try_parse(cssparser::parse_important).is_ok();
+        Ok(Declaration {
+            style,
+            important,
+            keyword,
+        })
+    }
+}
+
+impl StyleDeclarationParser {
+    /// Parses the value of `name` into a `Style` where only that property is set.
+    fn parse_property<'i, 't>(
+        &mut self,
+        name: CowRcStr<'i>,
+        input: &mut Parser<'i, 't>,
+    ) -> Result<Style, ParseError<'i, ()>> {
         let mut style = Style::default();
 
         match name.as_ref() {
@@ -337,11 +368,17 @@ impl<'i> DeclarationParser<'i> for StyleDeclarationParser {
             }
             "flex" => {
                 // `none | auto | [ <grow> <shrink>? || <basis> ]`
-                if input.try_parse(|input| input.expect_ident_matching("none")).is_ok() {
+                if input
+                    .try_parse(|input| input.expect_ident_matching("none"))
+                    .is_ok()
+                {
                     style.flex_grow = Some(0.0);
                     style.flex_shrink = Some(0.0);
                     style.flex_basis = Some(Length::Auto);
-                } else if input.try_parse(|input| input.expect_ident_matching("auto")).is_ok() {
+                } else if input
+                    .try_parse(|input| input.expect_ident_matching("auto"))
+                    .is_ok()
+                {
                     style.flex_grow = Some(1.0);
                     style.flex_shrink = Some(1.0);
                     style.flex_basis = Some(Length::Auto);
@@ -361,7 +398,9 @@ impl<'i> DeclarationParser<'i> for StyleDeclarationParser {
                             }
                         }
                         if basis.is_none() {
-                            if let Ok(value) = input.try_parse(|input| self.parse_length_value(input)) {
+                            if let Ok(value) =
+                                input.try_parse(|input| self.parse_length_value(input))
+                            {
                                 basis = Some(value);
                                 continue;
                             }
@@ -384,7 +423,9 @@ impl<'i> DeclarationParser<'i> for StyleDeclarationParser {
                         "row" => style.flex_direction = Some(FlexDirection::Row),
                         "row-reverse" => style.flex_direction = Some(FlexDirection::RowReverse),
                         "column" => style.flex_direction = Some(FlexDirection::Column),
-                        "column-reverse" => style.flex_direction = Some(FlexDirection::ColumnReverse),
+                        "column-reverse" => {
+                            style.flex_direction = Some(FlexDirection::ColumnReverse)
+                        }
                         "nowrap" => style.flex_wrap = Some(FlexWrap::NoWrap),
                         "wrap" => style.flex_wrap = Some(FlexWrap::Wrap),
                         "wrap-reverse" => style.flex_wrap = Some(FlexWrap::WrapReverse),
@@ -582,7 +623,10 @@ impl StyleDeclarationParser {
         &mut self,
         input: &mut Parser<'i, 't>,
     ) -> Result<Length, ParseError<'i, ()>> {
-        if input.try_parse(|input| input.expect_ident_matching("none")).is_ok() {
+        if input
+            .try_parse(|input| input.expect_ident_matching("none"))
+            .is_ok()
+        {
             return Ok(Length::Auto);
         }
         self.parse_length_value(input)
@@ -591,17 +635,17 @@ impl StyleDeclarationParser {
 
 impl<'i> AtRuleParser<'i> for StyleDeclarationParser {
     type Prelude = ();
-    type AtRule = Style;
+    type AtRule = Declaration;
     type Error = ();
 }
 
 impl<'i> QualifiedRuleParser<'i> for StyleDeclarationParser {
     type Prelude = ();
-    type QualifiedRule = Style;
+    type QualifiedRule = Declaration;
     type Error = ();
 }
 
-impl<'i> RuleBodyItemParser<'i, Style, ()> for StyleDeclarationParser {
+impl<'i> RuleBodyItemParser<'i, Declaration, ()> for StyleDeclarationParser {
     fn parse_qualified(&self) -> bool {
         false
     }

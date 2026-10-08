@@ -17,8 +17,17 @@ use std::sync::{Arc, Mutex};
 /// Chrome lays out in 1/64 px units and drops remainders, so allow a little slack.
 pub const DEFAULT_TOLERANCE: f64 = 1.0 / 16.0;
 
-/// Lays out one case and returns each node's rect relative to its parent, in snapshot order.
-pub type Engine = dyn Fn(&Fixture, &SnapshotCase) -> Result<Vec<Rect4>, String> + Send + Sync;
+/// Lays out one case.
+pub type Engine = dyn Fn(&Fixture, &SnapshotCase) -> Result<CaseOutput, String> + Send + Sync;
+
+/// What an engine produced for one case, in snapshot order.
+pub struct CaseOutput {
+    /// Each node's rect relative to its parent.
+    pub rects: Vec<Rect4>,
+    /// Each node's computed values of the fixture's `@check` properties, formatted like
+    /// `getComputedStyle`. `None` skips the value checks.
+    pub values: Option<Vec<BTreeMap<String, String>>>,
+}
 
 pub struct Suite {
     /// Shown in the summary, e.g. `sonate_layout`.
@@ -175,12 +184,12 @@ fn evaluate_fixture(fixture: &Fixture, engine: &Engine) -> FixtureResult {
         .map(|case| {
             let key = case_key(&fixture.name, &case.params);
             let failure = match engine(fixture, case) {
-                Ok(actual) if actual.len() == case.nodes.len() => {
+                Ok(actual) if actual.rects.len() == case.nodes.len() => {
                     compare(case, &actual, tolerance, &key)
                 }
                 Ok(actual) => Some(error_failure(
                     &key,
-                    format!("engine returned {} rects for {} nodes", actual.len(), case.nodes.len()),
+                    format!("engine returned {} rects for {} nodes", actual.rects.len(), case.nodes.len()),
                 )),
                 Err(err) => Some(error_failure(&key, err)),
             };
@@ -263,10 +272,11 @@ fn verdict(result: &FixtureResult, known: &BTreeSet<String>, mode: UpdateMode) -
     }
 }
 
-/// Compares the engine's rects with Chrome's and renders the differences.
-fn compare(case: &SnapshotCase, actual: &[Rect4], tolerance: f64, key: &str) -> Option<CaseFailure> {
+/// Compares the engine's rects and checked values with Chrome's and renders the differences.
+fn compare(case: &SnapshotCase, output: &CaseOutput, tolerance: f64, key: &str) -> Option<CaseFailure> {
+    let actual = &output.rects;
     let expected: Vec<Rect4> = case.nodes.iter().map(|node| node.rect).collect();
-    let wrong: Vec<bool> = expected
+    let rect_wrong: Vec<bool> = expected
         .iter()
         .zip(actual)
         .map(|(expected, actual)| {
@@ -275,6 +285,31 @@ fn compare(case: &SnapshotCase, actual: &[Rect4], tolerance: f64, key: &str) -> 
                 .zip(actual)
                 .any(|(expected, actual)| differs(*expected, *actual, tolerance))
         })
+        .collect();
+    let value_errors: Vec<Vec<String>> = case
+        .nodes
+        .iter()
+        .enumerate()
+        .map(|(index, node)| {
+            let Some(values) = &output.values else {
+                return Vec::new();
+            };
+            node.checks
+                .iter()
+                .filter_map(|(property, expected)| {
+                    let actual = values.get(index).and_then(|values| values.get(property));
+                    (actual != Some(expected)).then(|| {
+                        let actual = actual.map_or("<unsupported>", String::as_str);
+                        format!("{property} {actual} (expected {expected})")
+                    })
+                })
+                .collect()
+        })
+        .collect();
+    let wrong: Vec<bool> = rect_wrong
+        .iter()
+        .zip(&value_errors)
+        .map(|(rect_wrong, errors)| *rect_wrong || !errors.is_empty())
         .collect();
     if !wrong.contains(&true) {
         return None;
@@ -290,7 +325,17 @@ fn compare(case: &SnapshotCase, actual: &[Rect4], tolerance: f64, key: &str) -> 
     }
 
     let mut tree = String::new();
-    render_tree(0, case, &children, &labels, &expected, actual, &wrong, &subtree_wrong, &mut tree);
+    let nodes = TreeNodes {
+        case,
+        children: &children,
+        labels: &labels,
+        expected: &expected,
+        actual,
+        rect_wrong: &rect_wrong,
+        value_errors: &value_errors,
+        subtree_wrong: &subtree_wrong,
+    };
+    render_tree(0, &nodes, &mut tree);
 
     // The first wrong node in tree order is usually the cause; its descendants follow from it.
     let first = (0..case.nodes.len()).find(|&index| wrong[index]).unwrap();
@@ -303,7 +348,7 @@ fn compare(case: &SnapshotCase, actual: &[Rect4], tolerance: f64, key: &str) -> 
         }
     }
     path.reverse();
-    let fields: Vec<String> = ["x", "y", "width", "height"]
+    let mut problems: Vec<String> = ["x", "y", "width", "height"]
         .iter()
         .enumerate()
         .filter(|&(field, _)| differs(expected[first][field], actual[first][field], tolerance))
@@ -315,7 +360,8 @@ fn compare(case: &SnapshotCase, actual: &[Rect4], tolerance: f64, key: &str) -> 
             )
         })
         .collect();
-    let summary = format!("first wrong node {}: {}", path.join(" > "), fields.join(", "));
+    problems.extend(value_errors[first].iter().cloned());
+    let summary = format!("first wrong node {}: {}", path.join(" > "), problems.join(", "));
 
     Some(CaseFailure {
         summary,
@@ -360,23 +406,29 @@ fn labels(case: &SnapshotCase, children: &[Vec<usize>]) -> Vec<String> {
     labels
 }
 
-#[allow(clippy::too_many_arguments)]
-fn render_tree(
-    index: usize,
-    case: &SnapshotCase,
-    children: &[Vec<usize>],
-    labels: &[String],
-    expected: &[Rect4],
-    actual: &[Rect4],
-    wrong: &[bool],
-    subtree_wrong: &[bool],
-    out: &mut String,
-) {
-    let indent = "  ".repeat(case.nodes[index].depth + 2);
-    let _ = write!(out, "{indent}{:<24} {}", labels[index], rect(actual[index]));
-    if wrong[index] {
-        let _ = write!(out, "   ✗ expected {}", rect(expected[index]));
-        let hidden = count_descendants(index, children);
+/// Everything `render_tree` needs about the case.
+struct TreeNodes<'a> {
+    case: &'a SnapshotCase,
+    children: &'a [Vec<usize>],
+    labels: &'a [String],
+    expected: &'a [Rect4],
+    actual: &'a [Rect4],
+    rect_wrong: &'a [bool],
+    value_errors: &'a [Vec<String>],
+    subtree_wrong: &'a [bool],
+}
+
+fn render_tree(index: usize, nodes: &TreeNodes, out: &mut String) {
+    let indent = "  ".repeat(nodes.case.nodes[index].depth + 2);
+    let _ = write!(out, "{indent}{:<24} {}", nodes.labels[index], rect(nodes.actual[index]));
+    if nodes.rect_wrong[index] {
+        let _ = write!(out, "   ✗ expected {}", rect(nodes.expected[index]));
+    }
+    if !nodes.value_errors[index].is_empty() {
+        let _ = write!(out, "   ✗ {}", nodes.value_errors[index].join(", "));
+    }
+    if nodes.rect_wrong[index] {
+        let hidden = count_descendants(index, nodes.children);
         if hidden > 0 {
             let _ = write!(out, "  (+{hidden} descendants hidden)");
         }
@@ -386,9 +438,9 @@ fn render_tree(
     out.push('\n');
 
     let mut matching = 0;
-    for &child in &children[index] {
-        if subtree_wrong[child] {
-            render_tree(child, case, children, labels, expected, actual, wrong, subtree_wrong, out);
+    for &child in &nodes.children[index] {
+        if nodes.subtree_wrong[child] {
+            render_tree(child, nodes, out);
         } else {
             matching += 1;
         }

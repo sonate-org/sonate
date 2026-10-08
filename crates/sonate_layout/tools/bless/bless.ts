@@ -20,18 +20,32 @@ const MAX_CASES = 64;
 const TOOL_DIR = fromFileUrl(new URL(".", import.meta.url));
 const FIXTURES_DIR = join(TOOL_DIR, "../../tests/fixtures");
 
+/** Tags without user-agent styles that matter here; base.css makes them flex containers too. */
+const ALLOWED_TAGS = ["div", "span", "section", "article", "header", "footer", "nav", "main", "aside", "label"];
+const STATES = ["hover", "active", "focus", "none"];
+
 interface Axis {
   selector: string;
+  /** A CSS property, or `:state` for an `@state` axis. */
   property: string;
   values: string[];
 }
 
 interface Header {
   axes: Axis[];
+  /** Computed values to record for every element (`@check`). */
+  checks: string[];
   tolerance?: number;
 }
 
 type OverrideList = [string, string, string][];
+type StateList = [string, string][];
+
+interface Case {
+  params: string;
+  overrides: OverrideList;
+  states: StateList;
+}
 
 interface MeasuredCase {
   nodes: Record<string, unknown>[];
@@ -39,15 +53,24 @@ interface MeasuredCase {
 }
 
 function parseHeader(html: string): Header {
-  const header: Header = { axes: [] };
+  const header: Header = { axes: [], checks: [] };
+  const values = (text: string) => text.split("|").map((value) => value.trim()).filter(Boolean);
   for (const comment of html.matchAll(/<!--([\s\S]*?)-->/g)) {
     for (const raw of comment[1].split("\n")) {
       const line = raw.trim();
       if (line.startsWith("@matrix")) {
         const match = line.match(/^@matrix\s+([#.][\w-]+)\s+([a-z-]+)\s*:\s*(.+)$/);
         if (!match) throw new Error(`invalid @matrix line: ${line}`);
-        const values = match[3].split("|").map((value) => value.trim()).filter(Boolean);
-        header.axes.push({ selector: match[1], property: match[2], values });
+        header.axes.push({ selector: match[1], property: match[2], values: values(match[3]) });
+      } else if (line.startsWith("@state")) {
+        const match = line.match(/^@state\s+([#.][\w-]+)\s+(.+)$/);
+        if (!match) throw new Error(`invalid @state line: ${line}`);
+        const states = values(match[2]);
+        const invalid = states.find((state) => !STATES.includes(state));
+        if (invalid) throw new Error(`unknown state ${invalid}; use ${STATES.join(" | ")}`);
+        header.axes.push({ selector: match[1], property: ":state", values: states });
+      } else if (line.startsWith("@check")) {
+        header.checks.push(...line.slice("@check".length).trim().split(/\s+/).filter(Boolean));
       } else if (line.startsWith("@tolerance")) {
         header.tolerance = Number(line.split(/\s+/)[1]);
         if (!Number.isFinite(header.tolerance)) throw new Error(`invalid @tolerance: ${line}`);
@@ -60,22 +83,28 @@ function parseHeader(html: string): Header {
 }
 
 /** Every combination of the axis values, in declaration order. */
-function expandCases(axes: Axis[]): { params: string; overrides: OverrideList }[] {
-  let cases: OverrideList[] = [[]];
+function expandCases(axes: Axis[]): Case[] {
+  let combinations: [Axis, string][][] = [[]];
   for (const axis of axes) {
-    cases = cases.flatMap((overrides) =>
-      axis.values.map((value) =>
-        [...overrides, [axis.selector, axis.property, value]] as OverrideList
-      )
+    combinations = combinations.flatMap((chosen) =>
+      axis.values.map((value) => [...chosen, [axis, value]] as [Axis, string][])
     );
   }
-  if (cases.length > MAX_CASES) {
-    throw new Error(`@matrix expands to ${cases.length} cases, the limit is ${MAX_CASES}`);
+  if (combinations.length > MAX_CASES) {
+    throw new Error(`@matrix/@state expand to ${combinations.length} cases, the limit is ${MAX_CASES}`);
   }
-  return cases.map((overrides) => ({
-    params: overrides.map(([selector, property, value]) => `${selector} ${property}=${value}`)
+  return combinations.map((chosen) => ({
+    params: chosen
+      .map(([axis, value]) =>
+        axis.property === ":state" ? `${axis.selector} state=${value}` : `${axis.selector} ${axis.property}=${value}`
+      )
       .join(", "),
-    overrides,
+    overrides: chosen
+      .filter(([axis]) => axis.property !== ":state")
+      .map(([axis, value]) => [axis.selector, axis.property, value]),
+    states: chosen
+      .filter(([axis, value]) => axis.property === ":state" && value !== "none")
+      .map(([axis, value]) => [axis.selector, value]),
   }));
 }
 
@@ -93,10 +122,11 @@ function fixtureHash(html: string, baseCss: string): string {
 }
 
 /**
- * Runs inside the page: applies each case's overrides and reads computed values and rects.
- * Must be self-contained because astral sends its source text to the page.
+ * Runs inside the page and installs `window.__bless`, which applies a case's overrides, finds
+ * elements for the mouse, and reads computed values and rects. Must be self-contained because
+ * astral sends its source text to the page.
  */
-async function measureInPage(cases: OverrideList[]): Promise<MeasuredCase[]> {
+async function installInPage(checks: string[], allowedTags: string[]): Promise<void> {
   const fail = (message: string): never => {
     throw new Error(message);
   };
@@ -232,8 +262,8 @@ async function measureInPage(cases: OverrideList[]): Promise<MeasuredCase[]> {
   const root = roots[0] as HTMLElement;
   const elements = [root, ...root.querySelectorAll<HTMLElement>("*")];
   for (const element of elements) {
-    if (element.tagName !== "DIV") {
-      fail(`only <div> elements are supported, found <${element.tagName.toLowerCase()}>`);
+    if (!allowedTags.includes(element.tagName.toLowerCase())) {
+      fail(`<${element.tagName.toLowerCase()}> is not supported; use ${allowedTags.join(", ")}`);
     }
   }
   const originalStyles = new Map(elements.map((element) => [element, element.getAttribute("style")]));
@@ -250,7 +280,7 @@ async function measureInPage(cases: OverrideList[]): Promise<MeasuredCase[]> {
       ? `#${element.id}`
       : element.classList.length > 0
       ? `.${element.classList[0]}`
-      : "div";
+      : element.tagName.toLowerCase();
 
     const style: Record<string, string | number> = {};
     for (const [property, initial] of Object.entries(INITIAL)) {
@@ -310,6 +340,10 @@ async function measureInPage(cases: OverrideList[]): Promise<MeasuredCase[]> {
       }
     }
     node.rect = rect;
+    if (checks.length > 0) {
+      const css = getComputedStyle(element);
+      node.checks = Object.fromEntries(checks.map((property) => [property, css.getPropertyValue(property)]));
+    }
     nodes.push(node);
 
     for (const child of element.children) {
@@ -317,47 +351,68 @@ async function measureInPage(cases: OverrideList[]): Promise<MeasuredCase[]> {
     }
   };
 
-  const results: MeasuredCase[] = [];
-  for (const overrides of cases) {
-    for (const [element, style] of originalStyles) {
-      if (style === null) element.removeAttribute("style");
-      else element.setAttribute("style", style);
-    }
-    for (const [selector, property, value] of overrides) {
-      const targets = root.parentElement!.querySelectorAll<HTMLElement>(selector);
-      if (targets.length === 0) fail(`@matrix selector ${selector} matches nothing`);
-      for (const target of targets) {
-        target.style.setProperty(property, value);
-        if (target.style.getPropertyValue(property) === "") {
-          fail(`@matrix: invalid value ${property}: ${value}`);
+  const target = (selector: string) => {
+    const element = root.parentElement!.querySelector<HTMLElement>(selector);
+    if (!element) fail(`selector ${selector} matches nothing`);
+    return element!;
+  };
+
+  // deno-lint-ignore no-explicit-any
+  (window as any).__bless = {
+    applyCase(overrides: OverrideList) {
+      for (const [element, style] of originalStyles) {
+        if (style === null) element.removeAttribute("style");
+        else element.setAttribute("style", style);
+      }
+      for (const [selector, property, value] of overrides) {
+        const targets = root.parentElement!.querySelectorAll<HTMLElement>(selector);
+        if (targets.length === 0) fail(`@matrix selector ${selector} matches nothing`);
+        for (const element of targets) {
+          element.style.setProperty(property, value);
+          if (element.style.getPropertyValue(property) === "") {
+            fail(`@matrix: invalid value ${property}: ${value}`);
+          }
         }
       }
-    }
 
-    const rootStyle = root.computedStyleMap();
-    for (const property of ["width", "height"]) {
-      const value = rootStyle.get(property);
-      if (!(value instanceof CSSUnitValue) || value.unit !== "px") {
-        fail(`the root needs an explicit ${property} in px`);
+      const rootStyle = root.computedStyleMap();
+      for (const property of ["width", "height"]) {
+        const value = rootStyle.get(property);
+        if (!(value instanceof CSSUnitValue) || value.unit !== "px") {
+          fail(`the root needs an explicit ${property} in px`);
+        }
       }
-    }
-    for (const side of ["top", "right", "bottom", "left"]) {
-      if (String(rootStyle.get(`margin-${side}`)) !== "0px") fail("the root must not have margins");
-    }
-
-    const nodes: Record<string, unknown>[] = [];
-    const warnings: string[] = [];
-    walk(root, 0, new DOMRect(0, 0, 0, 0), nodes, warnings);
-    results.push({ nodes, warnings });
-  }
-  return results;
+      for (const side of ["top", "right", "bottom", "left"]) {
+        if (String(rootStyle.get(`margin-${side}`)) !== "0px") fail("the root must not have margins");
+      }
+    },
+    /** The center of the element's border box, where the mouse goes for hover/active. */
+    center(selector: string): [number, number] {
+      const box = target(selector).getBoundingClientRect();
+      return [box.x + box.width / 2, box.y + box.height / 2];
+    },
+    focus(selector: string) {
+      const element = target(selector);
+      element.focus();
+      if (document.activeElement !== element) fail(`${selector} can't be focused; give it a tabindex`);
+    },
+    blur() {
+      (document.activeElement as HTMLElement | null)?.blur();
+    },
+    measure(): MeasuredCase {
+      const nodes: Record<string, unknown>[] = [];
+      const warnings: string[] = [];
+      walk(root, 0, new DOMRect(0, 0, 0, 0), nodes, warnings);
+      return { nodes, warnings };
+    },
+  };
 }
 
 function formatSnapshot(
   hash: string,
   chrome: string,
   header: Header,
-  cases: { params: string; overrides: OverrideList; measured: MeasuredCase }[],
+  cases: (Case & { measured: MeasuredCase })[],
 ): string {
   const lines = ["{", `  "schema": ${SCHEMA},`, `  "hash": "${hash}",`, `  "chrome": ${JSON.stringify(chrome)},`];
   if (header.tolerance !== undefined) lines.push(`  "tolerance": ${header.tolerance},`);
@@ -366,6 +421,7 @@ function formatSnapshot(
     lines.push("    {");
     lines.push(`      "params": ${JSON.stringify(testCase.params)},`);
     lines.push(`      "overrides": ${JSON.stringify(testCase.overrides)},`);
+    if (testCase.states.length > 0) lines.push(`      "states": ${JSON.stringify(testCase.states)},`);
     lines.push(`      "warnings": ${JSON.stringify(testCase.measured.warnings)},`);
     lines.push(`      "nodes": [`);
     testCase.measured.nodes.forEach((node, nodeIndex) => {
@@ -495,9 +551,38 @@ async function main() {
         `http://127.0.0.1:${server.addr.port}/fixture/${relative(FIXTURES_DIR, path).replaceAll("\\", "/")}`,
         { waitUntil: "load" },
       );
-      const measured = await page.evaluate(measureInPage, {
-        args: [cases.map((testCase) => testCase.overrides)],
-      });
+      await page.evaluate(installInPage, { args: [header.checks, ALLOWED_TAGS] });
+
+      // deno-lint-ignore no-explicit-any
+      type Bless = any;
+      const measured: MeasuredCase[] = [];
+      for (const testCase of cases) {
+        // Start without hover, press or focus: the mouse rests outside the fixture.
+        await page.mouse.move(1199, 899);
+        await page.evaluate(() => (window as Bless).__bless.blur());
+        await page.evaluate((overrides) => (window as Bless).__bless.applyCase(overrides), {
+          args: [testCase.overrides],
+        });
+
+        let pressed = false;
+        for (const [selector, state] of testCase.states) {
+          if (state === "focus") {
+            await page.evaluate((selector) => (window as Bless).__bless.focus(selector), { args: [selector] });
+            continue;
+          }
+          const [x, y] = await page.evaluate(
+            (selector) => (window as Bless).__bless.center(selector) as [number, number],
+            { args: [selector] },
+          );
+          await page.mouse.move(x, y);
+          if (state === "active") {
+            await page.mouse.down();
+            pressed = true;
+          }
+        }
+        measured.push(await page.evaluate(() => (window as Bless).__bless.measure() as MeasuredCase));
+        if (pressed) await page.mouse.up();
+      }
       const snapshot = formatSnapshot(
         fixtureHash(html, baseCss),
         chrome,

@@ -1,5 +1,5 @@
 use crate::css_parser::parse_css;
-use crate::style::{BorderStyle, Length, Selector};
+use crate::style::{BorderStyle, Length};
 
 #[test]
 fn test_parse_border_shorthand_width_and_color() {
@@ -13,7 +13,7 @@ fn test_parse_border_shorthand_width_and_color() {
     assert_eq!(stylesheet.rules.len(), 1);
 
     let rule = &stylesheet.rules[0];
-    assert_eq!(rule.selector, Selector::Class("btn".to_string()));
+    assert_eq!(rule.selectors.to_string(), ".btn");
 
     let mut found_width = false;
     let mut found_color = false;
@@ -52,7 +52,7 @@ fn test_parse_border_shorthand_none() {
     assert_eq!(stylesheet.rules.len(), 1);
 
     let rule = &stylesheet.rules[0];
-    assert_eq!(rule.selector, Selector::Class("noborder".to_string()));
+    assert_eq!(rule.selectors.to_string(), ".noborder");
 
     // Also ensure we did parse the style keyword.
     let mut saw_none_style = false;
@@ -84,7 +84,7 @@ fn test_parse_border_shorthand_rejects_duplicate_width() {
     assert_eq!(stylesheet.rules.len(), 1);
 
     let rule = &stylesheet.rules[0];
-    assert_eq!(rule.selector, Selector::Class("dup".to_string()));
+    assert_eq!(rule.selectors.to_string(), ".dup");
 
     let mut saw_width_decl = false;
     let mut saw_any_border_field = false;
@@ -133,7 +133,7 @@ fn test_parse_border_shorthand_rejects_duplicate_color() {
     assert_eq!(stylesheet.rules.len(), 1);
 
     let rule = &stylesheet.rules[0];
-    assert_eq!(rule.selector, Selector::Class("dup".to_string()));
+    assert_eq!(rule.selectors.to_string(), ".dup");
 
     let mut saw_width_decl = false;
     let mut saw_any_border_field = false;
@@ -182,7 +182,7 @@ fn test_parse_border_shorthand_rejects_duplicate_style() {
     assert_eq!(stylesheet.rules.len(), 1);
 
     let rule = &stylesheet.rules[0];
-    assert_eq!(rule.selector, Selector::Class("dup".to_string()));
+    assert_eq!(rule.selectors.to_string(), ".dup");
 
     let mut saw_width_decl = false;
     let mut saw_any_border_field = false;
@@ -230,7 +230,7 @@ fn test_parse_border_style_property() {
     assert_eq!(stylesheet.rules.len(), 1);
 
     let rule = &stylesheet.rules[0];
-    assert_eq!(rule.selector, Selector::Class("styled".to_string()));
+    assert_eq!(rule.selectors.to_string(), ".styled");
 
     let mut saw_dashed = false;
     for declaration in &rule.declarations {
@@ -257,7 +257,7 @@ fn test_parse_border_side_longhands() {
     assert_eq!(stylesheet.rules.len(), 1);
 
     let rule = &stylesheet.rules[0];
-    assert_eq!(rule.selector, Selector::Class("sides".to_string()));
+    assert_eq!(rule.selectors.to_string(), ".sides");
 
     let mut saw_top_color = false;
     let mut saw_right_style = false;

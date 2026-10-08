@@ -1,0 +1,15 @@
+<!--
+Selector lists, several style blocks, and rules dropped as a whole for an invalid selector.
+@check color background-color
+-->
+<div id="root" style="width: 300px; height: 100px">
+  <div class="a">a</div>
+  <div class="b">b</div>
+</div>
+<style>
+  .a, .b { color: rgb(255, 0, 0); }
+  .b, .a:unknown-state { background-color: rgb(1, 1, 1); }
+</style>
+<style>
+  .b { color: rgb(0, 0, 255); }
+</style>

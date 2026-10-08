@@ -409,9 +409,7 @@ impl FlexLayoutEngine {
                         | AlignItems::Baseline
                         | AlignItems::Stretch
                         | AlignItems::Normal
-                        | AlignItems::Start => {
-                            line_cross_offset + cross_before_px
-                        }
+                        | AlignItems::Start => line_cross_offset + cross_before_px,
                         AlignItems::FlexEnd | AlignItems::End => {
                             line_cross_offset + (line.cross_size - outer_cross) + cross_before_px
                         }
@@ -937,22 +935,7 @@ fn justify_offsets(
     }
 }
 
-fn resolve_style(node: &Rc<RefCell<Node>>, ctx: &LayoutContext, fallback: &Style) -> Style {
-    let node_borrow = node.borrow();
-
-    // Start with existing style as base.
-    let mut style = node_borrow.layout.style.as_ref().clone();
-
-    crate::style_matching::apply_matching_rules(
-        &mut style,
-        &node_borrow.attributes,
-        &ctx.style_sheet,
-    );
-
-    // Best-effort inheritance for anonymous items.
-    if node_borrow.attributes.is_empty() && node_borrow.children.is_empty() {
-        style.display = fallback.display.clone();
-    }
-
-    style
+fn resolve_style(node: &Rc<RefCell<Node>>, _ctx: &LayoutContext, _fallback: &Style) -> Style {
+    // Styles were computed by the cascade.
+    node.borrow().layout.style.as_ref().clone()
 }

@@ -21,7 +21,7 @@ impl FontSpec {
 
         let size_px = match style.font_size {
             Some(Length::Px(px)) if px > 0.0 => px.round().clamp(1.0, 512.0) as u32,
-            _ => 12,
+            _ => crate::cascade::DEFAULT_FONT_SIZE_PX as u32,
         };
 
         Self { family, size_px }
@@ -57,7 +57,11 @@ pub trait TextMeasurer: Send + Sync {
 /// Breaks `text` into lines at whitespace, greedily, so that no line is wider than
 /// `max_width` unless it holds a single word. Whitespace is collapsed like in HTML.
 /// Returns each line with its width.
-pub fn break_lines(text: &str, max_width: f64, measure: &mut dyn FnMut(&str) -> f64) -> Vec<(String, f64)> {
+pub fn break_lines(
+    text: &str,
+    max_width: f64,
+    measure: &mut dyn FnMut(&str) -> f64,
+) -> Vec<(String, f64)> {
     let space = measure(" ");
     let mut lines: Vec<(String, f64)> = Vec::new();
     for word in text.split_whitespace() {
@@ -75,7 +79,12 @@ pub fn break_lines(text: &str, max_width: f64, measure: &mut dyn FnMut(&str) -> 
 }
 
 /// Size of the wrapped text for a measure function and line height.
-fn wrapped_size(text: &str, max_width: f64, line_height: f64, measure: &mut dyn FnMut(&str) -> f64) -> Size {
+fn wrapped_size(
+    text: &str,
+    max_width: f64,
+    line_height: f64,
+    measure: &mut dyn FnMut(&str) -> f64,
+) -> Size {
     let lines = break_lines(text, max_width, measure);
     Size {
         width: lines.iter().map(|(_, width)| *width).fold(0.0, f64::max),
@@ -226,7 +235,8 @@ impl TextMeasurer for SkiaTextMeasurer {
     }
 
     fn min_content_width(&self, text: &str, font: &FontSpec) -> f64 {
-        self.measure_cached(text, font, Measurement::MinContent).width
+        self.measure_cached(text, font, Measurement::MinContent)
+            .width
     }
 
     fn ascent(&self, font: &FontSpec) -> f64 {
@@ -261,7 +271,9 @@ impl TextMeasurer for TestTextMeasurer {
 
     fn measure_wrapped(&self, text: &str, font: &FontSpec, max_width_px: f64) -> Size {
         let em = Self::em(font);
-        wrapped_size(text, max_width_px, em, &mut |text| text.chars().count() as f64 * em)
+        wrapped_size(text, max_width_px, em, &mut |text| {
+            text.chars().count() as f64 * em
+        })
     }
 
     fn min_content_width(&self, text: &str, font: &FontSpec) -> f64 {
@@ -302,7 +314,12 @@ mod tests {
         let measurer = TestTextMeasurer;
         let size = measurer.measure_wrapped("aa bbbb  c", &font(), 70.0);
         assert_eq!((size.width, size.height), (70.0, 20.0));
-        assert_eq!(measurer.measure_wrapped(" aa bbbb ", &font(), f64::INFINITY).width, 70.0);
+        assert_eq!(
+            measurer
+                .measure_wrapped(" aa bbbb ", &font(), f64::INFINITY)
+                .width,
+            70.0
+        );
         assert_eq!(measurer.min_content_width("aa bbbb", &font()), 40.0);
     }
 

@@ -1,3 +1,4 @@
+use crate::css_parser::SelectorList;
 use sonate_macros::MergeProperties;
 
 #[derive(Clone, Copy, Default, Debug, PartialEq)]
@@ -360,24 +361,52 @@ impl StyleSheet {
     pub fn add_rule(&mut self, rule: Rule) {
         self.rules.push(rule);
     }
+
+    /// Whether any rule depends on `:hover`, `:active`, `:focus` or `:focus-within`, i.e.
+    /// whether styles must be recomputed when those states change.
+    pub fn has_state_selectors(&self) -> bool {
+        self.rules
+            .iter()
+            .any(|rule| rule.selectors.depends_on_state())
+    }
 }
 
 pub struct Rule {
-    pub selector: Selector,
-    pub declarations: Vec<Style>,
+    pub selectors: SelectorList,
+    pub declarations: Vec<Declaration>,
 }
 
 impl std::fmt::Debug for Rule {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Rule")
-            .field("selector", &self.selector)
+            .field("selectors", &self.selectors.to_string())
             .field("declarations", &self.declarations)
             .finish()
     }
 }
 
-#[derive(Debug, PartialEq)]
-pub enum Selector {
-    Tag(String),
-    Class(String),
+/// `inherit`, `initial` and `unset`, which every property accepts.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CssWideKeyword {
+    Inherit,
+    Initial,
+    Unset,
+}
+
+/// One declaration of a rule or `style` attribute.
+#[derive(Clone, Debug)]
+pub struct Declaration {
+    /// The parsed value; only this declaration's property is set.
+    pub style: Style,
+    pub important: bool,
+    /// Set instead of `style` for `property: inherit | initial | unset`.
+    pub keyword: Option<(String, CssWideKeyword)>,
+}
+
+impl std::ops::Deref for Declaration {
+    type Target = Style;
+
+    fn deref(&self) -> &Style {
+        &self.style
+    }
 }

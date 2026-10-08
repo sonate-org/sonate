@@ -1,0 +1,24 @@
+<!--
+Inherited properties (color, font-size) flow down; em and % font sizes resolve against the
+parent; inherit, initial and unset work on inherited and non-inherited properties.
+@check color background-color font-size
+-->
+<div id="root" class="theme" style="width: 400px; height: 200px">
+  <div class="panel">
+    <div class="text">plain</div>
+    <div class="big">big</div>
+    <div class="half">half</div>
+    <div class="reset">reset</div>
+    <div class="unset">unset</div>
+    <div class="bg">bg</div>
+  </div>
+</div>
+<style>
+  .theme { color: rgb(255, 0, 0); font-size: 20px; }
+  .panel { background-color: rgb(0, 255, 0); width: 300px; }
+  .big { font-size: 1.5em; }
+  .half { font-size: 50%; }
+  .reset { color: initial; font-size: initial; }
+  .unset { color: unset; background-color: unset; }
+  .bg { background-color: inherit; width: inherit; }
+</style>

@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "hash": "c306ad7ef291d18e",
+  "chrome": "Chrome/153.0.8010.52/@78e5e45d4bb41035e17ea4da2cc257f496416ac9",
+  "cases": [
+    {
+      "params": "#target state=hover",
+      "overrides": [],
+      "states": [["#target","hover"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"200px","height":"100px"},"rect":[0,0,200,100],"checks":{"color":"rgb(0, 0, 0)","background-color":"rgba(0, 0, 0, 0)","border-top-color":"rgb(0, 0, 0)"}},
+        {"d":1,"label":"#outer","style":{"padding-top":"10px","padding-right":"10px","padding-bottom":"10px","padding-left":"10px"},"rect":[0,0,70,100],"checks":{"color":"rgb(0, 0, 0)","background-color":"rgb(0, 255, 0)","border-top-color":"rgb(0, 0, 0)"}},
+        {"d":2,"label":"#target","style":{"width":"50px","height":"50px"},"text":"T","font":10,"rect":[10,10,50,50],"checks":{"color":"rgb(255, 0, 0)","background-color":"rgba(0, 0, 0, 0)","border-top-color":"rgb(255, 0, 0)"}},
+        {"d":1,"label":"#sibling","style":{},"text":"S","font":10,"rect":[70,0,10,100],"checks":{"color":"rgb(7, 8, 9)","background-color":"rgba(0, 0, 0, 0)","border-top-color":"rgb(7, 8, 9)"}}
+      ]
+    },
+    {
+      "params": "#target state=active",
+      "overrides": [],
+      "states": [["#target","active"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"200px","height":"100px"},"rect":[0,0,200,100],"checks":{"color":"rgb(0, 0, 0)","background-color":"rgba(0, 0, 0, 0)","border-top-color":"rgb(0, 0, 0)"}},
+        {"d":1,"label":"#outer","style":{"padding-top":"10px","padding-right":"10px","padding-bottom":"10px","padding-left":"10px"},"rect":[0,0,70,100],"checks":{"color":"rgb(4, 5, 6)","background-color":"rgb(0, 255, 0)","border-top-color":"rgb(4, 5, 6)"}},
+        {"d":2,"label":"#target","style":{"width":"50px","height":"50px"},"text":"T","font":10,"rect":[10,10,50,50],"checks":{"color":"rgb(255, 0, 0)","background-color":"rgb(0, 0, 255)","border-top-color":"rgb(1, 2, 3)"}},
+        {"d":1,"label":"#sibling","style":{},"text":"S","font":10,"rect":[70,0,10,100],"checks":{"color":"rgb(7, 8, 9)","background-color":"rgba(0, 0, 0, 0)","border-top-color":"rgb(7, 8, 9)"}}
+      ]
+    },
+    {
+      "params": "#target state=focus",
+      "overrides": [],
+      "states": [["#target","focus"]],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"200px","height":"100px"},"rect":[0,0,200,100],"checks":{"color":"rgb(0, 0, 0)","background-color":"rgba(0, 0, 0, 0)","border-top-color":"rgb(0, 0, 0)"}},
+        {"d":1,"label":"#outer","style":{"padding-top":"10px","padding-right":"10px","padding-bottom":"10px","padding-left":"10px"},"rect":[0,0,70,100],"checks":{"color":"rgb(4, 5, 6)","background-color":"rgba(0, 0, 0, 0)","border-top-color":"rgb(4, 5, 6)"}},
+        {"d":2,"label":"#target","style":{"width":"50px","height":"50px"},"text":"T","font":10,"rect":[10,10,50,50],"checks":{"color":"rgb(4, 5, 6)","background-color":"rgba(0, 0, 0, 0)","border-top-color":"rgb(1, 2, 3)"}},
+        {"d":1,"label":"#sibling","style":{},"text":"S","font":10,"rect":[70,0,10,100],"checks":{"color":"rgb(0, 0, 0)","background-color":"rgba(0, 0, 0, 0)","border-top-color":"rgb(0, 0, 0)"}}
+      ]
+    },
+    {
+      "params": "#target state=none",
+      "overrides": [],
+      "warnings": [],
+      "nodes": [
+        {"d":0,"label":"#root","style":{"width":"200px","height":"100px"},"rect":[0,0,200,100],"checks":{"color":"rgb(0, 0, 0)","background-color":"rgba(0, 0, 0, 0)","border-top-color":"rgb(0, 0, 0)"}},
+        {"d":1,"label":"#outer","style":{"padding-top":"10px","padding-right":"10px","padding-bottom":"10px","padding-left":"10px"},"rect":[0,0,70,100],"checks":{"color":"rgb(0, 0, 0)","background-color":"rgba(0, 0, 0, 0)","border-top-color":"rgb(0, 0, 0)"}},
+        {"d":2,"label":"#target","style":{"width":"50px","height":"50px"},"text":"T","font":10,"rect":[10,10,50,50],"checks":{"color":"rgb(0, 0, 0)","background-color":"rgba(0, 0, 0, 0)","border-top-color":"rgb(0, 0, 0)"}},
+        {"d":1,"label":"#sibling","style":{},"text":"S","font":10,"rect":[70,0,10,100],"checks":{"color":"rgb(0, 0, 0)","background-color":"rgba(0, 0, 0, 0)","border-top-color":"rgb(0, 0, 0)"}}
+      ]
+    }
+  ]
+}

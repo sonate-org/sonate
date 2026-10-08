@@ -1,6 +1,5 @@
 use crate::layout::test_html::load_html_test_example;
 use crate::style::Length;
-use crate::style::Selector;
 
 #[test]
 fn tag_selectors_apply_to_elements() {
@@ -20,7 +19,7 @@ fn tag_selectors_apply_to_elements() {
         ctx.style_sheet
             .rules
             .iter()
-            .any(|r| r.selector == Selector::Tag("input".to_owned())),
+            .any(|r| r.selectors.to_string() == "input"),
         "expected a tag rule for input"
     );
 

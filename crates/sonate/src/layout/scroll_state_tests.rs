@@ -1,6 +1,4 @@
 use super::*;
-use crate::style::{Length, Overflow, Style};
-use std::sync::Arc;
 
 fn make_id(n: u64) -> Id {
     Id::from_u64(10_000 + n)
@@ -20,15 +18,11 @@ fn setup_scroll_ctx() -> (LayoutContext, Id, Id, Id) {
     ctx.document.set_parent(container_id, child_b).unwrap();
 
     // Give the container an overflow: scroll style
-    {
-        let node = ctx.document.get_node(container_id).unwrap();
-        let mut nb = node.borrow_mut();
-        let mut style = Style::default();
-        style.overflow = Some(Overflow::Scroll);
-        style.width = Some(Length::Px(200.0));
-        style.height = Some(Length::Px(100.0));
-        nb.layout.style = Arc::new(style);
-    }
+    ctx.document.set_attribute(
+        container_id,
+        "style".to_owned(),
+        "overflow: scroll; width: 200px; height: 100px".to_owned(),
+    );
 
     (ctx, container_id, child_a, child_b)
 }
@@ -40,10 +34,8 @@ fn scroll_state_cleaned_up_when_node_removed() {
     let (mut ctx, container_id, _child_a, _child_b) = setup_scroll_ctx();
 
     // Simulate scroll on the container
-    ctx.scroll_state.insert(
-        container_id,
-        ScrollState::new(0.0, 50.0),
-    );
+    ctx.scroll_state
+        .insert(container_id, ScrollState::new(0.0, 50.0));
 
     assert!(ctx.scroll_state.contains_key(&container_id));
 
@@ -61,18 +53,10 @@ fn scroll_state_cleaned_up_for_descendants_when_parent_removed() {
     let (mut ctx, container_id, child_a, child_b) = setup_scroll_ctx();
 
     // Add scroll state to the container and both children
-    ctx.scroll_state.insert(
-        container_id,
-        ScrollState::new(10.0, 20.0),
-    );
-    ctx.scroll_state.insert(
-        child_a,
-        ScrollState::new(0.0, 5.0),
-    );
-    ctx.scroll_state.insert(
-        child_b,
-        ScrollState::new(0.0, 3.0),
-    );
+    ctx.scroll_state
+        .insert(container_id, ScrollState::new(10.0, 20.0));
+    ctx.scroll_state.insert(child_a, ScrollState::new(0.0, 5.0));
+    ctx.scroll_state.insert(child_b, ScrollState::new(0.0, 3.0));
 
     assert_eq!(ctx.scroll_state.len(), 3);
 
@@ -89,14 +73,10 @@ fn scroll_state_cleaned_up_for_descendants_when_parent_removed() {
 fn removing_leaf_leaves_other_scroll_state_intact() {
     let (mut ctx, container_id, child_a, _child_b) = setup_scroll_ctx();
 
-    ctx.scroll_state.insert(
-        container_id,
-        ScrollState::new(0.0, 50.0),
-    );
-    ctx.scroll_state.insert(
-        child_a,
-        ScrollState::new(0.0, 10.0),
-    );
+    ctx.scroll_state
+        .insert(container_id, ScrollState::new(0.0, 50.0));
+    ctx.scroll_state
+        .insert(child_a, ScrollState::new(0.0, 10.0));
 
     // Remove only child_a
     ctx.remove_node(child_a);
@@ -123,14 +103,8 @@ fn add_nodes_scroll_then_remove_one_by_one() {
     ctx.document.set_parent(root_id, a).unwrap();
     ctx.document.set_parent(root_id, b).unwrap();
 
-    ctx.scroll_state.insert(
-        a,
-        ScrollState::new(0.0, 1.0),
-    );
-    ctx.scroll_state.insert(
-        b,
-        ScrollState::new(2.0, 0.0),
-    );
+    ctx.scroll_state.insert(a, ScrollState::new(0.0, 1.0));
+    ctx.scroll_state.insert(b, ScrollState::new(2.0, 0.0));
 
     assert_eq!(ctx.scroll_state.len(), 2);
 
@@ -159,18 +133,10 @@ fn add_deep_tree_then_remove_subtree() {
     ctx.document.set_parent(root_id, sibling).unwrap();
 
     // Give scroll state to several nodes
-    ctx.scroll_state.insert(
-        parent,
-        ScrollState::new(0.0, 10.0),
-    );
-    ctx.scroll_state.insert(
-        grandchild,
-        ScrollState::new(5.0, 0.0),
-    );
-    ctx.scroll_state.insert(
-        sibling,
-        ScrollState::new(1.0, 1.0),
-    );
+    ctx.scroll_state.insert(parent, ScrollState::new(0.0, 10.0));
+    ctx.scroll_state
+        .insert(grandchild, ScrollState::new(5.0, 0.0));
+    ctx.scroll_state.insert(sibling, ScrollState::new(1.0, 1.0));
 
     assert_eq!(ctx.scroll_state.len(), 3);
 
@@ -198,10 +164,8 @@ fn scroll_state_dropped_with_layout_context() {
     let node_id = ctx.document.create_node(make_id(300), None);
     ctx.document.set_parent(root_id, node_id).unwrap();
 
-    ctx.scroll_state.insert(
-        node_id,
-        ScrollState::new(0.0, 42.0),
-    );
+    ctx.scroll_state
+        .insert(node_id, ScrollState::new(0.0, 42.0));
     assert_eq!(ctx.scroll_state.len(), 1);
 
     drop(ctx);
@@ -215,31 +179,24 @@ fn scroll_state_dropped_with_layout_context() {
 fn scroll_offset_shifts_children() {
     let (mut ctx, container_id, child_a, child_b) = setup_scroll_ctx();
 
-    // Set flex-direction: column on the container so children stack vertically.
-    {
-        let node = ctx.document.get_node(container_id).unwrap();
-        let mut nb = node.borrow_mut();
-        let mut style = nb.layout.style.as_ref().clone();
-        style.flex_direction = Some(crate::style::FlexDirection::Column);
-        nb.layout.style = Arc::new(style);
-    }
-
-    // Make children tall enough to overflow the 100px container. Without `flex-shrink: 0`
-    // they would shrink to fit, as in CSS.
+    // Stack the children vertically and make them tall enough to overflow the 100px container.
+    // Without `flex-shrink: 0` they would shrink to fit, as in CSS.
+    ctx.document.set_attribute(
+        container_id,
+        "style".to_owned(),
+        "overflow: scroll; width: 200px; height: 100px; flex-direction: column".to_owned(),
+    );
     for &id in &[child_a, child_b] {
-        let node = ctx.document.get_node(id).unwrap();
-        let mut nb = node.borrow_mut();
-        let mut style = Style::default();
-        style.height = Some(Length::Px(80.0));
-        style.flex_shrink = Some(0.0);
-        nb.layout.style = Arc::new(style);
+        ctx.document.set_attribute(
+            id,
+            "style".to_owned(),
+            "height: 80px; flex-shrink: 0".to_owned(),
+        );
     }
 
     // Set a scroll offset
-    ctx.scroll_state.insert(
-        container_id,
-        ScrollState::new(0.0, 30.0),
-    );
+    ctx.scroll_state
+        .insert(container_id, ScrollState::new(0.0, 30.0));
 
     ctx.layout();
 

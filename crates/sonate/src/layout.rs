@@ -1,17 +1,14 @@
 use crate::{
     flex_layout::FlexLayoutEngine,
     style::{BoxSizing, Length, Overflow, Style, StyleSheet, ZIndex},
+    style_matching::ElementStates,
     text::{default_text_measurer, FontSpec, TextMeasurer},
     Id,
 };
 
-// Many layout tests do `use super::*;` and refer to `Selector::...`.
-// Keep this import in the module namespace for those tests.
-#[allow(unused_imports)]
-use crate::style::Selector;
 use std::{
     cell::{Cell, RefCell},
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     rc::Rc,
     sync::Arc,
 };
@@ -255,6 +252,12 @@ pub struct LayoutContext {
     pub text_measurer: Arc<dyn TextMeasurer>,
     viewport_size: Size,
     focused_text_input: Option<Id>,
+    /// The focused element (a text input or an element with `tabindex`), for `:focus`.
+    focused_element: Option<Id>,
+    /// The element under the pointer and its ancestors, for `:hover`.
+    hovered: HashSet<Id>,
+    /// The pressed element and its ancestors, for `:active`.
+    active: HashSet<Id>,
     pub scroll_state: HashMap<Id, ScrollState>,
 }
 
@@ -270,6 +273,9 @@ impl LayoutContext {
                 height: 500.0,
             },
             focused_text_input: None,
+            focused_element: None,
+            hovered: HashSet::new(),
+            active: HashSet::new(),
             scroll_state: HashMap::new(),
         }
     }
@@ -280,12 +286,79 @@ impl LayoutContext {
 
     pub fn layout(&mut self) {
         self.text_measurer.begin_layout_pass();
+        crate::cascade::compute_styles(&self.document, &self.style_sheet, &self.element_states());
         if use_legacy_layout() {
             self.layout_node(self.document.root.clone(), 0.0, 0.0);
         } else {
             flex_adapter::layout_document(self);
         }
         self.text_measurer.end_layout_pass_and_sweep();
+    }
+
+    /// The interaction states that dynamic pseudo-classes match.
+    pub fn element_states(&self) -> ElementStates {
+        let mut focus_within = HashSet::new();
+        let mut current = self.focused_element;
+        while let Some(id) = current {
+            focus_within.insert(id);
+            current = self
+                .document
+                .get_node(id)
+                .and_then(|node| node.borrow().parent);
+        }
+        ElementStates {
+            hovered: self.hovered.clone(),
+            active: self.active.clone(),
+            focused: self.focused_element,
+            focus_within,
+        }
+    }
+
+    /// Sets the hit-test path under the pointer (target first). Returns whether it changed.
+    pub fn set_hovered(&mut self, path: &[Id]) -> bool {
+        let hovered: HashSet<Id> = path.iter().copied().collect();
+        let changed = hovered != self.hovered;
+        self.hovered = hovered;
+        changed
+    }
+
+    /// Sets the hit-test path of the pressed element (empty when released). Returns whether it
+    /// changed.
+    pub fn set_active(&mut self, path: &[Id]) -> bool {
+        let active: HashSet<Id> = path.iter().copied().collect();
+        let changed = active != self.active;
+        self.active = active;
+        changed
+    }
+
+    /// Focuses the first focusable element of a clicked hit-test path: a text input or an
+    /// element with a `tabindex` attribute. Clicking elsewhere removes the focus. Returns
+    /// whether the focus changed.
+    pub fn focus_path(&mut self, path: &[Id]) -> bool {
+        let focusable = path.iter().copied().find(|id| {
+            self.document.get_node(*id).is_some_and(|node| {
+                let node = node.borrow();
+                node.attributes.contains_key("tabindex")
+                    || node
+                        .layout
+                        .style
+                        .widget
+                        .is_some_and(|widget| widget.is_text_input())
+            })
+        });
+        let is_text_input = focusable.is_some_and(|id| {
+            self.document.get_node(id).is_some_and(|node| {
+                node.borrow()
+                    .layout
+                    .style
+                    .widget
+                    .is_some_and(|w| w.is_text_input())
+            })
+        });
+        let previous = self.focused_element;
+        self.set_focused_text_input(focusable.filter(|_| is_text_input));
+        self.focused_element = focusable;
+        previous != self.focused_element
     }
 
     /// Remove a node from the document and clean up associated scroll state.
@@ -299,6 +372,14 @@ impl LayoutContext {
         }
         for rid in &removed {
             self.scroll_state.remove(rid);
+            self.hovered.remove(rid);
+            self.active.remove(rid);
+        }
+        if self
+            .focused_element
+            .is_some_and(|focused| removed.contains(&focused))
+        {
+            self.focused_element = None;
         }
     }
 
@@ -328,6 +409,7 @@ impl LayoutContext {
                 state.caret = text_len;
             }
             self.focused_text_input = Some(target);
+            self.focused_element = Some(target);
         }
 
         true
@@ -450,18 +532,8 @@ impl LayoutContext {
 
     pub fn layout_node(&self, node: Rc<RefCell<Node>>, x: f64, y: f64) {
         // Get style for this node - merge existing style with CSS rules
-        let style = {
-            let node_borrow = node.borrow();
-            // Start with existing style as base (this preserves manually set properties like flex_wrap)
-            let mut style = node_borrow.layout.style.as_ref().clone();
-
-            crate::style_matching::apply_matching_rules(
-                &mut style,
-                &node_borrow.attributes,
-                &self.style_sheet,
-            );
-            style
-        };
+        // Styles were computed by the cascade.
+        let style = node.borrow().layout.style.as_ref().clone();
 
         // Set position (margins will be applied by flex layout engine for flex items)
         {
